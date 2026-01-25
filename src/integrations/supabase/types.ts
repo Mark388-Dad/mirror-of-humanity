@@ -14,16 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      book_submissions: {
+        Row: {
+          author: string
+          category_name: string
+          category_number: number
+          created_at: string
+          date_finished: string
+          date_started: string
+          id: string
+          points_earned: number
+          reflection: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author: string
+          category_name: string
+          category_number: number
+          created_at?: string
+          date_finished: string
+          date_started: string
+          id?: string
+          points_earned?: number
+          reflection: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          category_name?: string
+          category_number?: number
+          created_at?: string
+          date_finished?: string
+          date_started?: string
+          id?: string
+          points_earned?: number
+          reflection?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          class_name: string | null
+          created_at: string
+          email: string
+          full_name: string
+          house: Database["public"]["Enums"]["house_name"] | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+          year_group: Database["public"]["Enums"]["year_group"] | null
+        }
+        Insert: {
+          class_name?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          house?: Database["public"]["Enums"]["house_name"] | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+          year_group?: Database["public"]["Enums"]["year_group"] | null
+        }
+        Update: {
+          class_name?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          house?: Database["public"]["Enums"]["house_name"] | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+          year_group?: Database["public"]["Enums"]["year_group"] | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      house_leaderboard: {
+        Row: {
+          house: Database["public"]["Enums"]["house_name"] | null
+          total_books: number | null
+          total_points: number | null
+          total_readers: number | null
+        }
+        Relationships: []
+      }
+      student_progress: {
+        Row: {
+          achievement_level:
+            | Database["public"]["Enums"]["achievement_level"]
+            | null
+          books_read: number | null
+          class_name: string | null
+          full_name: string | null
+          house: Database["public"]["Enums"]["house_name"] | null
+          total_points: number | null
+          user_id: string | null
+          year_group: Database["public"]["Enums"]["year_group"] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      achievement_level: "none" | "bronze" | "silver" | "gold"
+      house_name: "Kenya" | "Longonot" | "Kilimanjaro" | "Elgon"
+      user_role:
+        | "student"
+        | "homeroom_tutor"
+        | "head_of_year"
+        | "house_patron"
+        | "librarian"
+        | "staff"
+      year_group: "MYP5" | "DP1"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +269,18 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      achievement_level: ["none", "bronze", "silver", "gold"],
+      house_name: ["Kenya", "Longonot", "Kilimanjaro", "Elgon"],
+      user_role: [
+        "student",
+        "homeroom_tutor",
+        "head_of_year",
+        "house_patron",
+        "librarian",
+        "staff",
+      ],
+      year_group: ["MYP5", "DP1"],
+    },
   },
 } as const
