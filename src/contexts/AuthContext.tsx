@@ -8,7 +8,7 @@ interface Profile {
   full_name: string;
   email: string;
   role: 'student' | 'homeroom_tutor' | 'head_of_year' | 'house_patron' | 'librarian' | 'staff';
-  year_group: 'MYP5' | 'DP1' | null;
+  year_group: 'MYP5' | 'DP1' | 'DP2' | 'G10' | null;
   class_name: string | null;
   house: 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | null;
 }

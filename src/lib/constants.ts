@@ -33,11 +33,9 @@ export const READING_CATEGORIES = [
 
 export const HOUSES = ['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon'] as const;
 
-export const YEAR_GROUPS = ['MYP5', 'DP1'] as const;
+export const YEAR_GROUPS = ['MYP5', 'DP1', 'DP2', 'G10'] as const;
 
-export const MYP5_CLASSES = ['MYP5 Chui', 'MYP5 Nyati', 'MYP5 Swara'] as const;
-
-export const DP1_CLASSES = ['DP1 Chui', 'DP1 Nyati', 'DP1 Swara'] as const;
+export const CLASSES = ['Swara', 'Chui', 'Duma', 'Nyati', 'Twiga', 'Kifaru'] as const;
 
 export const USER_ROLES = [
   { value: 'student', label: 'Student' },
@@ -50,4 +48,5 @@ export const USER_ROLES = [
 
 export type House = typeof HOUSES[number];
 export type YearGroup = typeof YEAR_GROUPS[number];
+export type ClassName = typeof CLASSES[number];
 export type UserRole = typeof USER_ROLES[number]['value'];
