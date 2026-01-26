@@ -59,6 +59,63 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_submissions: {
+        Row: {
+          author: string
+          category_name: string
+          category_number: number
+          class_name: string | null
+          created_at: string
+          date_finished: string
+          date_started: string
+          email: string
+          house: string | null
+          id: string
+          imported_at: string | null
+          imported_to_user_id: string | null
+          reflection: string
+          student_name: string
+          title: string
+          year_group: string | null
+        }
+        Insert: {
+          author: string
+          category_name: string
+          category_number: number
+          class_name?: string | null
+          created_at?: string
+          date_finished: string
+          date_started: string
+          email: string
+          house?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_to_user_id?: string | null
+          reflection: string
+          student_name: string
+          title: string
+          year_group?: string | null
+        }
+        Update: {
+          author?: string
+          category_name?: string
+          category_number?: number
+          class_name?: string | null
+          created_at?: string
+          date_finished?: string
+          date_started?: string
+          email?: string
+          house?: string | null
+          id?: string
+          imported_at?: string | null
+          imported_to_user_id?: string | null
+          reflection?: string
+          student_name?: string
+          title?: string
+          year_group?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           class_name: string | null
