@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import SubmitBook from "./pages/SubmitBook";
 import MyProgress from "./pages/MyProgress";
 import Leaderboard from "./pages/Leaderboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +80,11 @@ const AppRoutes = () => {
       <Route path="/leaderboard" element={
         <ProtectedRoute>
           <Leaderboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <AdminDashboard />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />

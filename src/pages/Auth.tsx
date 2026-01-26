@@ -90,7 +90,39 @@ const Auth = () => {
 
         if (profileError) throw profileError;
 
-        toast.success('Account created successfully!');
+        // Import any pending submissions for this email
+        const { data: pendingData } = await supabase
+          .from('pending_submissions')
+          .select('*')
+          .eq('email', validatedData.email);
+
+        if (pendingData && pendingData.length > 0) {
+          // Insert the pending submissions as actual book submissions
+          const submissionsToInsert = pendingData.map(pending => ({
+            user_id: authData.user!.id,
+            category_number: pending.category_number,
+            category_name: pending.category_name,
+            title: pending.title,
+            author: pending.author,
+            date_started: pending.date_started,
+            date_finished: pending.date_finished,
+            reflection: pending.reflection,
+            points_earned: 3,
+          }));
+
+          await supabase.from('book_submissions').insert(submissionsToInsert);
+
+          // Mark pending submissions as imported
+          await supabase
+            .from('pending_submissions')
+            .update({ imported_at: new Date().toISOString(), imported_to_user_id: authData.user!.id })
+            .eq('email', validatedData.email);
+
+          toast.success(`Account created! ${pendingData.length} previous submissions imported.`);
+        } else {
+          toast.success('Account created successfully!');
+        }
+        
         navigate('/dashboard');
       }
     } catch (error: any) {
