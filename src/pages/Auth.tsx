@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { HOUSES, YEAR_GROUPS, MYP5_CLASSES, DP1_CLASSES, USER_ROLES } from '@/lib/constants';
+import { HOUSES, YEAR_GROUPS, CLASSES, USER_ROLES } from '@/lib/constants';
 import { z } from 'zod';
 
 const signUpSchema = z.object({
@@ -17,7 +17,7 @@ const signUpSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
   role: z.enum(['student', 'homeroom_tutor', 'head_of_year', 'house_patron', 'librarian', 'staff']),
-  yearGroup: z.enum(['MYP5', 'DP1']).optional(),
+  yearGroup: z.enum(['MYP5', 'DP1', 'DP2', 'G10']).optional(),
   className: z.string().optional(),
   house: z.enum(['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon']).optional(),
 });
@@ -35,15 +35,13 @@ const Auth = () => {
     password: '',
     fullName: '',
     role: 'student' as const,
-    yearGroup: '' as 'MYP5' | 'DP1' | '',
+    yearGroup: '' as 'MYP5' | 'DP1' | 'DP2' | 'G10' | '',
     className: '',
     house: '' as 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | '',
   });
 
   const getClassOptions = () => {
-    if (formData.yearGroup === 'MYP5') return MYP5_CLASSES;
-    if (formData.yearGroup === 'DP1') return DP1_CLASSES;
-    return [];
+    return CLASSES;
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -238,7 +236,7 @@ const Auth = () => {
                   <>
                     <div className="space-y-2">
                       <Label>Year Group</Label>
-                      <Select value={formData.yearGroup} onValueChange={(value: 'MYP5' | 'DP1') => setFormData({ ...formData, yearGroup: value, className: '' })}>
+                      <Select value={formData.yearGroup} onValueChange={(value: 'MYP5' | 'DP1' | 'DP2' | 'G10') => setFormData({ ...formData, yearGroup: value, className: '' })}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select year group" />
                         </SelectTrigger>
@@ -249,21 +247,19 @@ const Auth = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {formData.yearGroup && (
-                      <div className="space-y-2">
-                        <Label>Class</Label>
-                        <Select value={formData.className} onValueChange={(value) => setFormData({ ...formData, className: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your class" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {getClassOptions().map((cls) => (
-                              <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      <Label>Class</Label>
+                      <Select value={formData.className} onValueChange={(value) => setFormData({ ...formData, className: value })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your class" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getClassOptions().map((cls) => (
+                            <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2">
                       <Label>House</Label>
                       <Select value={formData.house} onValueChange={(value: any) => setFormData({ ...formData, house: value })}>

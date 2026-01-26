@@ -142,7 +142,7 @@ export type Database = {
         | "house_patron"
         | "librarian"
         | "staff"
-      year_group: "MYP5" | "DP1"
+      year_group: "MYP5" | "DP1" | "DP2" | "G10"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -280,7 +280,7 @@ export const Constants = {
         "librarian",
         "staff",
       ],
-      year_group: ["MYP5", "DP1"],
+      year_group: ["MYP5", "DP1", "DP2", "G10"],
     },
   },
 } as const
