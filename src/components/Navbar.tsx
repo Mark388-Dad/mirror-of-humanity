@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User } from 'lucide-react';
+import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Navbar = () => {
@@ -14,11 +14,14 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const isStaff = profile?.role && profile.role !== 'student';
+
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/submit', label: 'Submit Book', icon: PlusCircle },
     { path: '/progress', label: 'My Progress', icon: BarChart3 },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    ...(isStaff ? [{ path: '/admin', label: 'Admin', icon: Settings }] : []),
   ];
 
   if (!user) return null;

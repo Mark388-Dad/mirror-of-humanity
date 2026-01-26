@@ -5,9 +5,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Medal, Award, Crown, Target, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, Medal, Award, Crown, Target, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
 import { READING_CATEGORIES } from '@/lib/constants';
 import { format } from 'date-fns';
+import EditSubmissionDialog from '@/components/EditSubmissionDialog';
+import DeleteSubmissionDialog from '@/components/DeleteSubmissionDialog';
 
 interface BookSubmission {
   id: string;
@@ -26,23 +29,25 @@ const MyProgress = () => {
   const { user, profile } = useAuth();
   const [submissions, setSubmissions] = useState<BookSubmission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingSubmission, setEditingSubmission] = useState<BookSubmission | null>(null);
+  const [deletingSubmission, setDeletingSubmission] = useState<BookSubmission | null>(null);
+
+  const fetchSubmissions = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('book_submissions')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setSubmissions(data);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('book_submissions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        setSubmissions(data);
-      }
-      setLoading(false);
-    };
-
     fetchSubmissions();
   }, [user]);
 
@@ -231,11 +236,30 @@ const MyProgress = () => {
                           #{submission.category_number} - {submission.category_name}
                         </Badge>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-2">
                         <div className="text-lg font-display font-bold text-gold">+{submission.points_earned}</div>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(submission.date_finished), 'MMM d, yyyy')}
                         </p>
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setEditingSubmission(submission)}
+                          >
+                            <Pencil className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => setDeletingSubmission(submission)}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -245,6 +269,27 @@ const MyProgress = () => {
           </CardContent>
         </Card>
       </main>
+
+      {/* Edit Dialog */}
+      {editingSubmission && (
+        <EditSubmissionDialog
+          open={!!editingSubmission}
+          onOpenChange={(open) => !open && setEditingSubmission(null)}
+          submission={editingSubmission}
+          onSuccess={fetchSubmissions}
+        />
+      )}
+
+      {/* Delete Dialog */}
+      {deletingSubmission && (
+        <DeleteSubmissionDialog
+          open={!!deletingSubmission}
+          onOpenChange={(open) => !open && setDeletingSubmission(null)}
+          submissionId={deletingSubmission.id}
+          bookTitle={deletingSubmission.title}
+          onSuccess={fetchSubmissions}
+        />
+      )}
     </div>
   );
 };
