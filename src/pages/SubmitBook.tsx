@@ -60,7 +60,8 @@ const SubmitBook = () => {
 
       setLoading(true);
 
-      const { error } = await supabase.from('book_submissions').insert({
+      // Insert submission with pending status
+      const { data: submissionData, error } = await supabase.from('book_submissions').insert({
         user_id: user.id,
         category_number: validatedData.categoryNumber,
         category_name: currentCategory?.name || '',
@@ -70,17 +71,81 @@ const SubmitBook = () => {
         date_finished: validatedData.dateFinished,
         reflection: validatedData.reflection.trim(),
         points_earned: 3,
-      });
+        approval_status: 'pending',
+      }).select().single();
 
       if (error) throw error;
 
+      // Trigger AI review in background
+      supabase.functions.invoke('review-submission', {
+        body: {
+          submission_id: submissionData.id,
+          title: validatedData.title.trim(),
+          author: validatedData.author.trim(),
+          category_name: currentCategory?.name || '',
+          reflection: validatedData.reflection.trim(),
+        },
+      }).then(() => {
+        console.log('AI review completed');
+      }).catch((err) => {
+        console.error('AI review error:', err);
+      });
+
+      // Get user profile for email
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('email, full_name')
+        .eq('user_id', user.id)
+        .single();
+
+      // Send notification email
+      if (profileData?.email) {
+        supabase.functions.invoke('send-notification', {
+          body: {
+            user_id: user.id,
+            email: profileData.email,
+            type: 'submission',
+            title: 'Book Submitted Successfully!',
+            message: `Great job, ${profileData.full_name?.split(' ')[0]}! You've submitted "${validatedData.title}" by ${validatedData.author}. Your reflection is being reviewed.`,
+          },
+        }).catch((err) => console.error('Notification error:', err));
+
+        // Check for achievement milestones
+        const { data: progressData } = await supabase
+          .from('student_progress')
+          .select('books_read')
+          .eq('user_id', user.id)
+          .single();
+
+        const booksRead = (progressData?.books_read || 0) + 1;
+        let achievementLevel = null;
+        
+        if (booksRead === 15) achievementLevel = 'bronze';
+        else if (booksRead === 30) achievementLevel = 'silver';
+        else if (booksRead === 45) achievementLevel = 'gold';
+
+        if (achievementLevel) {
+          supabase.functions.invoke('send-notification', {
+            body: {
+              user_id: user.id,
+              email: profileData.email,
+              type: 'achievement',
+              title: `${achievementLevel.toUpperCase()} Level Achieved!`,
+              message: `Incredible! You've read ${booksRead} books and earned the ${achievementLevel} achievement!`,
+              achievement_level: achievementLevel,
+            },
+          }).catch((err) => console.error('Achievement notification error:', err));
+        }
+      }
+
       toast.success('Book submitted successfully! +3 points earned!');
       navigate('/progress');
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || 'Failed to submit book');
+        const message = error instanceof Error ? error.message : 'Failed to submit book';
+        toast.error(message);
       }
     } finally {
       setLoading(false);

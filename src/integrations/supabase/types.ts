@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       book_submissions: {
         Row: {
+          ai_feedback: string | null
+          approval_status: string | null
           author: string
           category_name: string
           category_number: number
@@ -25,11 +27,14 @@ export type Database = {
           id: string
           points_earned: number
           reflection: string
+          reviewed_at: string | null
           title: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          ai_feedback?: string | null
+          approval_status?: string | null
           author: string
           category_name: string
           category_number: number
@@ -39,11 +44,14 @@ export type Database = {
           id?: string
           points_earned?: number
           reflection: string
+          reviewed_at?: string | null
           title: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          ai_feedback?: string | null
+          approval_status?: string | null
           author?: string
           category_name?: string
           category_number?: number
@@ -53,8 +61,125 @@ export type Database = {
           id?: string
           points_earned?: number
           reflection?: string
+          reviewed_at?: string | null
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      challenge_participants: {
+        Row: {
+          books_completed: number | null
+          challenge_id: string
+          completed_at: string | null
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          books_completed?: number | null
+          challenge_id: string
+          completed_at?: string | null
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          books_completed?: number | null
+          challenge_id?: string
+          completed_at?: string | null
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          created_by: string
+          description: string
+          end_date: string
+          id: string
+          is_active: boolean | null
+          points_reward: number | null
+          start_date: string
+          target_books: number | null
+          target_categories: number[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type: string
+          created_at?: string
+          created_by: string
+          description: string
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number | null
+          start_date: string
+          target_books?: number | null
+          target_categories?: number[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number | null
+          start_date?: string
+          target_books?: number | null
+          target_categories?: number[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          email_sent: boolean | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent?: boolean | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []

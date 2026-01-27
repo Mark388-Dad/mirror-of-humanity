@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings } from 'lucide-react';
+import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Navbar = () => {
@@ -14,13 +14,22 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const isStudent = profile?.role === 'student';
+  const isLibrarian = profile?.role === 'librarian';
+  const isTutor = profile?.role === 'homeroom_tutor' || profile?.role === 'head_of_year';
+  const isHousePatron = profile?.role === 'house_patron';
   const isStaff = profile?.role && profile.role !== 'student';
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/submit', label: 'Submit Book', icon: PlusCircle },
-    { path: '/progress', label: 'My Progress', icon: BarChart3 },
+    ...(isStudent ? [{ path: '/submit', label: 'Submit Book', icon: PlusCircle }] : []),
+    ...(isStudent ? [{ path: '/progress', label: 'My Progress', icon: BarChart3 }] : []),
+    { path: '/gallery', label: 'Gallery', icon: Library },
+    { path: '/challenges', label: 'Challenges', icon: Zap },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    ...(isLibrarian ? [{ path: '/librarian', label: 'Librarian', icon: BookOpen }] : []),
+    ...(isTutor ? [{ path: '/tutor', label: 'My Class', icon: GraduationCap }] : []),
+    ...(isHousePatron ? [{ path: '/house', label: 'My House', icon: Users }] : []),
     ...(isStaff ? [{ path: '/admin', label: 'Admin', icon: Settings }] : []),
   ];
 

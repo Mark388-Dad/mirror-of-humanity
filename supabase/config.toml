@@ -1,1 +1,10 @@
 project_id = "tufkrzabktzduqjagfuc"
+
+[functions.review-submission]
+verify_jwt = false
+
+[functions.send-notification]
+verify_jwt = false
+
+[functions.generate-challenge]
+verify_jwt = false
