@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Trophy, Target, Star, Medal, Award, Crown } from 'lucide-react';
+import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -21,17 +21,33 @@ interface HouseLeaderboard {
   total_points: number;
 }
 
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  end_date: string;
+  points_reward: number;
+}
+
+interface SchoolStats {
+  total_students: number;
+  total_books: number;
+  total_points: number;
+}
+
 const Dashboard = () => {
   const { profile } = useAuth();
   const [progress, setProgress] = useState<StudentProgress | null>(null);
   const [leaderboard, setLeaderboard] = useState<HouseLeaderboard[]>([]);
+  const [activeChallenges, setActiveChallenges] = useState<Challenge[]>([]);
+  const [schoolStats, setSchoolStats] = useState<SchoolStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!profile) return;
 
-      // Fetch student progress
+      // Fetch student progress (for students)
       if (profile.role === 'student') {
         const { data: progressData } = await supabase
           .from('student_progress')
@@ -52,6 +68,26 @@ const Dashboard = () => {
       
       if (leaderboardData) {
         setLeaderboard(leaderboardData as unknown as HouseLeaderboard[]);
+        
+        // Calculate school stats
+        const stats = {
+          total_students: leaderboardData.reduce((sum, h: any) => sum + (h.total_readers || 0), 0),
+          total_books: leaderboardData.reduce((sum, h: any) => sum + (h.total_books || 0), 0),
+          total_points: leaderboardData.reduce((sum, h: any) => sum + (h.total_points || 0), 0),
+        };
+        setSchoolStats(stats);
+      }
+
+      // Fetch active challenges
+      const { data: challengeData } = await supabase
+        .from('challenges')
+        .select('id, title, description, end_date, points_reward')
+        .eq('is_active', true)
+        .order('end_date', { ascending: true })
+        .limit(3);
+
+      if (challengeData) {
+        setActiveChallenges(challengeData as Challenge[]);
       }
 
       setLoading(false);
@@ -83,6 +119,16 @@ const Dashboard = () => {
     Elgon: 'bg-purple-500',
   };
 
+  const getRoleWelcome = () => {
+    switch (profile?.role) {
+      case 'librarian': return 'Manage challenges and review submissions.';
+      case 'homeroom_tutor': return 'Track your class\'s reading progress.';
+      case 'head_of_year': return 'Monitor year group achievements.';
+      case 'house_patron': return 'Lead your house to reading glory!';
+      default: return 'Keep reading! You\'re doing great.';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -93,12 +139,35 @@ const Dashboard = () => {
           <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
             Welcome back, {profile?.full_name?.split(' ')[0]}! 👋
           </h1>
-          <p className="text-muted-foreground">
-            {profile?.role === 'student' 
-              ? `Keep reading! You're doing great.`
-              : `Track student progress and engagement.`}
-          </p>
+          <p className="text-muted-foreground">{getRoleWelcome()}</p>
         </div>
+
+        {/* School-Wide Stats */}
+        {schoolStats && (
+          <div className="grid grid-cols-3 gap-4 mb-8">
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                <div className="text-3xl font-display font-bold">{schoolStats.total_students}</div>
+                <div className="text-sm text-muted-foreground">Active Readers</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <BookOpen className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <div className="text-3xl font-display font-bold">{schoolStats.total_books}</div>
+                <div className="text-sm text-muted-foreground">Books Read</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <TrendingUp className="w-8 h-8 text-gold mx-auto mb-2" />
+                <div className="text-3xl font-display font-bold">{schoolStats.total_points}</div>
+                <div className="text-sm text-muted-foreground">Total Points</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Progress Card - Students Only */}
@@ -173,10 +242,15 @@ const Dashboard = () => {
           {/* House Leaderboard */}
           <Card className={profile?.role === 'student' ? '' : 'lg:col-span-2'}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-gold" />
-                House Leaderboard
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-gold" />
+                  House Leaderboard
+                </CardTitle>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/leaderboard">View All</Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -214,36 +288,73 @@ const Dashboard = () => {
             </CardContent>
           </Card>
 
+          {/* Active Challenges */}
+          <Card className={profile?.role !== 'student' ? 'lg:col-span-1' : ''}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  Active Challenges
+                </CardTitle>
+                <Button asChild variant="ghost" size="sm">
+                  <Link to="/challenges">View All</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activeChallenges.length === 0 ? (
+                <p className="text-center text-muted-foreground py-4">
+                  No active challenges right now.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {activeChallenges.map(challenge => (
+                    <div key={challenge.id} className="p-3 rounded-lg bg-secondary">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm">{challenge.title}</span>
+                        <span className="text-xs text-gold font-bold">+{challenge.points_reward} pts</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {challenge.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Quick Stats for Staff */}
           {profile?.role !== 'student' && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Star className="w-5 h-5 text-gold" />
-                  Quick Stats
+                  Quick Actions
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-secondary">
-                    <div className="text-3xl font-display font-bold text-foreground">
-                      {leaderboard.reduce((sum, h) => sum + h.total_readers, 0)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total Participants</div>
-                  </div>
-                  <div className="p-4 rounded-xl bg-secondary">
-                    <div className="text-3xl font-display font-bold text-foreground">
-                      {leaderboard.reduce((sum, h) => sum + h.total_books, 0)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Books Submitted</div>
-                  </div>
-                  <div className="p-4 rounded-xl bg-secondary">
-                    <div className="text-3xl font-display font-bold text-foreground">
-                      {leaderboard.reduce((sum, h) => sum + h.total_points, 0)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total Points</div>
-                  </div>
-                </div>
+              <CardContent className="space-y-3">
+                {profile?.role === 'librarian' && (
+                  <Button asChild className="w-full" variant="outline">
+                    <Link to="/librarian">Manage Challenges</Link>
+                  </Button>
+                )}
+                {(profile?.role === 'homeroom_tutor' || profile?.role === 'head_of_year') && (
+                  <Button asChild className="w-full" variant="outline">
+                    <Link to="/tutor">View Class Progress</Link>
+                  </Button>
+                )}
+                {profile?.role === 'house_patron' && (
+                  <Button asChild className="w-full" variant="outline">
+                    <Link to="/house">View House Progress</Link>
+                  </Button>
+                )}
+                <Button asChild className="w-full" variant="outline">
+                  <Link to="/admin">Admin Dashboard</Link>
+                </Button>
+                <Button asChild className="w-full" variant="outline">
+                  <Link to="/gallery">Browse Book Gallery</Link>
+                </Button>
               </CardContent>
             </Card>
           )}

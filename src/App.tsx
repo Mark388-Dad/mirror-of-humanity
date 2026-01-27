@@ -11,6 +11,11 @@ import SubmitBook from "./pages/SubmitBook";
 import MyProgress from "./pages/MyProgress";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import BookGallery from "./pages/BookGallery";
+import Challenges from "./pages/Challenges";
+import LibrarianDashboard from "./pages/LibrarianDashboard";
+import TutorDashboard from "./pages/TutorDashboard";
+import HousePatronDashboard from "./pages/HousePatronDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,6 +90,31 @@ const AppRoutes = () => {
       <Route path="/admin" element={
         <ProtectedRoute>
           <AdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/gallery" element={
+        <ProtectedRoute>
+          <BookGallery />
+        </ProtectedRoute>
+      } />
+      <Route path="/challenges" element={
+        <ProtectedRoute>
+          <Challenges />
+        </ProtectedRoute>
+      } />
+      <Route path="/librarian" element={
+        <ProtectedRoute>
+          <LibrarianDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/tutor" element={
+        <ProtectedRoute>
+          <TutorDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/house" element={
+        <ProtectedRoute>
+          <HousePatronDashboard />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />
