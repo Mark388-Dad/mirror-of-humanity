@@ -9,10 +9,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Loader2, Calendar, User, FileText } from 'lucide-react';
+import { BookOpen, Loader2, Calendar, User, FileText, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { READING_CATEGORIES } from '@/lib/constants';
 import { z } from 'zod';
+import BookSearch from '@/components/BookSearch';
+
 
 const submissionSchema = z.object({
   categoryNumber: z.number().min(1).max(30),
@@ -208,20 +210,36 @@ const SubmitBook = () => {
                 )}
               </div>
 
-              {/* Book Details */}
-              <div className="grid sm:grid-cols-2 gap-4">
+              {/* Book Details with Search */}
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title" className="flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     Book Title *
                   </Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter the book title"
+                  <BookSearch
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
+                    onChange={(title, author) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        title,
+                        author: author || prev.author,
+                      }));
+                    }}
+                    categoryName={currentCategory?.name}
+                    placeholder="Search for a book..."
                   />
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <ExternalLink className="w-3 h-3" />
+                    <a
+                      href="https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Browse school library catalog
+                    </a>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="author" className="flex items-center gap-2">

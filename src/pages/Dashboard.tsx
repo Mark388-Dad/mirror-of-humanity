@@ -7,6 +7,8 @@ import { Progress } from '@/components/ui/progress';
 import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import ReadingStreak from '@/components/ReadingStreak';
+import BookRecommendations from '@/components/BookRecommendations';
 
 interface StudentProgress {
   books_read: number;
@@ -239,6 +241,11 @@ const Dashboard = () => {
             </Card>
           )}
 
+          {/* Reading Streak - Students Only */}
+          {profile?.role === 'student' && (
+            <ReadingStreak />
+          )}
+
           {/* House Leaderboard */}
           <Card className={profile?.role === 'student' ? '' : 'lg:col-span-2'}>
             <CardHeader>
@@ -323,6 +330,11 @@ const Dashboard = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Book Recommendations - Students Only */}
+          {profile?.role === 'student' && (
+            <BookRecommendations />
+          )}
 
           {/* Quick Stats for Staff */}
           {profile?.role !== 'student' && (

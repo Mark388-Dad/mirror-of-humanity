@@ -8,3 +8,15 @@ verify_jwt = false
 
 [functions.generate-challenge]
 verify_jwt = false
+
+[functions.recommend-books]
+verify_jwt = false
+
+[functions.analyze-progress]
+verify_jwt = false
+
+[functions.extract-sheet-data]
+verify_jwt = false
+
+[functions.search-library]
+verify_jwt = false
