@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
@@ -69,7 +70,8 @@ const Navbar = () => {
           </div>
 
           {/* User Info */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="hidden sm:flex items-center gap-2 text-primary-foreground/80 text-sm">
               <User className="w-4 h-4" />
               <span className="font-medium">{profile?.full_name || 'User'}</span>
