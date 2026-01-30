@@ -90,7 +90,7 @@ const BookSearch = ({ value, onChange, categoryName, placeholder = "Search for a
 
   const openFollettLibrary = () => {
     window.open(
-      'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C',
+      'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793',
       '_blank'
     );
   };
