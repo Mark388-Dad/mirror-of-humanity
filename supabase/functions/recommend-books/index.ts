@@ -18,8 +18,12 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const completedList = completed_categories?.join(", ") || "none";
-    const interestsList = interests?.join(", ") || "various topics";
+    const completedList = Array.isArray(completed_categories) 
+      ? completed_categories.join(", ") 
+      : (completed_categories || "none");
+    const interestsList = Array.isArray(interests) 
+      ? interests.join(", ") 
+      : (interests || "various topics");
 
     const prompt = `You are a book recommendation expert for middle and high school students. Based on the student's reading history and interests, suggest 5 books they might enjoy.
 
