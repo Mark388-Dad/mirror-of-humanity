@@ -11,6 +11,7 @@ import { READING_CATEGORIES } from '@/lib/constants';
 import { format } from 'date-fns';
 import EditSubmissionDialog from '@/components/EditSubmissionDialog';
 import DeleteSubmissionDialog from '@/components/DeleteSubmissionDialog';
+import AchievementBadges from '@/components/AchievementBadges';
 
 interface BookSubmission {
   id: string;
@@ -169,6 +170,11 @@ const MyProgress = () => {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Achievement Badges */}
+        <div className="mt-6">
+          <AchievementBadges />
         </div>
 
         {/* Categories Checklist */}
