@@ -4,11 +4,19 @@ import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp, Flame, ExternalLink, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReadingStreak from '@/components/ReadingStreak';
 import BookRecommendations from '@/components/BookRecommendations';
+import NotificationBell from '@/components/NotificationBell';
+import XPProgressBar, { getXPLevel, getNextLevel } from '@/components/XPProgressBar';
+import VibrantDashboardCard, { FollettLibraryButton, QuickStats } from '@/components/VibrantDashboardCard';
+import confetti from 'canvas-confetti';
+
+const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793';
 
 interface StudentProgress {
   books_read: number;
@@ -37,6 +45,13 @@ interface SchoolStats {
   total_points: number;
 }
 
+const houseConfig: Record<string, { gradient: string; icon: string }> = {
+  Kenya: { gradient: 'from-red-500 to-orange-500', icon: '🦁' },
+  Longonot: { gradient: 'from-blue-500 to-cyan-500', icon: '🌋' },
+  Kilimanjaro: { gradient: 'from-green-500 to-emerald-500', icon: '🏔️' },
+  Elgon: { gradient: 'from-purple-500 to-violet-500', icon: '🐘' },
+};
+
 const Dashboard = () => {
   const { profile } = useAuth();
   const [progress, setProgress] = useState<StudentProgress | null>(null);
@@ -44,6 +59,7 @@ const Dashboard = () => {
   const [activeChallenges, setActiveChallenges] = useState<Challenge[]>([]);
   const [schoolStats, setSchoolStats] = useState<SchoolStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [studentRank, setStudentRank] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,14 +67,18 @@ const Dashboard = () => {
 
       // Fetch student progress (for students)
       if (profile.role === 'student') {
-        const { data: progressData } = await supabase
+        const { data: allStudents } = await supabase
           .from('student_progress')
           .select('*')
-          .eq('user_id', profile.user_id)
-          .maybeSingle();
+          .order('total_points', { ascending: false });
         
-        if (progressData) {
-          setProgress(progressData as unknown as StudentProgress);
+        if (allStudents) {
+          const myProgress = allStudents.find(s => s.user_id === profile.user_id);
+          if (myProgress) {
+            setProgress(myProgress as unknown as StudentProgress);
+            const rank = allStudents.findIndex(s => s.user_id === profile.user_id) + 1;
+            setStudentRank(rank);
+          }
         }
       }
 
@@ -102,23 +122,9 @@ const Dashboard = () => {
     switch (level) {
       case 'bronze': return <Medal className="w-8 h-8 text-amber-700" />;
       case 'silver': return <Award className="w-8 h-8 text-slate-400" />;
-      case 'gold': return <Crown className="w-8 h-8 text-gold" />;
+      case 'gold': return <Crown className="w-8 h-8 text-yellow-500" />;
       default: return <Target className="w-8 h-8 text-muted-foreground" />;
     }
-  };
-
-  const getNextLevel = (booksRead: number) => {
-    if (booksRead < 15) return { name: 'Bronze', target: 15, remaining: 15 - booksRead };
-    if (booksRead < 30) return { name: 'Silver', target: 30, remaining: 30 - booksRead };
-    if (booksRead < 45) return { name: 'Gold', target: 45, remaining: 45 - booksRead };
-    return null;
-  };
-
-  const houseColors: Record<string, string> = {
-    Kenya: 'bg-red-500',
-    Longonot: 'bg-blue-500',
-    Kilimanjaro: 'bg-green-500',
-    Elgon: 'bg-purple-500',
   };
 
   const getRoleWelcome = () => {
@@ -131,244 +137,345 @@ const Dashboard = () => {
     }
   };
 
+  const triggerCelebration = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
+  const xpLevel = progress ? getXPLevel(progress.total_points) : null;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Welcome back, {profile?.full_name?.split(' ')[0]}! 👋
-          </h1>
-          <p className="text-muted-foreground">{getRoleWelcome()}</p>
-        </div>
+        {/* Welcome Section with Notification Bell */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 flex items-start justify-between"
+        >
+          <div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
+              Welcome back, {profile?.full_name?.split(' ')[0]}! 
+              <motion.span
+                animate={{ rotate: [0, 20, 0] }}
+                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              >
+                👋
+              </motion.span>
+            </h1>
+            <p className="text-muted-foreground">{getRoleWelcome()}</p>
+          </div>
+          <NotificationBell />
+        </motion.div>
+
+        {/* Quick Library Access */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8"
+        >
+          <FollettLibraryButton className="w-full sm:w-auto" />
+        </motion.div>
 
         {/* School-Wide Stats */}
         {schoolStats && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-3xl font-display font-bold">{schoolStats.total_students}</div>
-                <div className="text-sm text-muted-foreground">Active Readers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <BookOpen className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <div className="text-3xl font-display font-bold">{schoolStats.total_books}</div>
-                <div className="text-sm text-muted-foreground">Books Read</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <TrendingUp className="w-8 h-8 text-gold mx-auto mb-2" />
-                <div className="text-3xl font-display font-bold">{schoolStats.total_points}</div>
-                <div className="text-sm text-muted-foreground">Total Points</div>
-              </CardContent>
-            </Card>
-          </div>
+          <QuickStats
+            stats={[
+              { label: 'Active Readers', value: schoolStats.total_students, icon: <Users className="w-8 h-8 text-blue-500" />, color: 'bg-blue-500/10' },
+              { label: 'Books Read', value: schoolStats.total_books, icon: <BookOpen className="w-8 h-8 text-green-500" />, color: 'bg-green-500/10' },
+              { label: 'Total XP', value: schoolStats.total_points, icon: <Sparkles className="w-8 h-8 text-yellow-500" />, color: 'bg-yellow-500/10' },
+              { label: 'Challenges Active', value: activeChallenges.length, icon: <Zap className="w-8 h-8 text-purple-500" />, color: 'bg-purple-500/10' },
+            ]}
+          />
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6 mt-8">
           {/* Progress Card - Students Only */}
-          {profile?.role === 'student' && (
-            <Card className="lg:col-span-2 card-elevated">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-gold" />
-                  Your Reading Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-6 mb-6">
-                  <div className="w-20 h-20 rounded-2xl bg-gold/10 flex items-center justify-center">
-                    {getAchievementIcon(progress?.achievement_level || 'none')}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-4xl font-display font-bold text-foreground">
-                        {progress?.books_read || 0}
-                      </span>
-                      <span className="text-muted-foreground">/ 45 books</span>
-                    </div>
-                    <Progress 
-                      value={((progress?.books_read || 0) / 45) * 100} 
-                      className="h-3"
-                    />
-                    {progress?.books_read !== undefined && getNextLevel(progress.books_read) && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        {getNextLevel(progress.books_read)?.remaining} more books to reach{' '}
-                        <span className="font-medium text-gold">
-                          {getNextLevel(progress.books_read)?.name}
-                        </span>
-                      </p>
+          {profile?.role === 'student' && progress && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="lg:col-span-2"
+            >
+              <Card className="relative overflow-hidden">
+                <div className={`absolute inset-0 bg-gradient-to-br ${xpLevel?.color || 'from-blue-500/10 to-purple-500/10'} opacity-10`} />
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-gold" />
+                    Your Reading Progress
+                    {studentRank && studentRank <= 10 && (
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
+                        #{studentRank} in School
+                      </Badge>
                     )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative">
+                  <div className="flex items-center gap-6 mb-6">
+                    <motion.div 
+                      className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/20 to-amber-500/20 flex items-center justify-center cursor-pointer"
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={triggerCelebration}
+                    >
+                      {getAchievementIcon(progress.achievement_level || 'none')}
+                    </motion.div>
+                    <div className="flex-1">
+                      <div className="flex items-baseline gap-2 mb-2">
+                        <span className="text-4xl font-display font-bold text-foreground">
+                          {progress.books_read || 0}
+                        </span>
+                        <span className="text-muted-foreground">/ 45 books</span>
+                      </div>
+                      <Progress 
+                        value={((progress.books_read || 0) / 45) * 100} 
+                        className="h-3"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 rounded-xl bg-secondary">
-                    <div className="text-2xl font-display font-bold text-foreground">
-                      {progress?.total_points || 0}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total Points</div>
-                  </div>
-                  <div className="text-center p-4 rounded-xl bg-secondary">
-                    <div className="text-2xl font-display font-bold text-foreground capitalize">
-                      {progress?.achievement_level || 'None'}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Current Level</div>
-                  </div>
-                  <div className="text-center p-4 rounded-xl bg-secondary">
-                    <div className="text-2xl font-display font-bold text-foreground">
-                      {profile?.house || '-'}
-                    </div>
-                    <div className="text-sm text-muted-foreground">House</div>
-                  </div>
-                </div>
+                  {/* XP Progress */}
+                  <XPProgressBar currentXP={progress.total_points || 0} />
 
-                <div className="mt-6 flex gap-4">
-                  <Button asChild className="bg-gold text-navy hover:bg-gold-light flex-1">
-                    <Link to="/submit">Submit a Book</Link>
-                  </Button>
-                  <Button asChild variant="outline" className="flex-1">
-                    <Link to="/progress">View Full Progress</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
+                    >
+                      <div className="text-2xl font-display font-bold text-foreground">
+                        {progress.total_points || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total XP</div>
+                    </motion.div>
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
+                    >
+                      <div className="text-2xl font-display font-bold text-foreground capitalize">
+                        {progress.achievement_level || 'None'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Level</div>
+                    </motion.div>
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
+                    >
+                      <div className="text-2xl font-display font-bold text-foreground">
+                        {profile?.house || '-'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">House</div>
+                    </motion.div>
+                  </div>
+
+                  <div className="mt-6 flex gap-4">
+                    <Button asChild className="bg-gradient-to-r from-gold to-amber-500 text-navy hover:from-gold-light hover:to-amber-400 flex-1 shadow-lg shadow-gold/25">
+                      <Link to="/submit">
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Submit a Book
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline" className="flex-1">
+                      <Link to="/progress">View Full Progress</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           )}
 
           {/* Reading Streak - Students Only */}
           {profile?.role === 'student' && (
-            <ReadingStreak />
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <ReadingStreak />
+            </motion.div>
           )}
 
           {/* House Leaderboard */}
-          <Card className={profile?.role === 'student' ? '' : 'lg:col-span-2'}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-gold" />
-                  House Leaderboard
-                </CardTitle>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/leaderboard">View All</Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {leaderboard.map((house, index) => (
-                  <div 
+          <VibrantDashboardCard
+            title="House Leaderboard"
+            icon={<Trophy className="w-5 h-5 text-gold" />}
+            gradient="from-gold/10 to-amber-500/10"
+            action={{ label: 'View All', href: '/leaderboard' }}
+            showFollettLink
+            delay={0.4}
+            className={profile?.role === 'student' ? '' : 'lg:col-span-2'}
+          >
+            <div className="space-y-4">
+              {leaderboard.map((house, index) => {
+                const config = houseConfig[house.house] || { gradient: 'from-slate-400 to-slate-500', icon: '🏠' };
+                const isMyHouse = profile?.house === house.house;
+                
+                return (
+                  <motion.div 
                     key={house.house}
-                    className={`flex items-center gap-4 p-4 rounded-xl ${
-                      profile?.house === house.house ? 'bg-gold/10 border border-gold/30' : 'bg-secondary'
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    className={`flex items-center gap-4 p-4 rounded-xl transition-all hover:scale-[1.02] ${
+                      isMyHouse ? 'bg-gold/10 border border-gold/30' : 'bg-secondary'
                     }`}
                   >
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background font-bold">
-                      {index + 1}
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 text-white' :
+                      index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-white' :
+                      index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white' :
+                      'bg-background'
+                    }`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
                     </div>
-                    <div className={`w-3 h-12 rounded-full ${houseColors[house.house] || 'bg-gray-400'}`} />
+                    <span className="text-2xl">{config.icon}</span>
                     <div className="flex-1">
-                      <div className="font-semibold text-foreground">{house.house}</div>
+                      <div className="font-semibold text-foreground flex items-center gap-2">
+                        {house.house}
+                        {isMyHouse && <Badge variant="outline" className="text-xs">You</Badge>}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {house.total_readers} readers • {house.total_books} books
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-display font-bold text-gold">
+                      <div className={`text-2xl font-display font-bold bg-gradient-to-r ${config.gradient} bg-clip-text text-transparent`}>
                         {house.total_points}
                       </div>
-                      <div className="text-xs text-muted-foreground">points</div>
+                      <div className="text-xs text-muted-foreground">XP</div>
                     </div>
-                  </div>
-                ))}
-                {leaderboard.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">
-                    No data yet. Be the first to submit a book!
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  </motion.div>
+                );
+              })}
+              {leaderboard.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No data yet. Be the first to submit a book!
+                </p>
+              )}
+            </div>
+          </VibrantDashboardCard>
 
           {/* Active Challenges */}
-          <Card className={profile?.role !== 'student' ? 'lg:col-span-1' : ''}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  Active Challenges
-                </CardTitle>
-                <Button asChild variant="ghost" size="sm">
-                  <Link to="/challenges">View All</Link>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {activeChallenges.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
-                  No active challenges right now.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {activeChallenges.map(challenge => (
-                    <div key={challenge.id} className="p-3 rounded-lg bg-secondary">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-sm">{challenge.title}</span>
-                        <span className="text-xs text-gold font-bold">+{challenge.points_reward} pts</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {challenge.description}
-                      </p>
+          <VibrantDashboardCard
+            title="Active Challenges"
+            icon={<Zap className="w-5 h-5 text-yellow-500" />}
+            gradient="from-yellow-500/10 to-orange-500/10"
+            action={{ label: 'View All', href: '/challenges' }}
+            delay={0.5}
+            className={profile?.role !== 'student' ? '' : ''}
+          >
+            {activeChallenges.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">
+                No active challenges right now.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {activeChallenges.map((challenge, index) => (
+                  <motion.div 
+                    key={challenge.id} 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 * index }}
+                    className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-sm">{challenge.title}</span>
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                        +{challenge.points_reward} XP
+                      </Badge>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {challenge.description}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </VibrantDashboardCard>
 
           {/* Book Recommendations - Students Only */}
           {profile?.role === 'student' && (
-            <BookRecommendations />
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
+              <BookRecommendations />
+            </motion.div>
           )}
 
-          {/* Quick Stats for Staff */}
+          {/* Quick Actions for Staff */}
           {profile?.role !== 'student' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-gold" />
-                  Quick Actions
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <VibrantDashboardCard
+              title="Quick Actions"
+              icon={<Star className="w-5 h-5 text-gold" />}
+              gradient="from-purple-500/10 to-pink-500/10"
+              delay={0.6}
+            >
+              <div className="space-y-3">
                 {profile?.role === 'librarian' && (
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to="/librarian">Manage Challenges</Link>
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/librarian">
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Manage Challenges
+                    </Link>
                   </Button>
                 )}
                 {(profile?.role === 'homeroom_tutor' || profile?.role === 'head_of_year') && (
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to="/tutor">View Class Progress</Link>
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/tutor">
+                      <Users className="w-4 h-4 mr-2" />
+                      View Class Progress
+                    </Link>
                   </Button>
                 )}
                 {profile?.role === 'house_patron' && (
-                  <Button asChild className="w-full" variant="outline">
-                    <Link to="/house">View House Progress</Link>
+                  <Button asChild className="w-full justify-start" variant="outline">
+                    <Link to="/house">
+                      <Trophy className="w-4 h-4 mr-2" />
+                      View House Progress
+                    </Link>
                   </Button>
                 )}
-                <Button asChild className="w-full" variant="outline">
-                  <Link to="/admin">Admin Dashboard</Link>
+                <Button asChild className="w-full justify-start" variant="outline">
+                  <Link to="/admin">
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Admin Dashboard
+                  </Link>
                 </Button>
-                <Button asChild className="w-full" variant="outline">
-                  <Link to="/gallery">Browse Book Gallery</Link>
+                <Button asChild className="w-full justify-start" variant="outline">
+                  <Link to="/gallery">
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    Browse Book Gallery
+                  </Link>
                 </Button>
-              </CardContent>
-            </Card>
+                <Button asChild className="w-full justify-start bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600">
+                  <a href={FOLLETT_LIBRARY_URL} target="_blank" rel="noopener noreferrer">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Open Library Catalog
+                    <ExternalLink className="w-4 h-4 ml-2" />
+                  </a>
+                </Button>
+              </div>
+            </VibrantDashboardCard>
           )}
         </div>
       </main>
