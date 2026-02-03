@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { z } from 'zod';
 import {
   Button,
   Input,
@@ -18,16 +20,11 @@ import {
   Tabs,
   TabsList,
   TabsTrigger,
-  TabsContent
+  TabsContent,
 } from '@/components/ui';
 import { BookOpen, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 import { HOUSES, YEAR_GROUPS, CLASSES, USER_ROLES } from '@/lib/constants';
-import { z } from 'zod';
 
-// -------------------
-// Validation Schemas
-// -------------------
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -36,6 +33,7 @@ const signUpSchema = z.object({
   yearGroup: z.enum(['MYP5', 'DP1', 'DP2', 'G10']).optional(),
   className: z.string().optional(),
   house: z.enum(['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon']).optional(),
+  accessCode: z.string().optional(), // New: for student/librarian code
 });
 
 const signInSchema = z.object({
@@ -43,9 +41,6 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-// -------------------
-// Component
-// -------------------
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -57,59 +52,60 @@ const Auth = () => {
     yearGroup: '' as 'MYP5' | 'DP1' | 'DP2' | 'G10' | '',
     className: '',
     house: '' as 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | '',
-    accessCode: '', // new field for role access code
+    accessCode: '',
   });
 
-  const getClassOptions = () => CLASSES;
-
-  // -------------------
-  // Sign Up Handler
-  // -------------------
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-
     try {
-      // Validate form data
       const validatedData = signUpSchema.parse({
         ...formData,
         yearGroup: formData.yearGroup || undefined,
         className: formData.className || undefined,
         house: formData.house || undefined,
+        accessCode: formData.accessCode || undefined,
       });
 
-      // Validate role-specific fields
+      // Validate student/librarian access code
+      if (['student', 'librarian'].includes(formData.role)) {
+        if (!formData.accessCode) {
+          toast.error('Access code is required for this role');
+          return;
+        }
+
+        const { data: codeData } = await supabase
+          .from('access_codes')
+          .select('*')
+          .eq('code', formData.accessCode)
+          .eq('code_type', formData.role)
+          .eq('is_active', true)
+          .single();
+
+        if (!codeData) {
+          toast.error('Invalid or inactive access code');
+          return;
+        }
+      }
+
+      // Student-specific fields
       if (formData.role === 'student') {
         if (!formData.yearGroup || !formData.className || !formData.house) {
           toast.error('Students must select year group, class, and house');
           return;
         }
-        // TODO: Validate student access code from database
-        if (!formData.accessCode) {
-          toast.error('Student access code is required');
-          return;
-        }
-      }
-
-      if (formData.role === 'librarian' && !formData.accessCode) {
-        // TODO: Validate librarian access code from database
-        toast.error('Librarian access code is required');
-        return;
       }
 
       setLoading(true);
-
-      // Supabase signup
       const redirectUrl = `${window.location.origin}/`;
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
         options: { emailRedirectTo: redirectUrl },
       });
-
       if (authError) throw authError;
 
       if (authData.user) {
-        // Save user profile
         const { error: profileError } = await supabase.from('profiles').insert([{
           user_id: authData.user.id,
           full_name: validatedData.fullName,
@@ -121,21 +117,45 @@ const Auth = () => {
         }]);
         if (profileError) throw profileError;
 
-        toast.success('Account created successfully!');
+        // Handle pending submissions
+        const { data: pendingData } = await supabase
+          .from('pending_submissions')
+          .select('*')
+          .eq('email', validatedData.email);
+
+        if (pendingData?.length) {
+          const submissions = pendingData.map(p => ({
+            user_id: authData.user!.id,
+            category_number: p.category_number,
+            category_name: p.category_name,
+            title: p.title,
+            author: p.author,
+            date_started: p.date_started,
+            date_finished: p.date_finished,
+            reflection: p.reflection,
+            points_earned: 3,
+          }));
+          await supabase.from('book_submissions').insert(submissions);
+          await supabase.from('pending_submissions')
+            .update({ imported_at: new Date().toISOString(), imported_to_user_id: authData.user!.id })
+            .eq('email', validatedData.email);
+
+          toast.success(`Account created! ${pendingData.length} previous submissions imported.`);
+        } else {
+          toast.success('Account created successfully!');
+        }
+
         navigate('/dashboard');
       }
-
     } catch (error: any) {
       if (error instanceof z.ZodError) toast.error(error.errors[0].message);
+      else if (error.message?.includes('already registered')) toast.error('This email is already registered. Please sign in.');
       else toast.error(error.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
-  // -------------------
-  // Sign In Handler
-  // -------------------
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -146,8 +166,8 @@ const Auth = () => {
         email: formData.email,
         password: formData.password,
       });
-
       if (error) throw error;
+
       toast.success('Signed in successfully!');
       navigate('/dashboard');
     } catch (error: any) {
@@ -159,7 +179,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-hero-gradient">
+    <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-6">
       <Card className="w-full max-w-lg bg-card/95 backdrop-blur">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -167,10 +187,9 @@ const Auth = () => {
               <BookOpen className="w-6 h-6 text-gold" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-display">45-Book Reading Challenge</CardTitle>
+          <CardTitle className="font-display text-2xl">45-Book Reading Challenge</CardTitle>
           <CardDescription>2025/2026 • Fiction as a Mirror of Humanity</CardDescription>
         </CardHeader>
-
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -178,46 +197,52 @@ const Auth = () => {
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
-            {/* ---------------- Sign In ---------------- */}
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <InputField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} type="email" placeholder="your.email@mpesafoundationacademy.ac.ke" />
-                <InputField label="Password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} type="password" />
-                <Button fullWidth loading={loading}>Sign In</Button>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <Input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
+                </div>
+                <Button type="submit" className="w-full bg-gold text-navy hover:bg-gold-light" disabled={loading}>
+                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Sign In
+                </Button>
               </form>
             </TabsContent>
 
-            {/* ---------------- Sign Up ---------------- */}
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <InputField label="Full Name" value={formData.fullName} onChange={(v) => setFormData({ ...formData, fullName: v })} />
-                <InputField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} type="email" />
-                <InputField label="Password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} type="password" />
-
-                {/* Role */}
+                <InputField label="Full Name" value={formData.fullName} onChange={v => setFormData({ ...formData, fullName: v })} />
+                <InputField label="Email" type="email" value={formData.email} onChange={v => setFormData({ ...formData, email: v })} />
+                <InputField label="Password" type="password" value={formData.password} onChange={v => setFormData({ ...formData, password: v })} />
+                
                 <Label>Role</Label>
-                <Select value={formData.role} onValueChange={(v: any) => setFormData({ ...formData, role: v })}>
-                  <SelectTrigger><SelectValue placeholder="Select your role" /></SelectTrigger>
+                <Select value={formData.role} onValueChange={v => setFormData({ ...formData, role: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                   <SelectContent>
-                    {USER_ROLES.map(role => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}
+                    {USER_ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
 
-                {/* Student-specific Fields */}
-                {(formData.role === 'student' || formData.role === 'librarian') && (
+                {['student', 'librarian'].includes(formData.role) && (
+                  <InputField label="Access Code" value={formData.accessCode} onChange={v => setFormData({ ...formData, accessCode: v })} />
+                )}
+
+                {formData.role === 'student' && (
                   <>
-                    {formData.role === 'student' && (
-                      <>
-                        <SelectField label="Year Group" value={formData.yearGroup} options={YEAR_GROUPS} onChange={(v) => setFormData({ ...formData, yearGroup: v, className: '' })} />
-                        <SelectField label="Class" value={formData.className} options={getClassOptions()} onChange={(v) => setFormData({ ...formData, className: v })} />
-                        <SelectField label="House" value={formData.house} options={HOUSES} onChange={(v) => setFormData({ ...formData, house: v })} />
-                      </>
-                    )}
-                    <InputField label={`${formData.role === 'student' ? 'Student' : 'Librarian'} Access Code`} value={formData.accessCode} onChange={(v) => setFormData({ ...formData, accessCode: v })} />
+                    <SelectField label="Year Group" value={formData.yearGroup} options={YEAR_GROUPS} onChange={v => setFormData({ ...formData, yearGroup: v, className: '' })} />
+                    <SelectField label="Class" value={formData.className} options={CLASSES} onChange={v => setFormData({ ...formData, className: v })} />
+                    <SelectField label="House" value={formData.house} options={HOUSES} onChange={v => setFormData({ ...formData, house: v })} />
                   </>
                 )}
 
-                <Button fullWidth loading={loading}>Create Account</Button>
+                <Button type="submit" className="w-full bg-gold text-navy hover:bg-gold-light" disabled={loading}>
+                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin />} Create Account
+                </Button>
               </form>
             </TabsContent>
           </Tabs>
@@ -227,40 +252,22 @@ const Auth = () => {
   );
 };
 
-export default Auth;
-
-// -------------------
-// Helper Components
-// -------------------
-interface InputProps { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; }
-const InputField = ({ label, value, onChange, type = 'text', placeholder = '' }: InputProps) => (
+// Helper components
+const InputField = ({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) => (
   <div className="space-y-2">
     <Label>{label}</Label>
-    <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} required />
+    <Input type={type} value={value} onChange={e => onChange(e.target.value)} required />
   </div>
 );
 
-interface SelectFieldProps { label: string; value: string; options: string[]; onChange: (v: string) => void; }
-const SelectField = ({ label, value, options, onChange }: SelectFieldProps) => (
+const SelectField = ({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) => (
   <div className="space-y-2">
     <Label>{label}</Label>
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
-      <SelectContent>
-        {options.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
-      </SelectContent>
+      <SelectTrigger><SelectValue placeholder={`Select ${label.toLowerCase()}`} /></SelectTrigger>
+      <SelectContent>{options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}</SelectContent>
     </Select>
   </div>
 );
 
-interface ButtonProps { children: React.ReactNode; fullWidth?: boolean; loading?: boolean; type?: 'button' | 'submit'; }
-const Button = ({ children, fullWidth, loading, type = 'button' }: ButtonProps) => (
-  <button
-    type={type}
-    className={`p-2 rounded bg-gold text-navy hover:bg-gold-light ${fullWidth ? 'w-full' : ''}`}
-    disabled={loading}
-  >
-    {loading && <Loader2 className="inline w-4 h-4 mr-2 animate-spin" />}
-    {children}
-  </button>
-);
+export default Auth;
