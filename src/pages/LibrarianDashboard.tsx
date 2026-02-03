@@ -4,16 +4,18 @@ import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Plus, Loader2, Sparkles, Trophy, Calendar, Eye, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+import HomepageEditor from '@/components/HomepageEditor';
+import AccessCodeManager from '@/components/AccessCodeManager';
+import FileUploadManager from '@/components/FileUploadManager';
+import GoogleSheetSync from '@/components/GoogleSheetSync';
+import EnhancedChallengeCreator from '@/components/EnhancedChallengeCreator';
+import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 
 interface Challenge {
   id: string;
@@ -22,9 +24,9 @@ interface Challenge {
   challenge_type: string;
   start_date: string;
   end_date: string;
-  target_books: number;
-  points_reward: number;
-  is_active: boolean;
+  target_books: number | null;
+  points_reward: number | null;
+  is_active: boolean | null;
   created_at: string;
 }
 
@@ -33,7 +35,7 @@ interface FlaggedSubmission {
   title: string;
   author: string;
   reflection: string;
-  approval_status: string;
+  approval_status: string | null;
   ai_feedback: string | null;
   created_at: string;
   profiles: {
@@ -43,24 +45,19 @@ interface FlaggedSubmission {
   } | null;
 }
 
+interface Stats {
+  totalStudents: number;
+  totalSubmissions: number;
+  activeChallenges: number;
+  pendingReviews: number;
+}
+
 const LibrarianDashboard = () => {
   const { profile } = useAuth();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [flaggedSubmissions, setFlaggedSubmissions] = useState<FlaggedSubmission[]>([]);
+  const [stats, setStats] = useState<Stats>({ totalStudents: 0, totalSubmissions: 0, activeChallenges: 0, pendingReviews: 0 });
   const [loading, setLoading] = useState(true);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const [newChallenge, setNewChallenge] = useState({
-    title: '',
-    description: '',
-    challenge_type: 'timed_sprint',
-    start_date: '',
-    end_date: '',
-    target_books: 3,
-    points_reward: 10,
-  });
 
   useEffect(() => {
     fetchData();
@@ -86,81 +83,30 @@ const LibrarianDashboard = () => {
       .order('created_at', { ascending: false });
 
     setFlaggedSubmissions((flaggedData as unknown as FlaggedSubmission[]) || []);
+
+    // Fetch stats
+    const { count: studentCount } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'student');
+
+    const { count: submissionCount } = await supabase
+      .from('book_submissions')
+      .select('*', { count: 'exact', head: true });
+
+    const { count: pendingCount } = await supabase
+      .from('pending_submissions')
+      .select('*', { count: 'exact', head: true })
+      .is('imported_to_user_id', null);
+
+    setStats({
+      totalStudents: studentCount || 0,
+      totalSubmissions: submissionCount || 0,
+      activeChallenges: challengeData?.filter(c => c.is_active).length || 0,
+      pendingReviews: (flaggedData?.length || 0) + (pendingCount || 0),
+    });
+
     setLoading(false);
-  };
-
-  const generateChallenge = async () => {
-    setGenerating(true);
-    try {
-      const response = await supabase.functions.invoke('generate-challenge', {
-        body: {
-          challenge_type: newChallenge.challenge_type,
-          description: newChallenge.description || undefined,
-        },
-      });
-
-      if (response.error) throw response.error;
-
-      const { challenge } = response.data;
-      
-      // Calculate dates
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setDate(endDate.getDate() + (challenge.suggested_duration_days || 14));
-
-      setNewChallenge({
-        ...newChallenge,
-        title: challenge.title,
-        description: challenge.description,
-        target_books: challenge.target_books,
-        points_reward: challenge.points_reward,
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-      });
-
-      toast.success('Challenge generated! Review and save.');
-    } catch (error: any) {
-      console.error('Error generating challenge:', error);
-      toast.error(error.message || 'Failed to generate challenge');
-    }
-    setGenerating(false);
-  };
-
-  const saveChallenge = async () => {
-    if (!profile?.user_id) return;
-
-    if (!newChallenge.title || !newChallenge.start_date || !newChallenge.end_date) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const { error } = await supabase.from('challenges').insert({
-        ...newChallenge,
-        created_by: profile.user_id,
-        is_active: true,
-      });
-
-      if (error) throw error;
-
-      toast.success('Challenge created successfully!');
-      setCreateDialogOpen(false);
-      setNewChallenge({
-        title: '',
-        description: '',
-        challenge_type: 'timed_sprint',
-        start_date: '',
-        end_date: '',
-        target_books: 3,
-        points_reward: 10,
-      });
-      fetchData();
-    } catch (error: any) {
-      console.error('Error saving challenge:', error);
-      toast.error('Failed to create challenge');
-    }
-    setSaving(false);
   };
 
   const handleSubmissionAction = async (submissionId: string, action: 'approved' | 'rejected') => {
@@ -180,7 +126,7 @@ const LibrarianDashboard = () => {
     }
   };
 
-  const toggleChallengeStatus = async (challengeId: string, isActive: boolean) => {
+  const toggleChallengeStatus = async (challengeId: string, isActive: boolean | null) => {
     const { error } = await supabase
       .from('challenges')
       .update({ is_active: !isActive })
@@ -211,149 +157,91 @@ const LibrarianDashboard = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Librarian Dashboard 📚
-            </h1>
-            <p className="text-muted-foreground">
-              Create challenges, review flagged submissions, and manage the reading program.
-            </p>
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+                Librarian Command Center 📚
+              </h1>
+              <p className="text-muted-foreground">
+                Full control over challenges, content, and the reading program
+              </p>
+            </div>
+            <FollettLibraryButton />
           </div>
-          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gold text-navy hover:bg-gold-light">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Challenge
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Create New Challenge</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Challenge Type</Label>
-                  <Select 
-                    value={newChallenge.challenge_type} 
-                    onValueChange={(v) => setNewChallenge({ ...newChallenge, challenge_type: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="timed_sprint">Reading Sprint</SelectItem>
-                      <SelectItem value="category">Category Challenge</SelectItem>
-                      <SelectItem value="house_competition">House Competition</SelectItem>
-                      <SelectItem value="custom">Custom Challenge</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        </motion.div>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={generateChallenge}
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-4 h-4 mr-2" />
-                  )}
-                  Generate with AI
-                </Button>
-
-                <div className="space-y-2">
-                  <Label>Title *</Label>
-                  <Input
-                    value={newChallenge.title}
-                    onChange={(e) => setNewChallenge({ ...newChallenge, title: e.target.value })}
-                    placeholder="Challenge title"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea
-                    value={newChallenge.description}
-                    onChange={(e) => setNewChallenge({ ...newChallenge, description: e.target.value })}
-                    placeholder="Describe the challenge..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Start Date *</Label>
-                    <Input
-                      type="date"
-                      value={newChallenge.start_date}
-                      onChange={(e) => setNewChallenge({ ...newChallenge, start_date: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>End Date *</Label>
-                    <Input
-                      type="date"
-                      value={newChallenge.end_date}
-                      onChange={(e) => setNewChallenge({ ...newChallenge, end_date: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Target Books</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={20}
-                      value={newChallenge.target_books}
-                      onChange={(e) => setNewChallenge({ ...newChallenge, target_books: parseInt(e.target.value) || 1 })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Points Reward</Label>
-                    <Input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={newChallenge.points_reward}
-                      onChange={(e) => setNewChallenge({ ...newChallenge, points_reward: parseInt(e.target.value) || 5 })}
-                    />
-                  </div>
-                </div>
-
-                <Button 
-                  className="w-full bg-gold text-navy hover:bg-gold-light"
-                  onClick={saveChallenge}
-                  disabled={saving}
-                >
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Save Challenge
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <VibrantDashboardCard
+            title="Total Students"
+            value={stats.totalStudents}
+            icon={<BookOpen className="h-5 w-5" />}
+            color="blue"
+          />
+          <VibrantDashboardCard
+            title="Book Submissions"
+            value={stats.totalSubmissions}
+            icon={<Trophy className="h-5 w-5" />}
+            color="green"
+          />
+          <VibrantDashboardCard
+            title="Active Challenges"
+            value={stats.activeChallenges}
+            icon={<Sparkles className="h-5 w-5" />}
+            color="purple"
+          />
+          <VibrantDashboardCard
+            title="Pending Reviews"
+            value={stats.pendingReviews}
+            icon={<AlertCircle className="h-5 w-5" />}
+            color="orange"
+          />
         </div>
 
+        {/* Main Tabs */}
         <Tabs defaultValue="challenges" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="challenges">
-              <Trophy className="w-4 h-4 mr-2" />
-              Challenges ({challenges.length})
+          <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
+            <TabsTrigger value="challenges" className="flex items-center gap-2">
+              <Trophy className="w-4 h-4" />
+              Challenges
             </TabsTrigger>
-            <TabsTrigger value="flagged">
-              <AlertCircle className="w-4 h-4 mr-2" />
+            <TabsTrigger value="create" className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              Create New
+            </TabsTrigger>
+            <TabsTrigger value="homepage" className="flex items-center gap-2">
+              <Home className="w-4 h-4" />
+              Homepage
+            </TabsTrigger>
+            <TabsTrigger value="sync" className="flex items-center gap-2">
+              <Cloud className="w-4 h-4" />
+              Google Sync
+            </TabsTrigger>
+            <TabsTrigger value="codes" className="flex items-center gap-2">
+              <Key className="w-4 h-4" />
+              Access Codes
+            </TabsTrigger>
+            <TabsTrigger value="files" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              Files
+            </TabsTrigger>
+            <TabsTrigger value="flagged" className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
               Flagged ({flaggedSubmissions.length})
             </TabsTrigger>
           </TabsList>
 
+          {/* Challenges Tab */}
           <TabsContent value="challenges">
             {loading ? (
               <div className="text-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto text-gold" />
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
               </div>
             ) : challenges.length === 0 ? (
               <Card className="py-12 text-center">
@@ -364,40 +252,73 @@ const LibrarianDashboard = () => {
               </Card>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {challenges.map(challenge => (
-                  <Card key={challenge.id}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                        <Badge variant={challenge.is_active ? 'default' : 'secondary'}>
-                          {challenge.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      <CardDescription>{challenge.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="w-4 h-4" />
-                        {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d')}
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span>{challenge.target_books} books • +{challenge.points_reward} pts</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}
-                      >
-                        {challenge.is_active ? 'Deactivate' : 'Activate'}
-                      </Button>
-                    </CardContent>
-                  </Card>
+                {challenges.map((challenge, index) => (
+                  <motion.div
+                    key={challenge.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="h-full">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg">{challenge.title}</CardTitle>
+                          <Badge variant={challenge.is_active ? 'default' : 'secondary'}>
+                            {challenge.is_active ? '✅ Active' : '⏸️ Inactive'}
+                          </Badge>
+                        </div>
+                        <CardDescription className="line-clamp-2">{challenge.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4" />
+                          {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d')}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span>{challenge.target_books || 1} books • +{challenge.points_reward || 5} pts</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}
+                        >
+                          {challenge.is_active ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}
           </TabsContent>
 
+          {/* Create Challenge Tab */}
+          <TabsContent value="create">
+            <EnhancedChallengeCreator />
+          </TabsContent>
+
+          {/* Homepage Editor Tab */}
+          <TabsContent value="homepage">
+            <HomepageEditor />
+          </TabsContent>
+
+          {/* Google Sync Tab */}
+          <TabsContent value="sync">
+            <GoogleSheetSync />
+          </TabsContent>
+
+          {/* Access Codes Tab */}
+          <TabsContent value="codes">
+            <AccessCodeManager />
+          </TabsContent>
+
+          {/* Files Tab */}
+          <TabsContent value="files">
+            <FileUploadManager />
+          </TabsContent>
+
+          {/* Flagged Submissions Tab */}
           <TabsContent value="flagged">
             {flaggedSubmissions.length === 0 ? (
               <Card className="py-12 text-center">
@@ -408,49 +329,58 @@ const LibrarianDashboard = () => {
               </Card>
             ) : (
               <div className="space-y-4">
-                {flaggedSubmissions.map(submission => (
-                  <Card key={submission.id} className="border-orange-200 bg-orange-50/30">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{submission.title}</h3>
-                            <span className="text-muted-foreground">by {submission.author}</span>
+                {flaggedSubmissions.map((submission, index) => (
+                  <motion.div
+                    key={submission.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <Card className="border-orange-200 bg-orange-50/30 dark:bg-orange-950/10">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold">{submission.title}</h3>
+                              <span className="text-muted-foreground">by {submission.author}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Submitted by: {submission.profiles?.full_name} ({submission.profiles?.year_group})
+                            </p>
+                            {submission.ai_feedback && (
+                              <div className="bg-background p-3 rounded-lg border">
+                                <p className="text-sm font-medium text-orange-700 dark:text-orange-400 mb-2">AI Feedback:</p>
+                                <p className="text-sm text-muted-foreground">{submission.ai_feedback}</p>
+                              </div>
+                            )}
+                            <div className="bg-secondary p-3 rounded-lg">
+                              <p className="text-sm font-medium mb-1">Reflection:</p>
+                              <p className="text-sm text-muted-foreground">{submission.reflection}</p>
+                            </div>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            Submitted by: {submission.profiles?.full_name} ({submission.profiles?.year_group})
-                          </p>
-                          <div className="bg-white p-3 rounded-lg border">
-                            <p className="text-sm font-medium text-orange-700 mb-2">AI Feedback:</p>
-                            <p className="text-sm text-muted-foreground">{submission.ai_feedback}</p>
-                          </div>
-                          <div className="bg-secondary p-3 rounded-lg">
-                            <p className="text-sm font-medium mb-1">Reflection:</p>
-                            <p className="text-sm text-muted-foreground">{submission.reflection}</p>
+                          <div className="flex flex-col gap-2">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleSubmissionAction(submission.id, 'approved')}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleSubmissionAction(submission.id, 'rejected')}
+                            >
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Reject
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => handleSubmissionAction(submission.id, 'approved')}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleSubmissionAction(submission.id, 'rejected')}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             )}

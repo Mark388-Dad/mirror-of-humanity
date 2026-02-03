@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          class_name: string | null
+          code: string
+          code_type: string
+          created_at: string
+          created_by: string | null
+          current_uses: number | null
+          expires_at: string | null
+          house: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          school_name: string | null
+          year_group: string | null
+        }
+        Insert: {
+          class_name?: string | null
+          code: string
+          code_type: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          house?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          school_name?: string | null
+          year_group?: string | null
+        }
+        Update: {
+          class_name?: string | null
+          code?: string
+          code_type?: string
+          created_at?: string
+          created_by?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          house?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          school_name?: string | null
+          year_group?: string | null
+        }
+        Relationships: []
+      }
       book_submissions: {
         Row: {
           ai_feedback: string | null
@@ -105,14 +153,26 @@ export type Database = {
       }
       challenges: {
         Row: {
+          allowed_classes: string[] | null
+          allowed_houses: string[] | null
+          allowed_year_groups: string[] | null
+          badge_icon: string | null
+          badge_name: string | null
+          category: string | null
           challenge_type: string
           created_at: string
           created_by: string
           description: string
+          difficulty_level: string | null
           end_date: string
+          evidence_type: string | null
           id: string
           is_active: boolean | null
+          is_featured: boolean | null
+          leaderboard_type: string | null
+          participation_type: string | null
           points_reward: number | null
+          requires_submission: boolean | null
           start_date: string
           target_books: number | null
           target_categories: number[] | null
@@ -120,14 +180,26 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_classes?: string[] | null
+          allowed_houses?: string[] | null
+          allowed_year_groups?: string[] | null
+          badge_icon?: string | null
+          badge_name?: string | null
+          category?: string | null
           challenge_type: string
           created_at?: string
           created_by: string
           description: string
+          difficulty_level?: string | null
           end_date: string
+          evidence_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
+          leaderboard_type?: string | null
+          participation_type?: string | null
           points_reward?: number | null
+          requires_submission?: boolean | null
           start_date: string
           target_books?: number | null
           target_categories?: number[] | null
@@ -135,19 +207,112 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_classes?: string[] | null
+          allowed_houses?: string[] | null
+          allowed_year_groups?: string[] | null
+          badge_icon?: string | null
+          badge_name?: string | null
+          category?: string | null
           challenge_type?: string
           created_at?: string
           created_by?: string
           description?: string
+          difficulty_level?: string | null
           end_date?: string
+          evidence_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
+          leaderboard_type?: string | null
+          participation_type?: string | null
           points_reward?: number | null
+          requires_submission?: boolean | null
           start_date?: string
           target_books?: number | null
           target_categories?: number[] | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      homepage_content: {
+        Row: {
+          content: string | null
+          created_at: string
+          display_order: number | null
+          id: string
+          image_url: string | null
+          is_visible: boolean | null
+          section_key: string
+          title: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          section_key: string
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          image_url?: string | null
+          is_visible?: boolean | null
+          section_key?: string
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      librarian_files: {
+        Row: {
+          ai_extracted_text: string | null
+          ai_summary: string | null
+          category: string | null
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          is_public: boolean | null
+          uploaded_by: string
+        }
+        Insert: {
+          ai_extracted_text?: string | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          is_public?: boolean | null
+          uploaded_by: string
+        }
+        Update: {
+          ai_extracted_text?: string | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          is_public?: boolean | null
+          uploaded_by?: string
         }
         Relationships: []
       }
@@ -310,6 +475,33 @@ export type Database = {
           total_bonus_points?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sheet_sync_logs: {
+        Row: {
+          created_at: string
+          errors: string[] | null
+          id: string
+          records_synced: number | null
+          sync_type: string
+          synced_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          errors?: string[] | null
+          id?: string
+          records_synced?: number | null
+          sync_type: string
+          synced_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          errors?: string[] | null
+          id?: string
+          records_synced?: number | null
+          sync_type?: string
+          synced_by?: string | null
         }
         Relationships: []
       }
