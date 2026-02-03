@@ -30,7 +30,7 @@ const AccessCodeManager = () => {
   const [codes, setCodes] = useState<AccessCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  
+
   // New code form
   const [newCodeType, setNewCodeType] = useState<'librarian' | 'student'>('student');
   const [newYearGroup, setNewYearGroup] = useState('');
@@ -69,9 +69,9 @@ const AccessCodeManager = () => {
     const { error } = await supabase.from('access_codes').insert({
       code,
       code_type: newCodeType,
-      year_group: newYearGroup || null,
+      year_group: newYearGroup === 'any' ? null : newYearGroup || null,
       class_name: newClassName || null,
-      house: newHouse || null,
+      house: newHouse === 'any' ? null : newHouse || null,
       max_uses: parseInt(newMaxUses) || 50,
       created_by: user?.id,
     });
@@ -81,7 +81,6 @@ const AccessCodeManager = () => {
     } else {
       toast({ title: 'Code created!', description: `New ${newCodeType} code: ${code}` });
       fetchCodes();
-      // Reset form
       setNewYearGroup('');
       setNewClassName('');
       setNewHouse('');
@@ -141,8 +140,11 @@ const AccessCodeManager = () => {
             Generate New Code
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+
+            {/* CODE TYPE */}
             <Select value={newCodeType} onValueChange={(v) => setNewCodeType(v as 'librarian' | 'student')}>
               <SelectTrigger>
                 <SelectValue placeholder="Code Type" />
@@ -163,12 +165,13 @@ const AccessCodeManager = () => {
               </SelectContent>
             </Select>
 
+            {/* YEAR GROUP */}
             <Select value={newYearGroup} onValueChange={setNewYearGroup}>
               <SelectTrigger>
                 <SelectValue placeholder="Year Group (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="MYP5">MYP5</SelectItem>
                 <SelectItem value="DP1">DP1</SelectItem>
                 <SelectItem value="DP2">DP2</SelectItem>
@@ -176,12 +179,13 @@ const AccessCodeManager = () => {
               </SelectContent>
             </Select>
 
+            {/* HOUSE */}
             <Select value={newHouse} onValueChange={setNewHouse}>
               <SelectTrigger>
                 <SelectValue placeholder="House (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any</SelectItem>
+                <SelectItem value="any">Any</SelectItem>
                 <SelectItem value="Kenya">Kenya</SelectItem>
                 <SelectItem value="Longonot">Longonot</SelectItem>
                 <SelectItem value="Kilimanjaro">Kilimanjaro</SelectItem>
@@ -200,6 +204,7 @@ const AccessCodeManager = () => {
               <Key className="h-4 w-4 mr-2" />
               {creating ? 'Creating...' : 'Generate Code'}
             </Button>
+
           </div>
         </CardContent>
       </Card>
@@ -215,6 +220,7 @@ const AccessCodeManager = () => {
           >
             <Card className={`${code.is_active ? '' : 'opacity-50'}`}>
               <CardContent className="pt-4">
+
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Badge variant={code.code_type === 'librarian' ? 'default' : 'secondary'}>
@@ -222,26 +228,15 @@ const AccessCodeManager = () => {
                     </Badge>
                     {!code.is_active && <Badge variant="outline">Disabled</Badge>}
                   </div>
+
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => copyCode(code.code)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => copyCode(code.code)}>
                       <Copy className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleActive(code.id, code.is_active)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => toggleActive(code.id, code.is_active)}>
                       {code.is_active ? '🔓' : '🔒'}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteCode(code.id)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => deleteCode(code.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -258,6 +253,7 @@ const AccessCodeManager = () => {
                     {code.house && <Badge variant="outline">{code.house}</Badge>}
                   </div>
                 </div>
+
               </CardContent>
             </Card>
           </motion.div>
@@ -270,6 +266,7 @@ const AccessCodeManager = () => {
           <p>No access codes yet. Generate your first code above!</p>
         </div>
       )}
+
     </div>
   );
 };
