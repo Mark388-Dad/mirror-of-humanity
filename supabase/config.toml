@@ -23,3 +23,9 @@ verify_jwt = false
 
 [functions.send-weekly-digest]
 verify_jwt = false
+
+[functions.sync-google-sheet]
+verify_jwt = false
+
+[functions.process-file]
+verify_jwt = false

@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, BookOpen, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793';
+const FOLLETT_LIBRARY_URL = 'https://search.follettsoftware.com/metasearch/ui/101035';
 
 interface VibrantDashboardCardProps {
   title: string;
+  value?: string | number;
   icon: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   gradient?: string;
+  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'gold';
   className?: string;
   action?: {
     label: string;
@@ -21,16 +23,60 @@ interface VibrantDashboardCardProps {
   delay?: number;
 }
 
-const VibrantDashboardCard = ({
+const colorMap = {
+  blue: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',
+  green: 'from-green-500/20 to-emerald-500/10 border-green-500/30',
+  purple: 'from-purple-500/20 to-pink-500/10 border-purple-500/30',
+  orange: 'from-orange-500/20 to-amber-500/10 border-orange-500/30',
+  red: 'from-red-500/20 to-rose-500/10 border-red-500/30',
+  gold: 'from-yellow-500/20 to-amber-500/10 border-yellow-500/30',
+};
+
+export const VibrantDashboardCard = ({
   title,
+  value,
   icon,
   children,
-  gradient = 'from-blue-500/10 to-purple-500/10',
+  gradient,
+  color = 'blue',
   className,
   action,
   showFollettLink = false,
   delay = 0
 }: VibrantDashboardCardProps) => {
+  const gradientClass = gradient || colorMap[color];
+  
+  // If value is provided, render a simple stat card
+  if (value !== undefined && !children) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.4 }}
+      >
+        <Card className={cn(
+          'relative overflow-hidden transition-all hover:shadow-lg border-2',
+          gradientClass,
+          className
+        )}>
+          <div className={cn('absolute inset-0 bg-gradient-to-br opacity-50', gradientClass.split(' ')[0], gradientClass.split(' ')[1])} />
+          <CardContent className="relative pt-6 text-center">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: delay + 0.2, type: 'spring' }}
+              className="mb-2 flex justify-center"
+            >
+              {icon}
+            </motion.div>
+            <div className="text-3xl font-display font-bold">{value}</div>
+            <div className="text-sm text-muted-foreground">{title}</div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -41,7 +87,7 @@ const VibrantDashboardCard = ({
         'relative overflow-hidden transition-all hover:shadow-lg hover:shadow-primary/5',
         className
       )}>
-        <div className={cn('absolute inset-0 bg-gradient-to-br opacity-50', gradient)} />
+        <div className={cn('absolute inset-0 bg-gradient-to-br opacity-50', gradientClass)} />
         
         <CardHeader className="relative pb-2">
           <div className="flex items-center justify-between">
