@@ -1,17 +1,33 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Button,
+  Input,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent
+} from '@/components/ui';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { HOUSES, YEAR_GROUPS, CLASSES, USER_ROLES } from '@/lib/constants';
 import { z } from 'zod';
 
+// -------------------
+// Validation Schemas
+// -------------------
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -27,6 +43,9 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+// -------------------
+// Component
+// -------------------
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -38,16 +57,19 @@ const Auth = () => {
     yearGroup: '' as 'MYP5' | 'DP1' | 'DP2' | 'G10' | '',
     className: '',
     house: '' as 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | '',
+    accessCode: '', // new field for role access code
   });
 
-  const getClassOptions = () => {
-    return CLASSES;
-  };
+  const getClassOptions = () => CLASSES;
 
+  // -------------------
+  // Sign Up Handler
+  // -------------------
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
+      // Validate form data
       const validatedData = signUpSchema.parse({
         ...formData,
         yearGroup: formData.yearGroup || undefined,
@@ -55,92 +77,67 @@ const Auth = () => {
         house: formData.house || undefined,
       });
 
-      // Validate student-specific fields
+      // Validate role-specific fields
       if (formData.role === 'student') {
         if (!formData.yearGroup || !formData.className || !formData.house) {
           toast.error('Students must select year group, class, and house');
           return;
         }
+        // TODO: Validate student access code from database
+        if (!formData.accessCode) {
+          toast.error('Student access code is required');
+          return;
+        }
+      }
+
+      if (formData.role === 'librarian' && !formData.accessCode) {
+        // TODO: Validate librarian access code from database
+        toast.error('Librarian access code is required');
+        return;
       }
 
       setLoading(true);
 
+      // Supabase signup
       const redirectUrl = `${window.location.origin}/`;
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-        },
+        options: { emailRedirectTo: redirectUrl },
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
+        // Save user profile
         const { error: profileError } = await supabase.from('profiles').insert([{
           user_id: authData.user.id,
           full_name: validatedData.fullName,
           email: validatedData.email,
           role: validatedData.role,
-          year_group: formData.role === 'student' && formData.yearGroup ? formData.yearGroup : null,
-          class_name: formData.role === 'student' && formData.className ? formData.className : null,
-          house: formData.role === 'student' && formData.house ? formData.house : null,
+          year_group: formData.role === 'student' ? formData.yearGroup : null,
+          class_name: formData.role === 'student' ? formData.className : null,
+          house: formData.role === 'student' ? formData.house : null,
         }]);
-
         if (profileError) throw profileError;
 
-        // Import any pending submissions for this email
-        const { data: pendingData } = await supabase
-          .from('pending_submissions')
-          .select('*')
-          .eq('email', validatedData.email);
-
-        if (pendingData && pendingData.length > 0) {
-          // Insert the pending submissions as actual book submissions
-          const submissionsToInsert = pendingData.map(pending => ({
-            user_id: authData.user!.id,
-            category_number: pending.category_number,
-            category_name: pending.category_name,
-            title: pending.title,
-            author: pending.author,
-            date_started: pending.date_started,
-            date_finished: pending.date_finished,
-            reflection: pending.reflection,
-            points_earned: 3,
-          }));
-
-          await supabase.from('book_submissions').insert(submissionsToInsert);
-
-          // Mark pending submissions as imported
-          await supabase
-            .from('pending_submissions')
-            .update({ imported_at: new Date().toISOString(), imported_to_user_id: authData.user!.id })
-            .eq('email', validatedData.email);
-
-          toast.success(`Account created! ${pendingData.length} previous submissions imported.`);
-        } else {
-          toast.success('Account created successfully!');
-        }
-        
+        toast.success('Account created successfully!');
         navigate('/dashboard');
       }
+
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      } else if (error.message?.includes('already registered')) {
-        toast.error('This email is already registered. Please sign in.');
-      } else {
-        toast.error(error.message || 'An error occurred');
-      }
+      if (error instanceof z.ZodError) toast.error(error.errors[0].message);
+      else toast.error(error.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
 
+  // -------------------
+  // Sign In Handler
+  // -------------------
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       signInSchema.parse({ email: formData.email, password: formData.password });
       setLoading(true);
@@ -151,22 +148,18 @@ const Auth = () => {
       });
 
       if (error) throw error;
-
       toast.success('Signed in successfully!');
       navigate('/dashboard');
     } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        toast.error(error.errors[0].message);
-      } else {
-        toast.error(error.message || 'Invalid credentials');
-      }
+      if (error instanceof z.ZodError) toast.error(error.errors[0].message);
+      else toast.error(error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-6">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-hero-gradient">
       <Card className="w-full max-w-lg bg-card/95 backdrop-blur">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -174,144 +167,57 @@ const Auth = () => {
               <BookOpen className="w-6 h-6 text-gold" />
             </div>
           </div>
-          <CardTitle className="font-display text-2xl">45-Book Reading Challenge</CardTitle>
+          <CardTitle className="text-2xl font-display">45-Book Reading Challenge</CardTitle>
           <CardDescription>2025/2026 • Fiction as a Mirror of Humanity</CardDescription>
         </CardHeader>
+
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-            
+
+            {/* ---------------- Sign In ---------------- */}
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="your.email@mpesafoundationacademy.ac.ke"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-gold text-navy hover:bg-gold-light" disabled={loading}>
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Sign In
-                </Button>
+                <InputField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} type="email" placeholder="your.email@mpesafoundationacademy.ac.ke" />
+                <InputField label="Password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} type="password" />
+                <Button fullWidth loading={loading}>Sign In</Button>
               </form>
             </TabsContent>
 
+            {/* ---------------- Sign Up ---------------- */}
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    placeholder="Enter your full name"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="your.email@mpesafoundationacademy.ac.ke"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="At least 6 characters"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Select value={formData.role} onValueChange={(value: any) => setFormData({ ...formData, role: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {USER_ROLES.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          {role.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <InputField label="Full Name" value={formData.fullName} onChange={(v) => setFormData({ ...formData, fullName: v })} />
+                <InputField label="Email" value={formData.email} onChange={(v) => setFormData({ ...formData, email: v })} type="email" />
+                <InputField label="Password" value={formData.password} onChange={(v) => setFormData({ ...formData, password: v })} type="password" />
 
-                {formData.role === 'student' && (
+                {/* Role */}
+                <Label>Role</Label>
+                <Select value={formData.role} onValueChange={(v: any) => setFormData({ ...formData, role: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select your role" /></SelectTrigger>
+                  <SelectContent>
+                    {USER_ROLES.map(role => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+
+                {/* Student-specific Fields */}
+                {(formData.role === 'student' || formData.role === 'librarian') && (
                   <>
-                    <div className="space-y-2">
-                      <Label>Year Group</Label>
-                      <Select value={formData.yearGroup} onValueChange={(value: 'MYP5' | 'DP1' | 'DP2' | 'G10') => setFormData({ ...formData, yearGroup: value, className: '' })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select year group" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {YEAR_GROUPS.map((yg) => (
-                            <SelectItem key={yg} value={yg}>{yg}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Class</Label>
-                      <Select value={formData.className} onValueChange={(value) => setFormData({ ...formData, className: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getClassOptions().map((cls) => (
-                            <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>House</Label>
-                      <Select value={formData.house} onValueChange={(value: any) => setFormData({ ...formData, house: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your house" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {HOUSES.map((house) => (
-                            <SelectItem key={house} value={house}>{house}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {formData.role === 'student' && (
+                      <>
+                        <SelectField label="Year Group" value={formData.yearGroup} options={YEAR_GROUPS} onChange={(v) => setFormData({ ...formData, yearGroup: v, className: '' })} />
+                        <SelectField label="Class" value={formData.className} options={getClassOptions()} onChange={(v) => setFormData({ ...formData, className: v })} />
+                        <SelectField label="House" value={formData.house} options={HOUSES} onChange={(v) => setFormData({ ...formData, house: v })} />
+                      </>
+                    )}
+                    <InputField label={`${formData.role === 'student' ? 'Student' : 'Librarian'} Access Code`} value={formData.accessCode} onChange={(v) => setFormData({ ...formData, accessCode: v })} />
                   </>
                 )}
 
-                <Button type="submit" className="w-full bg-gold text-navy hover:bg-gold-light" disabled={loading}>
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Create Account
-                </Button>
+                <Button fullWidth loading={loading}>Create Account</Button>
               </form>
             </TabsContent>
           </Tabs>
@@ -322,3 +228,39 @@ const Auth = () => {
 };
 
 export default Auth;
+
+// -------------------
+// Helper Components
+// -------------------
+interface InputProps { label: string; value: string; onChange: (v: string) => void; type?: string; placeholder?: string; }
+const InputField = ({ label, value, onChange, type = 'text', placeholder = '' }: InputProps) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <Input type={type} placeholder={placeholder} value={value} onChange={(e) => onChange(e.target.value)} required />
+  </div>
+);
+
+interface SelectFieldProps { label: string; value: string; options: string[]; onChange: (v: string) => void; }
+const SelectField = ({ label, value, options, onChange }: SelectFieldProps) => (
+  <div className="space-y-2">
+    <Label>{label}</Label>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger><SelectValue placeholder={`Select ${label}`} /></SelectTrigger>
+      <SelectContent>
+        {options.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  </div>
+);
+
+interface ButtonProps { children: React.ReactNode; fullWidth?: boolean; loading?: boolean; type?: 'button' | 'submit'; }
+const Button = ({ children, fullWidth, loading, type = 'button' }: ButtonProps) => (
+  <button
+    type={type}
+    className={`p-2 rounded bg-gold text-navy hover:bg-gold-light ${fullWidth ? 'w-full' : ''}`}
+    disabled={loading}
+  >
+    {loading && <Loader2 className="inline w-4 h-4 mr-2 animate-spin" />}
+    {children}
+  </button>
+);
