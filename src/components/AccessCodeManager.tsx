@@ -145,7 +145,7 @@ const AccessCodeManager = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
             {/* CODE TYPE */}
-            <Select value={newCodeType} onValueChange={(v) => setNewCodeType(v as 'librarian' | 'student'| 'Tonny')}>
+            <Select value={newCodeType} onValueChange={(v) => setNewCodeType(v as 'librarian' | 'student')}>
               <SelectTrigger>
                 <SelectValue placeholder="Code Type" />
               </SelectTrigger>
