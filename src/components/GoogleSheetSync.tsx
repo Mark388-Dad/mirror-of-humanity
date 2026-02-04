@@ -16,7 +16,7 @@ interface SyncLog {
 }
 
 const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf-u0b7RP1aUMOJGQvGzUaJKEP2hMKyNWvB0cMu68ANHqFq-A/viewform?usp=header";
-const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1IlnJQpAhyo3wnd_2pp2fiQdDQHzEAnlk2n2V-Wdsj5I/edit?usp=sharing";
+const GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1QMquWqbvB7OAhyry0YpS5hCJ7KpVsa6MPHgEbERKTKw/edit?usp=sharing";
 
 const GoogleSheetSync = () => {
   const [syncing, setSyncing] = useState(false);
