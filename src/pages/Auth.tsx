@@ -7,19 +7,26 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { BookOpen, Loader2, Key, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { HOUSES, YEAR_GROUPS, CLASSES, USER_ROLES } from '@/lib/constants';
 import { z } from 'zod';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { Database } from '@/integrations/supabase/types';
+
+type UserRole = Database['public']['Enums']['user_role'];
+type YearGroup = Database['public']['Enums']['year_group'];
+type HouseName = Database['public']['Enums']['house_name'];
 
 const signUpSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
   role: z.enum(['student', 'homeroom_tutor', 'head_of_year', 'house_patron', 'librarian', 'staff']),
-  yearGroup: z.enum(['MYP5', 'DP1', 'DP2', 'G10']).optional(),
+  yearGroup: z.string().optional(),
   className: z.string().optional(),
-  house: z.enum(['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon']).optional(),
+  house: z.string().optional(),
+  accessCode: z.string().optional(),
 });
 
 const signInSchema = z.object({
@@ -27,25 +34,81 @@ const signInSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+// Define which fields are needed for each role
+const ROLE_FIELD_CONFIG: Record<UserRole, string[]> = {
+  student: ['yearGroup', 'className', 'house', 'accessCode'],
+  homeroom_tutor: ['yearGroup', 'className'],
+  head_of_year: ['yearGroup'],
+  house_patron: ['house'],
+  librarian: ['accessCode'],
+  staff: [],
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [codeError, setCodeError] = useState('');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
-    role: 'student' as const,
-    yearGroup: '' as 'MYP5' | 'DP1' | 'DP2' | 'G10' | '',
+    role: 'student' as UserRole,
+    yearGroup: '',
     className: '',
-    house: '' as 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | '',
+    house: '',
+    accessCode: '',
   });
 
-  const getClassOptions = () => {
-    return CLASSES;
+  // Check what fields are required for the selected role
+  const roleFields = ROLE_FIELD_CONFIG[formData.role] || [];
+  const requiresCode = formData.role === 'student' || formData.role === 'librarian';
+
+  const validateAccessCode = async (code: string, role: string): Promise<boolean> => {
+    if (!code) return false;
+    
+    const { data, error } = await supabase
+      .from('access_codes')
+      .select('*')
+      .eq('code', code.toUpperCase().trim())
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !data) {
+      setCodeError('Invalid access code');
+      return false;
+    }
+
+    // Check if code has expired
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      setCodeError('This access code has expired');
+      return false;
+    }
+
+    // Check if code has reached max uses
+    if (data.max_uses && data.current_uses && data.current_uses >= data.max_uses) {
+      setCodeError('This access code has reached its usage limit');
+      return false;
+    }
+
+    // Check if code type matches role
+    const validCodeTypes = role === 'student' ? ['student'] : ['librarian', 'staff'];
+    if (!validCodeTypes.includes(data.code_type)) {
+      setCodeError(`This code is not valid for ${role} registration`);
+      return false;
+    }
+
+    // Increment usage count
+    await supabase
+      .from('access_codes')
+      .update({ current_uses: (data.current_uses || 0) + 1 })
+      .eq('id', data.id);
+
+    return true;
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setCodeError('');
     
     try {
       const validatedData = signUpSchema.parse({
@@ -53,17 +116,57 @@ const Auth = () => {
         yearGroup: formData.yearGroup || undefined,
         className: formData.className || undefined,
         house: formData.house || undefined,
+        accessCode: formData.accessCode || undefined,
       });
 
-      // Validate student-specific fields
+      // Validate required fields based on role
       if (formData.role === 'student') {
         if (!formData.yearGroup || !formData.className || !formData.house) {
           toast.error('Students must select year group, class, and house');
           return;
         }
+        if (!formData.accessCode) {
+          toast.error('Students must enter an access code');
+          return;
+        }
+      }
+
+      if (formData.role === 'homeroom_tutor') {
+        if (!formData.yearGroup || !formData.className) {
+          toast.error('Homeroom tutors must select year group and class');
+          return;
+        }
+      }
+
+      if (formData.role === 'head_of_year') {
+        if (!formData.yearGroup) {
+          toast.error('Head of Year must select a year group');
+          return;
+        }
+      }
+
+      if (formData.role === 'house_patron') {
+        if (!formData.house) {
+          toast.error('House Patrons must select a house');
+          return;
+        }
+      }
+
+      if (formData.role === 'librarian' && !formData.accessCode) {
+        toast.error('Librarians must enter an access code');
+        return;
       }
 
       setLoading(true);
+
+      // Validate access code if required
+      if (requiresCode) {
+        const codeValid = await validateAccessCode(formData.accessCode, formData.role);
+        if (!codeValid) {
+          setLoading(false);
+          return;
+        }
+      }
 
       const redirectUrl = `${window.location.origin}/`;
 
@@ -78,49 +181,64 @@ const Auth = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Determine year_group as proper type
+        let yearGroupValue: YearGroup | null = null;
+        if (['student', 'homeroom_tutor', 'head_of_year'].includes(formData.role) && formData.yearGroup) {
+          yearGroupValue = formData.yearGroup as YearGroup;
+        }
+
+        // Determine house as proper type
+        let houseValue: HouseName | null = null;
+        if (['student', 'house_patron'].includes(formData.role) && formData.house) {
+          houseValue = formData.house as HouseName;
+        }
+
         const { error: profileError } = await supabase.from('profiles').insert([{
           user_id: authData.user.id,
           full_name: validatedData.fullName,
           email: validatedData.email,
-          role: validatedData.role,
-          year_group: formData.role === 'student' && formData.yearGroup ? formData.yearGroup : null,
-          class_name: formData.role === 'student' && formData.className ? formData.className : null,
-          house: formData.role === 'student' && formData.house ? formData.house : null,
+          role: validatedData.role as UserRole,
+          year_group: yearGroupValue,
+          class_name: ['student', 'homeroom_tutor'].includes(formData.role) && formData.className ? formData.className : null,
+          house: houseValue,
         }]);
 
         if (profileError) throw profileError;
 
-        // Import any pending submissions for this email
-        const { data: pendingData } = await supabase
-          .from('pending_submissions')
-          .select('*')
-          .eq('email', validatedData.email);
-
-        if (pendingData && pendingData.length > 0) {
-          // Insert the pending submissions as actual book submissions
-          const submissionsToInsert = pendingData.map(pending => ({
-            user_id: authData.user!.id,
-            category_number: pending.category_number,
-            category_name: pending.category_name,
-            title: pending.title,
-            author: pending.author,
-            date_started: pending.date_started,
-            date_finished: pending.date_finished,
-            reflection: pending.reflection,
-            points_earned: 3,
-          }));
-
-          await supabase.from('book_submissions').insert(submissionsToInsert);
-
-          // Mark pending submissions as imported
-          await supabase
+        // Import any pending submissions for this email (for students)
+        if (formData.role === 'student') {
+          const { data: pendingData } = await supabase
             .from('pending_submissions')
-            .update({ imported_at: new Date().toISOString(), imported_to_user_id: authData.user!.id })
+            .select('*')
             .eq('email', validatedData.email);
 
-          toast.success(`Account created! ${pendingData.length} previous submissions imported.`);
+          if (pendingData && pendingData.length > 0) {
+            const submissionsToInsert = pendingData.map(pending => ({
+              user_id: authData.user!.id,
+              category_number: pending.category_number,
+              category_name: pending.category_name,
+              title: pending.title,
+              author: pending.author,
+              date_started: pending.date_started,
+              date_finished: pending.date_finished,
+              reflection: pending.reflection,
+              points_earned: 3,
+              approval_status: 'approved',
+            }));
+
+            await supabase.from('book_submissions').insert(submissionsToInsert);
+
+            await supabase
+              .from('pending_submissions')
+              .update({ imported_at: new Date().toISOString(), imported_to_user_id: authData.user!.id })
+              .eq('email', validatedData.email);
+
+            toast.success(`Account created! ${pendingData.length} previous submissions imported.`);
+          } else {
+            toast.success('Account created successfully! Check your email to verify.');
+          }
         } else {
-          toast.success('Account created successfully!');
+          toast.success('Account created successfully! Check your email to verify.');
         }
         
         navigate('/dashboard');
@@ -250,7 +368,17 @@ const Auth = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Role</Label>
-                  <Select value={formData.role} onValueChange={(value: any) => setFormData({ ...formData, role: value })}>
+                  <Select 
+                    value={formData.role} 
+                    onValueChange={(value: any) => setFormData({ 
+                      ...formData, 
+                      role: value,
+                      yearGroup: '',
+                      className: '',
+                      house: '',
+                      accessCode: '',
+                    })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select your role" />
                     </SelectTrigger>
@@ -264,48 +392,95 @@ const Auth = () => {
                   </Select>
                 </div>
 
-                {formData.role === 'student' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>Year Group</Label>
-                      <Select value={formData.yearGroup} onValueChange={(value: 'MYP5' | 'DP1' | 'DP2' | 'G10') => setFormData({ ...formData, yearGroup: value, className: '' })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select year group" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {YEAR_GROUPS.map((yg) => (
-                            <SelectItem key={yg} value={yg}>{yg}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Class</Label>
-                      <Select value={formData.className} onValueChange={(value) => setFormData({ ...formData, className: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getClassOptions().map((cls) => (
-                            <SelectItem key={cls} value={cls}>{cls}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>House</Label>
-                      <Select value={formData.house} onValueChange={(value: any) => setFormData({ ...formData, house: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select your house" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {HOUSES.map((house) => (
-                            <SelectItem key={house} value={house}>{house}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
+                {/* Access Code Field - for Students and Librarians */}
+                {requiresCode && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Key className="w-4 h-4" />
+                      Access Code
+                    </Label>
+                    <Input
+                      placeholder="Enter your access code"
+                      value={formData.accessCode}
+                      onChange={(e) => {
+                        setCodeError('');
+                        setFormData({ ...formData, accessCode: e.target.value.toUpperCase() });
+                      }}
+                      className="uppercase"
+                      required
+                    />
+                    {codeError && (
+                      <Alert variant="destructive" className="py-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{codeError}</AlertDescription>
+                      </Alert>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {formData.role === 'student' 
+                        ? 'Get your code from the librarian'
+                        : 'Get your code from an existing librarian or admin'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Year Group Field - for Students, Homeroom Tutors, Head of Year */}
+                {roleFields.includes('yearGroup') && (
+                  <div className="space-y-2">
+                    <Label>Year Group</Label>
+                    <Select 
+                      value={formData.yearGroup} 
+                      onValueChange={(value) => setFormData({ ...formData, yearGroup: value, className: '' })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year group" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {YEAR_GROUPS.map((yg) => (
+                          <SelectItem key={yg} value={yg}>{yg}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Class Field - for Students and Homeroom Tutors */}
+                {roleFields.includes('className') && (
+                  <div className="space-y-2">
+                    <Label>Class</Label>
+                    <Select 
+                      value={formData.className} 
+                      onValueChange={(value) => setFormData({ ...formData, className: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your class" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASSES.map((cls) => (
+                          <SelectItem key={cls} value={cls}>{cls}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* House Field - for Students and House Patrons */}
+                {roleFields.includes('house') && (
+                  <div className="space-y-2">
+                    <Label>House</Label>
+                    <Select 
+                      value={formData.house} 
+                      onValueChange={(value) => setFormData({ ...formData, house: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your house" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HOUSES.map((house) => (
+                          <SelectItem key={house} value={house}>{house}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 )}
 
                 <Button type="submit" className="w-full bg-gold text-navy hover:bg-gold-light" disabled={loading}>

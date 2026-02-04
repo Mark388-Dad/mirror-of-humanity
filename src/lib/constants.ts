@@ -33,17 +33,18 @@ export const READING_CATEGORIES = [
 
 export const HOUSES = ['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon'] as const;
 
-export const YEAR_GROUPS = ['MYP5', 'DP1', 'DP2', 'G10'] as const;
+// Updated year groups with Grade 10, 11, 12
+export const YEAR_GROUPS = ['MYP5', 'G10', 'G11', 'G12', 'DP1', 'DP2'] as const;
 
 export const CLASSES = ['Swara', 'Chui', 'Duma', 'Nyati', 'Twiga', 'Kifaru'] as const;
 
 export const USER_ROLES = [
-  { value: 'student', label: 'Student' },
-  { value: 'homeroom_tutor', label: 'Homeroom Tutor' },
-  { value: 'head_of_year', label: 'Head of Year' },
-  { value: 'house_patron', label: 'House Patron' },
-  { value: 'librarian', label: 'Librarian Staff' },
-  { value: 'staff', label: 'Other Staff' },
+  { value: 'student', label: 'Student', requiresCode: true },
+  { value: 'homeroom_tutor', label: 'Homeroom Tutor', requiresCode: false },
+  { value: 'head_of_year', label: 'Head of Year', requiresCode: false },
+  { value: 'house_patron', label: 'House Patron', requiresCode: false },
+  { value: 'librarian', label: 'Librarian Staff', requiresCode: true },
+  { value: 'staff', label: 'Other Staff', requiresCode: false },
 ] as const;
 
 export type House = typeof HOUSES[number];

@@ -31,7 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    const { sync_type = "full", user_id } = await req.json();
+    const { sync_type = "full", user_id } = await req.json().catch(() => ({}));
     
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -40,32 +40,53 @@ serve(async (req) => {
 
     // Fetch the Google Sheet as CSV (publicly shared sheet)
     // The sheet must be shared as "Anyone with the link can view"
+    // Try multiple export formats for compatibility
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
     
     console.log("Fetching Google Sheet from:", csvUrl);
     
-    const response = await fetch(csvUrl, {
-      headers: {
-        'Accept': 'text/csv',
-      },
-    });
+    let csvText = "";
     
-    if (!response.ok) {
-      // Check if it's an auth issue
-      if (response.status === 401 || response.status === 403) {
+    try {
+      // First try direct CSV export
+      const response = await fetch(csvUrl, {
+        headers: {
+          'Accept': 'text/csv',
+          'User-Agent': 'Mozilla/5.0 (compatible; ReadingChallenge/1.0)',
+        },
+        redirect: 'follow',
+      });
+      
+      if (response.ok) {
+        csvText = await response.text();
+      } else if (response.status === 401 || response.status === 403) {
+        // If access denied, provide helpful message
+        console.log("Sheet requires public access - status:", response.status);
         return new Response(
           JSON.stringify({ 
             success: false, 
             error: "Google Sheet is not publicly accessible. Please share the sheet with 'Anyone with the link can view' permissions.",
-            help: "Go to Google Sheets → Share → Change 'General access' to 'Anyone with the link'"
+            help: "Go to Google Sheets → Share → Change 'General access' to 'Anyone with the link'",
+            instructions: [
+              "1. Open the Google Sheet",
+              "2. Click 'Share' button (top right)",
+              "3. Under 'General access', click the dropdown",
+              "4. Select 'Anyone with the link'",
+              "5. Make sure 'Viewer' is selected",
+              "6. Click 'Done'",
+              "7. Try syncing again"
+            ]
           }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      } else {
+        throw new Error(`Failed to fetch Google Sheet: ${response.status}`);
       }
-      throw new Error(`Failed to fetch Google Sheet: ${response.status}`);
+    } catch (fetchError) {
+      console.error("Fetch error:", fetchError);
+      throw fetchError;
     }
     
-    const csvText = await response.text();
     const rows = parseCSV(csvText);
     
     console.log(`Parsed ${rows.length} rows from Google Sheet`);

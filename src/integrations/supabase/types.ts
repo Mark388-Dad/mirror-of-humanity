@@ -27,6 +27,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           max_uses: number | null
+          role_restriction: string | null
           school_name: string | null
           year_group: string | null
         }
@@ -42,6 +43,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          role_restriction?: string | null
           school_name?: string | null
           year_group?: string | null
         }
@@ -57,6 +59,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          role_restriction?: string | null
           school_name?: string | null
           year_group?: string | null
         }
@@ -549,7 +552,7 @@ export type Database = {
         | "house_patron"
         | "librarian"
         | "staff"
-      year_group: "MYP5" | "DP1" | "DP2" | "G10"
+      year_group: "MYP5" | "DP1" | "DP2" | "G10" | "G11" | "G12"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -687,7 +690,7 @@ export const Constants = {
         "librarian",
         "staff",
       ],
-      year_group: ["MYP5", "DP1", "DP2", "G10"],
+      year_group: ["MYP5", "DP1", "DP2", "G10", "G11", "G12"],
     },
   },
 } as const
