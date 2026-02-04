@@ -3,10 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// The Google Sheet ID from the provided URL
 const SHEET_ID = "1QMquWqbvB7OAhyry0YpS5hCJ7KpVsa6MPHgEbERKTKw";
 
 interface SheetRow {
@@ -31,80 +30,59 @@ serve(async (req) => {
   }
 
   try {
-    const { sync_type = "full", user_id } = await req.json().catch(() => ({}));
-    
+    const body = await req.json().catch(() => ({}));
+    const { sync_type = "full", user_id } = body;
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Fetch the Google Sheet as CSV (publicly shared sheet)
-    // The sheet must be shared as "Anyone with the link can view"
-    // Try multiple export formats for compatibility
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-    
-    console.log("Fetching Google Sheet from:", csvUrl);
-    
-    let csvText = "";
-    
-    try {
-      // First try direct CSV export
-      const response = await fetch(csvUrl, {
-        headers: {
-          'Accept': 'text/csv',
-          'User-Agent': 'Mozilla/5.0 (compatible; ReadingChallenge/1.0)',
-        },
-        redirect: 'follow',
-      });
-      
-      if (response.ok) {
-        csvText = await response.text();
-      } else if (response.status === 401 || response.status === 403) {
-        // If access denied, provide helpful message
-        console.log("Sheet requires public access - status:", response.status);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: "Google Sheet is not publicly accessible. Please share the sheet with 'Anyone with the link can view' permissions.",
-            help: "Go to Google Sheets → Share → Change 'General access' to 'Anyone with the link'",
-            instructions: [
-              "1. Open the Google Sheet",
-              "2. Click 'Share' button (top right)",
-              "3. Under 'General access', click the dropdown",
-              "4. Select 'Anyone with the link'",
-              "5. Make sure 'Viewer' is selected",
-              "6. Click 'Done'",
-              "7. Try syncing again"
-            ]
-          }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        throw new Error(`Failed to fetch Google Sheet: ${response.status}`);
-      }
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
-      throw fetchError;
+    // 1️⃣ Fetch the sheet as CSV from Google
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+    console.log("Fetching CSV from:", csvUrl);
+
+    const response = await fetch(csvUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ReadingChallenge/1.0)",
+      },
+    });
+
+    if (!response.ok) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: `Failed to fetch sheet (status ${response.status})`,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
-    
+
+    const csvText = await response.text();
+
+    if (!csvText || csvText.trim().length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Empty sheet or no data" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const rows = parseCSV(csvText);
-    
-    console.log(`Parsed ${rows.length} rows from Google Sheet`);
-    
+    console.log(`Parsed ${rows.length} rows`);
+
     if (rows.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: "No data to sync", records_synced: 0 }),
+        JSON.stringify({ success: true, message: "No rows to sync", records_synced: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const errors: string[] = [];
+    // 2️⃣ Sync into pending_submissions
     let recordsSynced = 0;
+    const errors: string[] = [];
 
-    // Process each row and insert into pending_submissions
     for (const row of rows) {
       try {
-        // Check if this submission already exists (by email + title + date)
         const { data: existing } = await supabase
           .from("pending_submissions")
           .select("id")
@@ -113,146 +91,88 @@ serve(async (req) => {
           .eq("date_finished", row.dateFinished)
           .maybeSingle();
 
-        if (existing) {
-          console.log(`Skipping duplicate: ${row.email} - ${row.title}`);
-          continue;
-        }
+        if (existing) continue;
 
-        // Insert new pending submission
         const { error } = await supabase.from("pending_submissions").insert({
           student_name: row.studentName,
           email: row.email,
           year_group: row.yearGroup,
           class_name: row.className,
           house: row.house,
-          category_number: row.categoryNumber || 15,
-          category_name: row.categoryName || "Free Choice",
+          category_number: row.categoryNumber,
+          category_name: row.categoryName,
           title: row.title,
-          author: row.author || "Unknown",
-          date_started: row.dateStarted || new Date().toISOString().split("T")[0],
-          date_finished: row.dateFinished || new Date().toISOString().split("T")[0],
-          reflection: row.reflection || "Synced from Google Form",
+          author: row.author,
+          date_started: row.dateStarted,
+          date_finished: row.dateFinished,
+          reflection: row.reflection,
         });
 
         if (error) {
-          errors.push(`Row ${row.studentName}: ${error.message}`);
+          errors.push(`Row ${row.email} - ${row.title}: ${error.message}`);
         } else {
           recordsSynced++;
         }
       } catch (err) {
-        errors.push(`Row processing error: ${err instanceof Error ? err.message : "Unknown"}`);
+        errors.push(`Row error: ${(err as Error).message}`);
       }
     }
 
-    // Log the sync
+    // 3️⃣ Log sync attempt
     await supabase.from("sheet_sync_logs").insert({
       sync_type,
       records_synced: recordsSynced,
-      errors: errors.length > 0 ? errors : null,
+      errors: errors.length ? errors : null,
       synced_by: user_id || null,
     });
-
-    // Try to auto-import submissions to registered users
-    const { data: pendingSubmissions } = await supabase
-      .from("pending_submissions")
-      .select("*")
-      .is("imported_to_user_id", null);
-
-    let autoImported = 0;
-    
-    for (const pending of pendingSubmissions || []) {
-      // Find matching profile by email
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("user_id")
-        .eq("email", pending.email)
-        .maybeSingle();
-
-      if (profile) {
-        // Create book submission
-        const { error: insertError } = await supabase.from("book_submissions").insert({
-          user_id: profile.user_id,
-          title: pending.title,
-          author: pending.author,
-          category_number: pending.category_number,
-          category_name: pending.category_name,
-          date_started: pending.date_started,
-          date_finished: pending.date_finished,
-          reflection: pending.reflection,
-          points_earned: 3,
-          approval_status: "approved",
-        });
-
-        if (!insertError) {
-          // Mark as imported
-          await supabase
-            .from("pending_submissions")
-            .update({ 
-              imported_to_user_id: profile.user_id,
-              imported_at: new Date().toISOString()
-            })
-            .eq("id", pending.id);
-          autoImported++;
-        }
-      }
-    }
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Sync completed`,
         records_synced: recordsSynced,
-        auto_imported: autoImported,
-        errors: errors.length > 0 ? errors : null,
+        errors: errors.length ? errors : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("Sync error:", error);
+
+  } catch (err) {
+    console.error("Sync Error:", err);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Sync failed",
-        success: false 
-      }),
+      JSON.stringify({ success: false, error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
 function parseCSV(csvText: string): SheetRow[] {
-  const lines = csvText.split("\n").filter(line => line.trim());
+  const lines = csvText.split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
 
   const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-  const rows: SheetRow[] = [];
+  const rows: any[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
-    if (values.length < 3) continue;
+    if (values.length < headers.length) continue;
 
-    const row: Record<string, string> = {};
-    headers.forEach((header, idx) => {
-      row[header] = values[idx] || "";
-    });
-
-    // Map common column variations
+    const row: any = {};
+    headers.forEach((h, idx) => row[h] = values[idx] || "");
     rows.push({
-      timestamp: row["timestamp"] || row["date"] || "",
-      email: row["email"] || row["email address"] || row["student email"] || "",
-      studentName: row["name"] || row["student name"] || row["full name"] || row["student"] || "",
-      yearGroup: row["year group"] || row["year"] || row["grade"] || "",
-      className: row["class"] || row["class name"] || row["tutor group"] || "",
-      house: row["house"] || row["house name"] || "",
-      categoryNumber: parseInt(row["category number"] || row["category"] || "15") || 15,
-      categoryName: row["category name"] || row["challenge category"] || "Free Choice",
-      title: row["title"] || row["book title"] || row["book"] || "",
-      author: row["author"] || row["book author"] || "",
-      dateStarted: parseDate(row["date started"] || row["start date"] || ""),
-      dateFinished: parseDate(row["date finished"] || row["end date"] || row["completion date"] || ""),
-      reflection: row["reflection"] || row["thoughts"] || row["review"] || "",
+      timestamp: row["timestamp"] || "",
+      email: row["email"] || "",
+      studentName: row["name"] || "",
+      yearGroup: row["year group"] || "",
+      className: row["class"] || "",
+      house: row["house"] || "",
+      categoryNumber: parseInt(row["category number"] || "0") || 0,
+      categoryName: row["category name"] || "",
+      title: row["title"] || "",
+      author: row["author"] || "",
+      dateStarted: row["date started"] || "",
+      dateFinished: row["date finished"] || "",
+      reflection: row["reflection"] || "",
     });
   }
-
   return rows.filter(r => r.email && r.title);
 }
 
@@ -261,43 +181,13 @@ function parseCSVLine(line: string): string[] {
   let current = "";
   let inQuotes = false;
 
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
+  for (let char of line) {
+    if (char === '"') inQuotes = !inQuotes;
+    else if (char === "," && !inQuotes) {
       values.push(current.trim());
       current = "";
-    } else {
-      current += char;
-    }
+    } else current += char;
   }
   values.push(current.trim());
   return values;
-}
-
-function parseDate(dateStr: string): string {
-  if (!dateStr) return new Date().toISOString().split("T")[0];
-  
-  try {
-    // Try various date formats
-    const date = new Date(dateStr);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split("T")[0];
-    }
-    
-    // Try DD/MM/YYYY format
-    const parts = dateStr.split(/[\/\-]/);
-    if (parts.length === 3) {
-      const [day, month, year] = parts;
-      const parsed = new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`);
-      if (!isNaN(parsed.getTime())) {
-        return parsed.toISOString().split("T")[0];
-      }
-    }
-  } catch {
-    // Ignore parsing errors
-  }
-  
-  return new Date().toISOString().split("T")[0];
 }
