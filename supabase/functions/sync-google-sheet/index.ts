@@ -9,7 +9,8 @@ const corsHeaders = {
 
 // ✅ USE THE PUBLISHED CSV LINK (THIS IS KEY)
 const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXo8qPXEXJC5MjQYqf_Gl6PZS0OXfYeZIGhuss0fR8YgEro3h4FxUUCodJQR-pckZCtC5Wyvd1QQwH/pub?output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXo8qPXEXJC5MjQYqf_Gl6PZS0OXfYeZIGhuss0fR8YgEro3h4FxUUCodJQR-pckZCtC5Wyvd1QQwH/pub?gid=0&single=true&output=csv";
+
 
 interface SheetRow {
   email: string;
