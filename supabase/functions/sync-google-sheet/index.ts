@@ -7,10 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ✅ USE THE PUBLISHED CSV LINK (THIS IS KEY)
+// ✅ Published CSV URL (correct format)
 const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXo8qPXEXJC5MjQYqf_Gl6PZS0OXfYeZIGhuss0fR8YgEro3h4FxUUCodJQR-pckZCtC5Wyvd1QQwH/pub?gid=0&single=true&output=csv";
-
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlLWsu_KyDIjAGkvedtKJSxYvqinjrbX0TzUKh_DFL6G2oxK4yAduOdfMFjg1WH0iKbiUcAdNB-zNU/pub?gid=0&single=true&output=csv";
 
 interface SheetRow {
   email: string;
@@ -38,10 +37,23 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ✅ SIMPLE + RELIABLE FETCH
-    const res = await fetch(CSV_URL);
+    // ✅ FIXED FETCH (Google requires headers in Edge runtime)
+    console.log("Fetching CSV from:", CSV_URL);
+
+    const res = await fetch(CSV_URL, {
+      method: "GET",
+      headers: {
+        "accept": "text/csv, */*",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "no-cache",
+        "pragma": "no-cache",
+      },
+    });
+
     if (!res.ok) {
-      throw new Error("Failed to fetch published Google Sheet CSV");
+      const text = await res.text();
+      console.error("Google returned:", res.status, text);
+      throw new Error(`Failed to fetch Google Sheet: ${res.status}`);
     }
 
     const csvText = await res.text();
@@ -79,11 +91,8 @@ serve(async (req) => {
             reflection: row.reflection,
           });
 
-        if (error) {
-          errors.push(error.message);
-        } else {
-          recordsSynced++;
-        }
+        if (error) errors.push(error.message);
+        else recordsSynced++;
       } catch (e) {
         errors.push(String(e));
       }
@@ -98,12 +107,17 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+    console.error("SYNC ERROR:", err);
+
     return new Response(
       JSON.stringify({
         success: false,
         error: err instanceof Error ? err.message : "Unknown error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
@@ -118,27 +132,29 @@ function parseCSV(csv: string): SheetRow[] {
     h.toLowerCase().trim()
   );
 
-  return lines.slice(1).map((line) => {
-    const values = splitCSVLine(line);
-    const row: Record<string, string> = {};
+  return lines
+    .slice(1)
+    .map((line) => {
+      const values = splitCSVLine(line);
+      const row: Record<string, string> = {};
+      headers.forEach((h, i) => (row[h] = values[i] || ""));
 
-    headers.forEach((h, i) => (row[h] = values[i] || ""));
-
-    return {
-      email: row["email"] || "",
-      studentName: row["student name"] || row["name"] || "",
-      yearGroup: row["year group"] || "",
-      className: row["class"] || "",
-      house: row["house"] || "",
-      categoryNumber: Number(row["category number"] || 15),
-      categoryName: row["category name"] || "Free Choice",
-      title: row["title"] || "",
-      author: row["author"] || "Unknown",
-      dateStarted: parseDate(row["date started"]),
-      dateFinished: parseDate(row["date finished"]),
-      reflection: row["reflection"] || "",
-    };
-  }).filter(r => r.email && r.title);
+      return {
+        email: row["email"] || "",
+        studentName: row["student name"] || row["name"] || "",
+        yearGroup: row["year group"] || "",
+        className: row["class"] || "",
+        house: row["house"] || "",
+        categoryNumber: Number(row["category number"] || 15),
+        categoryName: row["category name"] || "Free Choice",
+        title: row["title"] || "",
+        author: row["author"] || "Unknown",
+        dateStarted: parseDate(row["date started"]),
+        dateFinished: parseDate(row["date finished"]),
+        reflection: row["reflection"] || "",
+      };
+    })
+    .filter((r) => r.email && r.title);
 }
 
 function splitCSVLine(line: string): string[] {
