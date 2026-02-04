@@ -3,13 +3,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-const SHEET_ID = "1QMquWqbvB7OAhyry0YpS5hCJ7KpVsa6MPHgEbERKTKw";
+// ✅ USE THE PUBLISHED CSV LINK (THIS IS KEY)
+const CSV_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXo8qPXEXJC5MjQYqf_Gl6PZS0OXfYeZIGhuss0fR8YgEro3h4FxUUCodJQR-pckZCtC5Wyvd1QQwH/pub?output=csv";
 
 interface SheetRow {
-  timestamp: string;
   email: string;
   studentName: string;
   yearGroup: string;
@@ -30,54 +32,20 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const { sync_type = "full", user_id } = body;
-
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1️⃣ Fetch the sheet as CSV from Google
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
-    console.log("Fetching CSV from:", csvUrl);
-
-    const response = await fetch(csvUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ReadingChallenge/1.0)",
-      },
-    });
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: `Failed to fetch sheet (status ${response.status})`,
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // ✅ SIMPLE + RELIABLE FETCH
+    const res = await fetch(CSV_URL);
+    if (!res.ok) {
+      throw new Error("Failed to fetch published Google Sheet CSV");
     }
 
-    const csvText = await response.text();
-
-    if (!csvText || csvText.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Empty sheet or no data" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    const csvText = await res.text();
     const rows = parseCSV(csvText);
-    console.log(`Parsed ${rows.length} rows`);
 
-    if (rows.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: "No rows to sync", records_synced: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // 2️⃣ Sync into pending_submissions
     let recordsSynced = 0;
     const errors: string[] = [];
 
@@ -93,38 +61,32 @@ serve(async (req) => {
 
         if (existing) continue;
 
-        const { error } = await supabase.from("pending_submissions").insert({
-          student_name: row.studentName,
-          email: row.email,
-          year_group: row.yearGroup,
-          class_name: row.className,
-          house: row.house,
-          category_number: row.categoryNumber,
-          category_name: row.categoryName,
-          title: row.title,
-          author: row.author,
-          date_started: row.dateStarted,
-          date_finished: row.dateFinished,
-          reflection: row.reflection,
-        });
+        const { error } = await supabase
+          .from("pending_submissions")
+          .insert({
+            student_name: row.studentName,
+            email: row.email,
+            year_group: row.yearGroup,
+            class_name: row.className,
+            house: row.house,
+            category_number: row.categoryNumber,
+            category_name: row.categoryName,
+            title: row.title,
+            author: row.author,
+            date_started: row.dateStarted,
+            date_finished: row.dateFinished,
+            reflection: row.reflection,
+          });
 
         if (error) {
-          errors.push(`Row ${row.email} - ${row.title}: ${error.message}`);
+          errors.push(error.message);
         } else {
           recordsSynced++;
         }
-      } catch (err) {
-        errors.push(`Row error: ${(err as Error).message}`);
+      } catch (e) {
+        errors.push(String(e));
       }
     }
-
-    // 3️⃣ Log sync attempt
-    await supabase.from("sheet_sync_logs").insert({
-      sync_type,
-      records_synced: recordsSynced,
-      errors: errors.length ? errors : null,
-      synced_by: user_id || null,
-    });
 
     return new Response(
       JSON.stringify({
@@ -134,60 +96,71 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-
   } catch (err) {
-    console.error("Sync Error:", err);
     return new Response(
-      JSON.stringify({ success: false, error: (err as Error).message }),
+      JSON.stringify({
+        success: false,
+        error: err instanceof Error ? err.message : "Unknown error",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
-function parseCSV(csvText: string): SheetRow[] {
-  const lines = csvText.split("\n").filter(l => l.trim());
+/* ================= CSV HELPERS ================= */
+
+function parseCSV(csv: string): SheetRow[] {
+  const lines = csv.split("\n").filter(Boolean);
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-  const rows: any[] = [];
+  const headers = splitCSVLine(lines[0]).map((h) =>
+    h.toLowerCase().trim()
+  );
 
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    if (values.length < headers.length) continue;
+  return lines.slice(1).map((line) => {
+    const values = splitCSVLine(line);
+    const row: Record<string, string> = {};
 
-    const row: any = {};
-    headers.forEach((h, idx) => row[h] = values[idx] || "");
-    rows.push({
-      timestamp: row["timestamp"] || "",
+    headers.forEach((h, i) => (row[h] = values[i] || ""));
+
+    return {
       email: row["email"] || "",
-      studentName: row["name"] || "",
+      studentName: row["student name"] || row["name"] || "",
       yearGroup: row["year group"] || "",
       className: row["class"] || "",
       house: row["house"] || "",
-      categoryNumber: parseInt(row["category number"] || "0") || 0,
-      categoryName: row["category name"] || "",
+      categoryNumber: Number(row["category number"] || 15),
+      categoryName: row["category name"] || "Free Choice",
       title: row["title"] || "",
-      author: row["author"] || "",
-      dateStarted: row["date started"] || "",
-      dateFinished: row["date finished"] || "",
+      author: row["author"] || "Unknown",
+      dateStarted: parseDate(row["date started"]),
+      dateFinished: parseDate(row["date finished"]),
       reflection: row["reflection"] || "",
-    });
-  }
-  return rows.filter(r => r.email && r.title);
+    };
+  }).filter(r => r.email && r.title);
 }
 
-function parseCSVLine(line: string): string[] {
-  const values: string[] = [];
+function splitCSVLine(line: string): string[] {
+  const result: string[] = [];
   let current = "";
   let inQuotes = false;
 
-  for (let char of line) {
+  for (const char of line) {
     if (char === '"') inQuotes = !inQuotes;
     else if (char === "," && !inQuotes) {
-      values.push(current.trim());
+      result.push(current.trim());
       current = "";
     } else current += char;
   }
-  values.push(current.trim());
-  return values;
+
+  result.push(current.trim());
+  return result;
+}
+
+function parseDate(value?: string) {
+  if (!value) return new Date().toISOString().split("T")[0];
+  const d = new Date(value);
+  return isNaN(d.getTime())
+    ? new Date().toISOString().split("T")[0]
+    : d.toISOString().split("T")[0];
 }
