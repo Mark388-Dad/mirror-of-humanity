@@ -52,6 +52,21 @@ const GoogleSheetSync = () => {
 
       if (error) throw error;
 
+      // Handle case where sheet is not public
+      if (data.success === false && data.error) {
+        toast({
+          title: 'Sync Issue',
+          description: data.error,
+          variant: 'destructive',
+        });
+        
+        // Show instructions if available
+        if (data.instructions) {
+          console.log('Instructions to make sheet public:', data.instructions);
+        }
+        return;
+      }
+
       toast({
         title: 'Sync Complete! ✅',
         description: `${data.records_synced} new records synced, ${data.auto_imported || 0} auto-imported`,

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -15,6 +15,7 @@ import AccessCodeManager from '@/components/AccessCodeManager';
 import FileUploadManager from '@/components/FileUploadManager';
 import GoogleSheetSync from '@/components/GoogleSheetSync';
 import EnhancedChallengeCreator from '@/components/EnhancedChallengeCreator';
+import MemberManagement from '@/components/MemberManagement';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 
 interface Challenge {
@@ -231,6 +232,10 @@ const LibrarianDashboard = () => {
               <Upload className="w-4 h-4" />
               Files
             </TabsTrigger>
+            <TabsTrigger value="members" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Members
+            </TabsTrigger>
             <TabsTrigger value="flagged" className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Flagged ({flaggedSubmissions.length})
@@ -316,6 +321,11 @@ const LibrarianDashboard = () => {
           {/* Files Tab */}
           <TabsContent value="files">
             <FileUploadManager />
+          </TabsContent>
+
+          {/* Members Tab */}
+          <TabsContent value="members">
+            <MemberManagement />
           </TabsContent>
 
           {/* Flagged Submissions Tab */}
