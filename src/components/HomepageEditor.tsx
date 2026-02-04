@@ -20,12 +20,22 @@ interface HomepageSection {
   display_order: number;
 }
 
+// Friendly labels for known sections; unknown sections fallback gracefully
 const sectionLabels: Record<string, { label: string; description: string; icon: string }> = {
   hero: { label: 'Hero Banner', description: 'Main welcome message', icon: '🎯' },
   announcement: { label: 'Announcement', description: 'Featured news or updates', icon: '📢' },
   tip_of_day: { label: 'Reading Tip', description: 'Daily reading tip', icon: '💡' },
   featured_challenge: { label: 'Featured Challenge', description: 'Highlight a challenge', icon: '🏆' },
   motivation: { label: 'Motivation', description: 'Inspirational message', icon: '✨' },
+
+  HeroSection: { label: 'Hero Section', description: 'Top banner section', icon: '🎯' },
+  Footer: { label: 'Footer', description: 'Bottom of page', icon: '📌' },
+  GoalsSection: { label: 'Goals', description: 'Student goals', icon: '🎯' },
+  IBConnectionsSection: { label: 'IB Connections', description: 'IB links & updates', icon: '🌐' },
+  OutcomesSection: { label: 'Outcomes', description: 'Learning outcomes', icon: '📊' },
+  PointsSection: { label: 'Points', description: 'Student points display', icon: '🏅' },
+  NavLink: { label: 'Nav Link', description: 'Navigation links', icon: '🔗' },
+  Navbar: { label: 'Navbar', description: 'Top navigation bar', icon: '🧭' },
 };
 
 const HomepageEditor = () => {
@@ -44,7 +54,7 @@ const HomepageEditor = () => {
       .order('display_order');
 
     if (error) {
-      toast({ title: 'Error loading sections', variant: 'destructive' });
+      toast({ title: 'Error loading sections', description: error.message, variant: 'destructive' });
     } else {
       setSections(data || []);
     }
@@ -53,7 +63,6 @@ const HomepageEditor = () => {
 
   const updateSection = async (id: string, updates: Partial<HomepageSection>) => {
     setSaving(id);
-    
     const { error } = await supabase
       .from('homepage_content')
       .update(updates)
@@ -86,13 +95,13 @@ const HomepageEditor = () => {
         <Sparkles className="h-6 w-6 text-gold" />
         <div>
           <h2 className="text-2xl font-bold">Homepage Editor</h2>
-          <p className="text-muted-foreground">Edit sections that appear on the student homepage</p>
+          <p className="text-muted-foreground">Edit all sections on the student homepage</p>
         </div>
       </div>
 
       {sections.map((section, index) => {
-        const config = sectionLabels[section.section_key] || { 
-          label: section.section_key, 
+        const config = sectionLabels[section.section_key] || {
+          label: section.section_key,
           description: 'Custom section',
           icon: '📄'
         };
@@ -102,7 +111,7 @@ const HomepageEditor = () => {
             key={section.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: index * 0.05 }}
           >
             <Card className={`border-2 transition-all ${section.is_visible ? 'border-green-500/30 bg-green-500/5' : 'border-muted opacity-60'}`}>
               <CardHeader className="pb-3">
@@ -142,7 +151,7 @@ const HomepageEditor = () => {
                     className="mt-1"
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor={`content-${section.id}`}>Content</Label>
                   <Textarea
