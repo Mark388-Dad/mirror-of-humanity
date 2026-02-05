@@ -116,6 +116,20 @@ serve(async (req) => {
           .maybeSingle();
 
         if (existing) continue;
+ 
+         // Also check if already in book_submissions (to prevent re-syncing)
+         const { data: existingBook } = await supabase
+           .from("book_submissions")
+           .select("id")
+           .eq("title", row.title)
+           .eq("author", row.author)
+           .maybeSingle();
+ 
+         // If already exists as a book submission, skip entirely
+         if (existingBook) {
+           console.log(`Skipping already imported book: ${row.title}`);
+           continue;
+         }
 
         const { error } = await supabase
           .from("pending_submissions")
@@ -158,7 +172,7 @@ serve(async (req) => {
                 date_started: row.dateStarted,
                 date_finished: row.dateFinished,
                 reflection: row.reflection,
-                points_earned: 10,
+                 points_earned: 3,
                 approval_status: "approved",
               });
             

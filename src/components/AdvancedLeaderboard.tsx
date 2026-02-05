@@ -13,6 +13,7 @@ import {
   TrendingUp, Zap, Target
 } from 'lucide-react';
 import { HOUSES, YEAR_GROUPS, CLASSES } from '@/lib/constants';
+ import { HOUSE_COLORS } from '@/lib/constants';
 import confetti from 'canvas-confetti';
 
 interface HouseLeaderboard {
@@ -50,36 +51,8 @@ interface YearGroupRanking {
   avg_books: number;
 }
 
-const houseConfig: Record<string, { bg: string; text: string; accent: string; gradient: string; icon: string }> = {
-  Kenya: { 
-    bg: 'bg-red-500/10', 
-    text: 'text-red-500', 
-    accent: 'bg-gradient-to-br from-red-500 to-red-600',
-    gradient: 'from-red-500 to-orange-500',
-    icon: '🦁'
-  },
-  Longonot: { 
-    bg: 'bg-blue-500/10', 
-    text: 'text-blue-500', 
-    accent: 'bg-gradient-to-br from-blue-500 to-blue-600',
-    gradient: 'from-blue-500 to-cyan-500',
-    icon: '🌋'
-  },
-  Kilimanjaro: { 
-    bg: 'bg-green-500/10', 
-    text: 'text-green-500', 
-    accent: 'bg-gradient-to-br from-green-500 to-green-600',
-    gradient: 'from-green-500 to-emerald-500',
-    icon: '🏔️'
-  },
-  Elgon: { 
-    bg: 'bg-purple-500/10', 
-    text: 'text-purple-500', 
-    accent: 'bg-gradient-to-br from-purple-500 to-purple-600',
-    gradient: 'from-purple-500 to-violet-500',
-    icon: '🐘'
-  },
-};
+ // Use centralized house colors from constants
+ const houseConfig = HOUSE_COLORS;
 
 const AdvancedLeaderboard = () => {
   const { profile } = useAuth();

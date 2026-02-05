@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import { Copy, Key, Trash2, Plus, Users, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
+ import { YEAR_GROUPS, HOUSES } from '@/lib/constants';
 
 interface AccessCode {
   id: string;
@@ -172,10 +173,9 @@ const AccessCodeManager = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="MYP5">MYP5</SelectItem>
-                <SelectItem value="DP1">DP1</SelectItem>
-                <SelectItem value="DP2">DP2</SelectItem>
-                <SelectItem value="G10">G10</SelectItem>
+               {YEAR_GROUPS.map(year => (
+                 <SelectItem key={year} value={year}>{year}</SelectItem>
+               ))}
               </SelectContent>
             </Select>
 
@@ -186,10 +186,9 @@ const AccessCodeManager = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="Kenya">Kenya</SelectItem>
-                <SelectItem value="Longonot">Longonot</SelectItem>
-                <SelectItem value="Kilimanjaro">Kilimanjaro</SelectItem>
-                <SelectItem value="Elgon">Elgon</SelectItem>
+               {HOUSES.map(house => (
+                 <SelectItem key={house} value={house}>{house}</SelectItem>
+               ))}
               </SelectContent>
             </Select>
 

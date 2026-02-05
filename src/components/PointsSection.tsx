@@ -1,8 +1,8 @@
 import { Trophy, Star, Award, Medal, Zap } from "lucide-react";
 
 const pointsData = [
-  { action: "Participating in the challenge", points: 3, icon: Zap },
-  { action: "Each category completed", points: 3, icon: Star },
+   { action: "Each book submitted", points: 3, icon: Star },
+   { action: "Joining the challenge", points: 3, icon: Zap },
   { action: "Reaching Bronze Level", points: 5, icon: Medal },
   { action: "Reaching Silver Level", points: 10, icon: Award },
   { action: "Reaching Gold Level", points: 15, icon: Trophy },
