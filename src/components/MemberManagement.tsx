@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, GraduationCap, BookOpen, Home, UserCircle, Search, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { HOUSES, YEAR_GROUPS, CLASSES } from '@/lib/constants';
+ import { HOUSES, YEAR_GROUPS, CLASSES, HOUSE_COLORS } from '@/lib/constants';
 
 interface Profile {
   id: string;
@@ -29,12 +29,13 @@ const roleLabels: Record<string, string> = {
   staff: 'Staff',
 };
 
-const houseColors: Record<string, string> = {
-  Kenya: 'bg-red-500',
-  Longonot: 'bg-blue-500',
-  Kilimanjaro: 'bg-green-500',
-  Elgon: 'bg-amber-500',
-};
+ // Use centralized house colors - Kenya=Blue, Longonot=Yellow, Elgon=Green, Kilimanjaro=Red
+ const houseColors: Record<string, string> = {
+   Kenya: 'bg-blue-500',
+   Longonot: 'bg-yellow-500',
+   Kilimanjaro: 'bg-red-500',
+   Elgon: 'bg-green-500',
+ };
 
 const MemberManagement = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);

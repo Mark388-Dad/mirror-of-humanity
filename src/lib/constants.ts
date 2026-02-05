@@ -38,6 +38,42 @@ export const YEAR_GROUPS = ['MYP5', 'G10', 'G11', 'G12', 'DP1', 'DP2'] as const;
 
 export const CLASSES = ['Swara', 'Chui', 'Duma', 'Nyati', 'Twiga', 'Kifaru'] as const;
 
+ // House colors: Kenya=Blue, Longonot=Yellow, Elgon=Green, Kilimanjaro=Red
+ export const HOUSE_COLORS: Record<string, { bg: string; text: string; accent: string; gradient: string; icon: string; border: string }> = {
+   Kenya: { 
+     bg: 'bg-blue-500/10', 
+     text: 'text-blue-500', 
+     accent: 'bg-gradient-to-br from-blue-500 to-blue-600',
+     gradient: 'from-blue-500 to-cyan-500',
+     border: 'border-blue-500',
+     icon: '🦁'
+   },
+   Longonot: { 
+     bg: 'bg-yellow-500/10', 
+     text: 'text-yellow-600', 
+     accent: 'bg-gradient-to-br from-yellow-500 to-amber-500',
+     gradient: 'from-yellow-500 to-amber-500',
+     border: 'border-yellow-500',
+     icon: '🌋'
+   },
+   Kilimanjaro: { 
+     bg: 'bg-red-500/10', 
+     text: 'text-red-500', 
+     accent: 'bg-gradient-to-br from-red-500 to-red-600',
+     gradient: 'from-red-500 to-rose-500',
+     border: 'border-red-500',
+     icon: '🏔️'
+   },
+   Elgon: { 
+     bg: 'bg-green-500/10', 
+     text: 'text-green-500', 
+     accent: 'bg-gradient-to-br from-green-500 to-emerald-500',
+     gradient: 'from-green-500 to-emerald-500',
+     border: 'border-green-500',
+     icon: '🐘'
+   },
+ };
+ 
 export const USER_ROLES = [
   { value: 'student', label: 'Student', requiresCode: true },
   { value: 'homeroom_tutor', label: 'Homeroom Tutor', requiresCode: false },

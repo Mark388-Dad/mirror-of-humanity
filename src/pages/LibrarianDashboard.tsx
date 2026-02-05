@@ -16,6 +16,7 @@ import FileUploadManager from '@/components/FileUploadManager';
 import GoogleSheetSync from '@/components/GoogleSheetSync';
 import EnhancedChallengeCreator from '@/components/EnhancedChallengeCreator';
 import MemberManagement from '@/components/MemberManagement';
+ import LibrarianUserManager from '@/components/LibrarianUserManager';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 
 interface Challenge {
@@ -236,6 +237,10 @@ const LibrarianDashboard = () => {
               <Users className="w-4 h-4" />
               Members
             </TabsTrigger>
+             <TabsTrigger value="submissions" className="flex items-center gap-2">
+               <BookOpen className="w-4 h-4" />
+               All Submissions
+             </TabsTrigger>
             <TabsTrigger value="flagged" className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4" />
               Flagged ({flaggedSubmissions.length})
@@ -328,6 +333,11 @@ const LibrarianDashboard = () => {
             <MemberManagement />
           </TabsContent>
 
+           {/* Submissions Manager Tab */}
+           <TabsContent value="submissions">
+             <LibrarianUserManager />
+           </TabsContent>
+ 
           {/* Flagged Submissions Tab */}
           <TabsContent value="flagged">
             {flaggedSubmissions.length === 0 ? (
