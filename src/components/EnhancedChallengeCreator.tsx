@@ -42,7 +42,7 @@ const EVIDENCE_TYPES = [
   { value: 'none', label: 'No Evidence Required' },
 ];
 
-const YEAR_GROUPS = ['MYP5', 'DP1', 'DP2', 'G10'];
+const YEAR_GROUPS = ['MYP5', 'G10', 'G11', 'G12', 'DP1', 'DP2'];
 const HOUSES = ['Kenya', 'Longonot', 'Kilimanjaro', 'Elgon'];
 const CLASSES = ['Swara', 'Chui', 'Duma', 'Nyati', 'Twiga', 'Kifaru'];
 
