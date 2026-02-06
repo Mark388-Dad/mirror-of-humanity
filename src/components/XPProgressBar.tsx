@@ -12,17 +12,18 @@ interface XPLevel {
   icon: React.ReactNode;
 }
 
+// 3 points per book, max 45 books = 135 XP max
 const XP_LEVELS: XPLevel[] = [
-  { level: 1, title: 'Starter', minXP: 0, maxXP: 10, color: 'from-slate-400 to-slate-500', icon: <Star className="w-5 h-5" /> },
-  { level: 2, title: 'Beginner', minXP: 10, maxXP: 30, color: 'from-indigo-400 to-blue-500', icon: <Star className="w-5 h-5" /> },
-  { level: 3, title: 'Learner', minXP: 30, maxXP: 60, color: 'from-blue-400 to-cyan-500', icon: <Star className="w-5 h-5" /> },
-  { level: 4, title: 'Developing', minXP: 60, maxXP: 100, color: 'from-cyan-400 to-teal-500', icon: <Zap className="w-5 h-5" /> },
-  { level: 5, title: 'Intermediate', minXP: 100, maxXP: 150, color: 'from-teal-400 to-green-500', icon: <Zap className="w-5 h-5" /> },
-  { level: 6, title: 'Skilled', minXP: 150, maxXP: 200, color: 'from-green-400 to-emerald-500', icon: <Zap className="w-5 h-5" /> },
-  { level: 7, title: 'Proficient', minXP: 200, maxXP: 300, color: 'from-emerald-400 to-teal-500', icon: <Trophy className="w-5 h-5" /> },
-  { level: 8, title: 'Advanced', minXP: 300, maxXP: 400, color: 'from-purple-400 to-pink-500', icon: <Trophy className="w-5 h-5" /> },
-  { level: 9, title: 'Expert', minXP: 400, maxXP: 500, color: 'from-pink-400 to-rose-500', icon: <Crown className="w-5 h-5" /> },
-  { level: 10, title: 'Master Reader', minXP: 500, maxXP: 999999, color: 'from-yellow-400 to-orange-500', icon: <Crown className="w-5 h-5" /> },
+  { level: 1, title: 'Starter', minXP: 0, maxXP: 9, color: 'from-slate-400 to-slate-500', icon: <Star className="w-5 h-5" /> },
+  { level: 2, title: 'Beginner', minXP: 9, maxXP: 18, color: 'from-indigo-400 to-blue-500', icon: <Star className="w-5 h-5" /> },
+  { level: 3, title: 'Learner', minXP: 18, maxXP: 30, color: 'from-blue-400 to-cyan-500', icon: <Star className="w-5 h-5" /> },
+  { level: 4, title: 'Developing', minXP: 30, maxXP: 45, color: 'from-cyan-400 to-teal-500', icon: <Zap className="w-5 h-5" /> },
+  { level: 5, title: 'Intermediate', minXP: 45, maxXP: 60, color: 'from-teal-400 to-green-500', icon: <Zap className="w-5 h-5" /> },
+  { level: 6, title: 'Skilled', minXP: 60, maxXP: 75, color: 'from-green-400 to-emerald-500', icon: <Zap className="w-5 h-5" /> },
+  { level: 7, title: 'Proficient', minXP: 75, maxXP: 90, color: 'from-emerald-400 to-teal-500', icon: <Trophy className="w-5 h-5" /> },
+  { level: 8, title: 'Advanced', minXP: 90, maxXP: 105, color: 'from-purple-400 to-pink-500', icon: <Trophy className="w-5 h-5" /> },
+  { level: 9, title: 'Expert', minXP: 105, maxXP: 120, color: 'from-pink-400 to-rose-500', icon: <Crown className="w-5 h-5" /> },
+  { level: 10, title: 'Master Reader', minXP: 120, maxXP: 135, color: 'from-yellow-400 to-orange-500', icon: <Crown className="w-5 h-5" /> },
 ];
 
 export const getXPLevel = (xp: number): XPLevel => {
@@ -51,7 +52,7 @@ const XPProgressBar = ({ currentXP, showDetails = true, size = 'md', className }
   
   const progressInLevel = currentXP - currentLevel.minXP;
   const levelRange = currentLevel.maxXP - currentLevel.minXP;
-  const progressPercent = nextLevel ? (progressInLevel / levelRange) * 100 : 100;
+  const progressPercent = nextLevel ? Math.min((progressInLevel / levelRange) * 100, 100) : 100;
   
   const sizeClasses = {
     sm: { bar: 'h-2', text: 'text-xs', icon: 'w-4 h-4' },
@@ -111,7 +112,6 @@ const XPProgressBar = ({ currentXP, showDetails = true, size = 'md', className }
           />
         </div>
         
-        {/* Animated sparkle on progress bar */}
         <motion.div
           initial={{ left: 0, opacity: 0 }}
           animate={{ 

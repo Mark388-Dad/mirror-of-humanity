@@ -21,36 +21,35 @@ const connections = [
   }
 ];
 
-const IBConnectionsSection = () => {
+interface IBConnectionsSectionProps {
+  title?: string | null;
+  content?: string | null;
+}
+
+const IBConnectionsSection = ({ title, content }: IBConnectionsSectionProps) => {
   return (
     <section className="py-24 bg-secondary/30">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            IB Connections
+            {title || 'IB Connections'}
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            This challenge connects deeply with IB frameworks and learner development.
+            {content || 'This challenge connects deeply with IB frameworks and learner development.'}
           </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {connections.map((connection, index) => (
-            <div 
-              key={index}
-              className={`p-8 rounded-2xl ${connection.color} border-2 hover:shadow-lg transition-all duration-300`}
-            >
+            <div key={index} className={`p-8 rounded-2xl ${connection.color} border-2 hover:shadow-lg transition-all duration-300`}>
               <div className="w-14 h-14 rounded-xl bg-card flex items-center justify-center mb-6">
                 <connection.icon className="w-7 h-7 text-foreground" />
               </div>
-              <h3 className="font-display text-xl font-semibold text-foreground mb-4">
-                {connection.category}
-              </h3>
+              <h3 className="font-display text-xl font-semibold text-foreground mb-4">{connection.category}</h3>
               <ul className="space-y-2">
                 {connection.items.map((item, itemIndex) => (
                   <li key={itemIndex} className="text-muted-foreground flex items-start gap-2">
-                    <span className="text-gold mt-1">•</span>
-                    {item}
+                    <span className="text-gold mt-1">•</span>{item}
                   </li>
                 ))}
               </ul>

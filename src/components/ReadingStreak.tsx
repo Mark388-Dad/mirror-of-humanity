@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Flame, Trophy, TrendingUp } from 'lucide-react';
+import { Flame, Trophy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 interface StreakData {
   current_streak: number;
   longest_streak: number;
-  total_bonus_points: number;
   last_submission_date: string | null;
 }
 
@@ -22,7 +21,7 @@ const ReadingStreak = () => {
     const fetchStreak = async () => {
       const { data, error } = await supabase
         .from('reading_streaks')
-        .select('*')
+        .select('current_streak, longest_streak, last_submission_date')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -47,7 +46,6 @@ const ReadingStreak = () => {
 
   const currentStreak = streak?.current_streak || 0;
   const longestStreak = streak?.longest_streak || 0;
-  const bonusPoints = streak?.total_bonus_points || 0;
 
   const getStreakEmoji = (count: number) => {
     if (count >= 10) return '🔥🔥🔥';
@@ -83,25 +81,16 @@ const ReadingStreak = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <Trophy className="w-4 h-4 text-gold" />
-            <div>
-              <div className="text-sm font-medium">{longestStreak}</div>
-              <div className="text-xs text-muted-foreground">Best Streak</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50">
-            <TrendingUp className="w-4 h-4 text-green-500" />
-            <div>
-              <div className="text-sm font-medium">+{bonusPoints}</div>
-              <div className="text-xs text-muted-foreground">Bonus Points</div>
-            </div>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 justify-center">
+          <Trophy className="w-4 h-4 text-gold" />
+          <div>
+            <span className="text-sm font-medium">{longestStreak}</span>
+            <span className="text-xs text-muted-foreground ml-1">Best Streak</span>
           </div>
         </div>
 
         <p className="text-xs text-muted-foreground text-center mt-4">
-          Keep reading within 7 days to maintain your streak! 3+ books = bonus points!
+          Keep reading within 7 days to maintain your streak!
         </p>
       </CardContent>
     </Card>

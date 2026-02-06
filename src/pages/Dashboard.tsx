@@ -5,15 +5,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp, Flame, ExternalLink, Sparkles } from 'lucide-react';
+import { BookOpen, Trophy, Target, Star, Medal, Award, Crown, Zap, Users, TrendingUp, ExternalLink, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import ReadingStreak from '@/components/ReadingStreak';
 import BookRecommendations from '@/components/BookRecommendations';
 import NotificationBell from '@/components/NotificationBell';
-import XPProgressBar, { getXPLevel, getNextLevel } from '@/components/XPProgressBar';
+import XPProgressBar, { getXPLevel } from '@/components/XPProgressBar';
 import VibrantDashboardCard, { FollettLibraryButton, QuickStats } from '@/components/VibrantDashboardCard';
+import { HOUSE_COLORS, MAX_BOOKS } from '@/lib/constants';
 import confetti from 'canvas-confetti';
 
 const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793';
@@ -45,13 +46,6 @@ interface SchoolStats {
   total_points: number;
 }
 
-const houseConfig: Record<string, { gradient: string; icon: string }> = {
-  Kenya: { gradient: 'from-red-500 to-orange-500', icon: '🦁' },
-  Longonot: { gradient: 'from-blue-500 to-cyan-500', icon: '🌋' },
-  Kilimanjaro: { gradient: 'from-green-500 to-emerald-500', icon: '🏔️' },
-  Elgon: { gradient: 'from-purple-500 to-violet-500', icon: '🐘' },
-};
-
 const Dashboard = () => {
   const { profile } = useAuth();
   const [progress, setProgress] = useState<StudentProgress | null>(null);
@@ -65,7 +59,6 @@ const Dashboard = () => {
     const fetchData = async () => {
       if (!profile) return;
 
-      // Fetch student progress (for students)
       if (profile.role === 'student') {
         const { data: allStudents } = await supabase
           .from('student_progress')
@@ -82,7 +75,6 @@ const Dashboard = () => {
         }
       }
 
-      // Fetch house leaderboard
       const { data: leaderboardData } = await supabase
         .from('house_leaderboard')
         .select('*')
@@ -90,8 +82,6 @@ const Dashboard = () => {
       
       if (leaderboardData) {
         setLeaderboard(leaderboardData as unknown as HouseLeaderboard[]);
-        
-        // Calculate school stats
         const stats = {
           total_students: leaderboardData.reduce((sum, h: any) => sum + (h.total_readers || 0), 0),
           total_books: leaderboardData.reduce((sum, h: any) => sum + (h.total_books || 0), 0),
@@ -100,7 +90,6 @@ const Dashboard = () => {
         setSchoolStats(stats);
       }
 
-      // Fetch active challenges
       const { data: challengeData } = await supabase
         .from('challenges')
         .select('id, title, description, end_date, points_reward')
@@ -138,11 +127,7 @@ const Dashboard = () => {
   };
 
   const triggerCelebration = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
   };
 
   if (loading) {
@@ -164,7 +149,7 @@ const Dashboard = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section with Notification Bell */}
+        {/* Welcome Section */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -173,29 +158,17 @@ const Dashboard = () => {
           <div>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
               Welcome back, {profile?.full_name?.split(' ')[0]}! 
-              <motion.span
-                animate={{ rotate: [0, 20, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-              >
-                👋
-              </motion.span>
+              <motion.span animate={{ rotate: [0, 20, 0] }} transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}>👋</motion.span>
             </h1>
             <p className="text-muted-foreground">{getRoleWelcome()}</p>
           </div>
           <NotificationBell />
         </motion.div>
 
-        {/* Quick Library Access */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="mb-8">
           <FollettLibraryButton className="w-full sm:w-auto" />
         </motion.div>
 
-        {/* School-Wide Stats */}
         {schoolStats && (
           <QuickStats
             stats={[
@@ -208,14 +181,8 @@ const Dashboard = () => {
         )}
 
         <div className="grid lg:grid-cols-3 gap-6 mt-8">
-          {/* Progress Card - Students Only */}
           {profile?.role === 'student' && progress && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="lg:col-span-2"
-            >
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="lg:col-span-2">
               <Card className="relative overflow-hidden">
                 <div className={`absolute inset-0 bg-gradient-to-br ${xpLevel?.color || 'from-blue-500/10 to-purple-500/10'} opacity-10`} />
                 <CardHeader className="relative">
@@ -223,75 +190,44 @@ const Dashboard = () => {
                     <BookOpen className="w-5 h-5 text-gold" />
                     Your Reading Progress
                     {studentRank && studentRank <= 10 && (
-                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">
-                        #{studentRank} in School
-                      </Badge>
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white">#{studentRank} in School</Badge>
                     )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="relative">
                   <div className="flex items-center gap-6 mb-6">
-                    <motion.div 
-                      className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/20 to-amber-500/20 flex items-center justify-center cursor-pointer"
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={triggerCelebration}
-                    >
+                    <motion.div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold/20 to-amber-500/20 flex items-center justify-center cursor-pointer" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }} onClick={triggerCelebration}>
                       {getAchievementIcon(progress.achievement_level || 'none')}
                     </motion.div>
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-4xl font-display font-bold text-foreground">
-                          {progress.books_read || 0}
-                        </span>
-                        <span className="text-muted-foreground">/ 45 books</span>
+                        <span className="text-4xl font-display font-bold text-foreground">{progress.books_read || 0}</span>
+                        <span className="text-muted-foreground">/ {MAX_BOOKS} books</span>
                       </div>
-                      <Progress 
-                        value={((progress.books_read || 0) / 45) * 100} 
-                        className="h-3"
-                      />
+                      <Progress value={Math.min(((progress.books_read || 0) / MAX_BOOKS) * 100, 100)} className="h-3" />
                     </div>
                   </div>
 
-                  {/* XP Progress */}
                   <XPProgressBar currentXP={progress.total_points || 0} />
 
                   <div className="grid grid-cols-3 gap-4 mt-6">
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
-                    >
-                      <div className="text-2xl font-display font-bold text-foreground">
-                        {progress.total_points || 0}
-                      </div>
+                    <motion.div whileHover={{ scale: 1.05 }} className="text-center p-4 rounded-xl bg-secondary cursor-pointer">
+                      <div className="text-2xl font-display font-bold text-foreground">{progress.total_points || 0}</div>
                       <div className="text-sm text-muted-foreground">Total XP</div>
                     </motion.div>
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
-                    >
-                      <div className="text-2xl font-display font-bold text-foreground capitalize">
-                        {progress.achievement_level || 'None'}
-                      </div>
+                    <motion.div whileHover={{ scale: 1.05 }} className="text-center p-4 rounded-xl bg-secondary cursor-pointer">
+                      <div className="text-2xl font-display font-bold text-foreground capitalize">{progress.achievement_level || 'None'}</div>
                       <div className="text-sm text-muted-foreground">Level</div>
                     </motion.div>
-                    <motion.div 
-                      whileHover={{ scale: 1.05 }}
-                      className="text-center p-4 rounded-xl bg-secondary cursor-pointer"
-                    >
-                      <div className="text-2xl font-display font-bold text-foreground">
-                        {profile?.house || '-'}
-                      </div>
+                    <motion.div whileHover={{ scale: 1.05 }} className="text-center p-4 rounded-xl bg-secondary cursor-pointer">
+                      <div className="text-2xl font-display font-bold text-foreground">{profile?.house || '-'}</div>
                       <div className="text-sm text-muted-foreground">House</div>
                     </motion.div>
                   </div>
 
                   <div className="mt-6 flex gap-4">
                     <Button asChild className="bg-gradient-to-r from-gold to-amber-500 text-navy hover:from-gold-light hover:to-amber-400 flex-1 shadow-lg shadow-gold/25">
-                      <Link to="/submit">
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Submit a Book
-                      </Link>
+                      <Link to="/submit"><Sparkles className="w-4 h-4 mr-2" />Submit a Book</Link>
                     </Button>
                     <Button asChild variant="outline" className="flex-1">
                       <Link to="/progress">View Full Progress</Link>
@@ -302,18 +238,13 @@ const Dashboard = () => {
             </motion.div>
           )}
 
-          {/* Reading Streak - Students Only */}
           {profile?.role === 'student' && (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-            >
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
               <ReadingStreak />
             </motion.div>
           )}
 
-          {/* House Leaderboard */}
+          {/* House Leaderboard - using HOUSE_COLORS */}
           <VibrantDashboardCard
             title="House Leaderboard"
             icon={<Trophy className="w-5 h-5 text-gold" />}
@@ -325,7 +256,7 @@ const Dashboard = () => {
           >
             <div className="space-y-4">
               {leaderboard.map((house, index) => {
-                const config = houseConfig[house.house] || { gradient: 'from-slate-400 to-slate-500', icon: '🏠' };
+                const config = HOUSE_COLORS[house.house] || { gradient: 'from-slate-400 to-slate-500', icon: '🏠' };
                 const isMyHouse = profile?.house === house.house;
                 
                 return (
@@ -366,9 +297,7 @@ const Dashboard = () => {
                 );
               })}
               {leaderboard.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  No data yet. Be the first to submit a book!
-                </p>
+                <p className="text-center text-muted-foreground py-8">No data yet. Be the first to submit a book!</p>
               )}
             </div>
           </VibrantDashboardCard>
@@ -380,49 +309,31 @@ const Dashboard = () => {
             gradient="from-yellow-500/10 to-orange-500/10"
             action={{ label: 'View All', href: '/challenges' }}
             delay={0.5}
-            className={profile?.role !== 'student' ? '' : ''}
           >
             {activeChallenges.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                No active challenges right now.
-              </p>
+              <p className="text-center text-muted-foreground py-4">No active challenges right now.</p>
             ) : (
               <div className="space-y-3">
                 {activeChallenges.map((challenge, index) => (
-                  <motion.div 
-                    key={challenge.id} 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 * index }}
-                    className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-all cursor-pointer"
-                  >
+                  <motion.div key={challenge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * index }}
+                    className="p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-all cursor-pointer">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-medium text-sm">{challenge.title}</span>
-                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
-                        +{challenge.points_reward} XP
-                      </Badge>
+                      <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">+{challenge.points_reward} XP</Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {challenge.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{challenge.description}</p>
                   </motion.div>
                 ))}
               </div>
             )}
           </VibrantDashboardCard>
 
-          {/* Book Recommendations - Students Only */}
           {profile?.role === 'student' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
               <BookRecommendations />
             </motion.div>
           )}
 
-          {/* Quick Actions for Staff */}
           {profile?.role !== 'student' && (
             <VibrantDashboardCard
               title="Quick Actions"
@@ -433,45 +344,28 @@ const Dashboard = () => {
               <div className="space-y-3">
                 {profile?.role === 'librarian' && (
                   <Button asChild className="w-full justify-start" variant="outline">
-                    <Link to="/librarian">
-                      <BookOpen className="w-4 h-4 mr-2" />
-                      Manage Challenges
-                    </Link>
+                    <Link to="/librarian"><BookOpen className="w-4 h-4 mr-2" />Manage Challenges</Link>
                   </Button>
                 )}
                 {(profile?.role === 'homeroom_tutor' || profile?.role === 'head_of_year') && (
                   <Button asChild className="w-full justify-start" variant="outline">
-                    <Link to="/tutor">
-                      <Users className="w-4 h-4 mr-2" />
-                      View Class Progress
-                    </Link>
+                    <Link to="/tutor"><Users className="w-4 h-4 mr-2" />View Class Progress</Link>
                   </Button>
                 )}
                 {profile?.role === 'house_patron' && (
                   <Button asChild className="w-full justify-start" variant="outline">
-                    <Link to="/house">
-                      <Trophy className="w-4 h-4 mr-2" />
-                      View House Progress
-                    </Link>
+                    <Link to="/house"><Trophy className="w-4 h-4 mr-2" />View House Progress</Link>
                   </Button>
                 )}
                 <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/admin">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Admin Dashboard
-                  </Link>
+                  <Link to="/admin"><TrendingUp className="w-4 h-4 mr-2" />Admin Dashboard</Link>
                 </Button>
                 <Button asChild className="w-full justify-start" variant="outline">
-                  <Link to="/gallery">
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Browse Book Gallery
-                  </Link>
+                  <Link to="/gallery"><BookOpen className="w-4 h-4 mr-2" />Browse Book Gallery</Link>
                 </Button>
                 <Button asChild className="w-full justify-start bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600">
                   <a href={FOLLETT_LIBRARY_URL} target="_blank" rel="noopener noreferrer">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Open Library Catalog
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                    <Sparkles className="w-4 h-4 mr-2" />Open Library Catalog<ExternalLink className="w-4 h-4 ml-2" />
                   </a>
                 </Button>
               </div>

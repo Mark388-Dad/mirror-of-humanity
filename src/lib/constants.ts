@@ -38,6 +38,19 @@ export const YEAR_GROUPS = ['MYP5', 'G10', 'G11', 'G12', 'DP1', 'DP2'] as const;
 
 export const CLASSES = ['Swara', 'Chui', 'Duma', 'Nyati', 'Twiga', 'Kifaru'] as const;
 
+// Every year group has the same classes
+export const CLASS_BY_YEAR: Record<string, readonly string[]> = {
+  MYP5: CLASSES,
+  G10: CLASSES,
+  G11: CLASSES,
+  G12: CLASSES,
+  DP1: CLASSES,
+  DP2: CLASSES,
+};
+
+export const MAX_BOOKS = 45;
+export const MAX_STUDENTS_PER_CLASS = 25;
+
  // House colors: Kenya=Blue, Longonot=Yellow, Elgon=Green, Kilimanjaro=Red
  export const HOUSE_COLORS: Record<string, { bg: string; text: string; accent: string; gradient: string; icon: string; border: string }> = {
    Kenya: { 

@@ -229,17 +229,9 @@ const SubmitBook = () => {
                     categoryName={currentCategory?.name}
                     placeholder="Search for a book..."
                   />
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <ExternalLink className="w-3 h-3" />
-                    <a
-                      href="https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Browse school library catalog
-                    </a>
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    You can submit any book — it doesn't need to be from the school library.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="author" className="flex items-center gap-2">
