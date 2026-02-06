@@ -23,15 +23,17 @@ interface HomepageSection {
 
 // Friendly labels for known sections; unknown sections fallback gracefully
 const sectionLabels: Record<string, { label: string; description: string; icon: string }> = {
-  hero: { label: 'Hero Banner', description: 'Main welcome message', icon: '🎯' },
-   goals: { label: 'Goals Section', description: 'Learning objectives and goals', icon: '🎯' },
-   categories: { label: 'Categories', description: '30 reading categories section', icon: '📚' },
-   ib_connections: { label: 'IB Connections', description: 'TOK, ATL, Learner Profile links', icon: '🌐' },
-   outcomes: { label: 'Outcomes', description: 'Expected learning outcomes', icon: '📊' },
-   points: { label: 'Points System', description: 'How points are earned', icon: '🏅' },
-   footer: { label: 'Footer', description: 'Bottom quote and credits', icon: '📌' },
-   announcement: { label: 'Announcement Banner', description: 'Special announcements', icon: '📢' },
-   featured_challenge: { label: 'Featured Challenge', description: 'Highlight current challenge', icon: '🏆' },
+  hero: { label: 'Hero Banner', description: 'Main welcome message and title', icon: '🎯' },
+  goals: { label: 'Goals Section', description: 'Learning objectives and goals', icon: '🎯' },
+  categories: { label: 'Categories', description: '30 reading categories section', icon: '📚' },
+  ib_connections: { label: 'IB Connections', description: 'TOK, ATL, Learner Profile links', icon: '🌐' },
+  outcomes: { label: 'Outcomes', description: 'Expected learning outcomes', icon: '📊' },
+  points: { label: 'Points System', description: 'How points are earned (3 pts/book)', icon: '🏅' },
+  footer: { label: 'Footer', description: 'Bottom quote and credits', icon: '📌' },
+  announcement: { label: 'Announcement Banner', description: 'Special announcements', icon: '📢' },
+  featured_challenge: { label: 'Featured Challenge', description: 'Highlight current challenge', icon: '🏆' },
+  motivation: { label: 'Motivational Quote', description: 'Inspiring quote section', icon: '✨' },
+  tip_of_day: { label: 'Tip of the Day', description: 'Daily reading tips', icon: '💡' },
 };
 
 const HomepageEditor = () => {

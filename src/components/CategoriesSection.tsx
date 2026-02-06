@@ -39,26 +39,27 @@ const categories = [
   { id: 30, name: "A Book About Sports", icon: Dumbbell },
 ];
 
-const CategoriesSection = () => {
+interface CategoriesSectionProps {
+  title?: string | null;
+  content?: string | null;
+}
+
+const CategoriesSection = ({ title, content }: CategoriesSectionProps) => {
   return (
     <section id="categories" className="py-24 bg-secondary/30">
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            30 Reading Categories
+            {title || '30 Reading Categories'}
           </h2>
           <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
-            Choose from fiction, non-fiction, poetry, or plays — any work that reflects an aspect of the human experience. 
-            Read one book from each category, then choose 15 more from any category (max 2 per category).
+            {content || 'Choose from fiction, non-fiction, poetry, or plays — any work that reflects an aspect of the human experience. Read one book from each category, then choose 15 more from any category (max 2 per category).'}
           </p>
         </div>
 
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {categories.map((category) => (
-            <div 
-              key={category.id}
-              className="group p-5 rounded-xl bg-card hover:bg-gold/5 border border-border hover:border-gold/30 transition-all duration-300 cursor-pointer"
-            >
+            <div key={category.id} className="group p-5 rounded-xl bg-card hover:bg-gold/5 border border-border hover:border-gold/30 transition-all duration-300 cursor-pointer">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0 group-hover:bg-gold/20 transition-colors">
                   <category.icon className="w-5 h-5 text-gold" />
