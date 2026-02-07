@@ -7,6 +7,7 @@ interface CertificateTemplate {
   body_text: string;
   background_image_url: string | null;
   school_logo_url: string | null;
+  signature_url: string | null;
   template_preset: string;
 }
 
@@ -17,89 +18,110 @@ interface CertificatePreviewProps {
   date: string;
 }
 
-const PRESET_STYLES: Record<string, { bg: string; border: string; titleColor: string; accent: string }> = {
-  classic: {
-    bg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
-    border: 'border-4 border-amber-300',
-    titleColor: 'text-amber-900',
-    accent: 'text-amber-700',
+const LEVEL_STYLES: Record<string, { line: string; badge: string; label: string }> = {
+  beginner: {
+    line: '#9BE7FF',
+    badge: '🌱',
+    label: 'Beginner Level',
   },
-  elegant: {
-    bg: 'bg-gradient-to-br from-slate-50 to-gray-100',
-    border: 'border-4 border-slate-300',
-    titleColor: 'text-slate-800',
-    accent: 'text-slate-600',
+  bronze: {
+    line: '#CD7F32',
+    badge: '🥉',
+    label: 'Bronze Achievement',
   },
-  modern: {
-    bg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-    border: 'border-4 border-blue-300',
-    titleColor: 'text-blue-900',
-    accent: 'text-blue-600',
+  silver: {
+    line: '#C0C0C0',
+    badge: '🥈',
+    label: 'Silver Achievement',
   },
-  royal: {
-    bg: 'bg-gradient-to-br from-purple-50 to-violet-50',
-    border: 'border-4 border-purple-400',
-    titleColor: 'text-purple-900',
-    accent: 'text-purple-600',
+  gold: {
+    line: '#D4AF37',
+    badge: '🥇',
+    label: 'Gold Achievement',
   },
 };
 
-const LEVEL_BADGES: Record<string, { emoji: string; label: string }> = {
-  beginner: { emoji: '🌱', label: 'Beginner Reader' },
-  bronze: { emoji: '🥉', label: 'Bronze Achievement' },
-  silver: { emoji: '🥈', label: 'Silver Achievement' },
-  gold: { emoji: '🥇', label: 'Gold Achievement' },
-};
-
-const CertificatePreview = ({ template, studentName, booksRead, date }: CertificatePreviewProps) => {
-  const style = PRESET_STYLES[template.template_preset] || PRESET_STYLES.classic;
-  const badge = LEVEL_BADGES[template.level] || LEVEL_BADGES.beginner;
+const CertificatePreview = ({
+  template,
+  studentName,
+  booksRead,
+  date,
+}: CertificatePreviewProps) => {
+  const level = LEVEL_STYLES[template.level] || LEVEL_STYLES.beginner;
 
   return (
-    <Card className={`${style.bg} ${style.border} relative overflow-hidden aspect-[1.414/1] flex flex-col items-center justify-center p-8 text-center`}
-      style={template.background_image_url ? {
-        backgroundImage: `url(${template.background_image_url})`,
+    <Card
+      className="relative overflow-hidden aspect-[1.414/1] flex flex-col justify-center p-10 bg-white"
+      style={{
+        backgroundImage: template.background_image_url
+          ? `url(${template.background_image_url})`
+          : undefined,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      } : undefined}>
-      
-      {/* Decorative corners */}
-      <div className="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-current opacity-30" />
-      <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-current opacity-30" />
-      <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-current opacity-30" />
-      <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-current opacity-30" />
+      }}
+    >
+      {/* DARK BLUE RIGHT SIDE */}
+      <div className="absolute right-0 top-0 h-full w-1/3 bg-[#1E3A6D]" />
 
-      {/* School Logo */}
+      {/* LEVEL COLORED LINE */}
+      <div
+        className="absolute inset-0 border-[6px]"
+        style={{ borderColor: level.line }}
+      />
+
+      {/* SCHOOL LOGO CIRCLE */}
       {template.school_logo_url && (
-        <img src={template.school_logo_url} alt="School Logo" className="w-16 h-16 object-contain mb-4" />
+        <div className="absolute top-10 right-20 w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg">
+          <img
+            src={template.school_logo_url}
+            className="w-20 h-20 object-contain"
+          />
+        </div>
       )}
 
-      {/* Badge */}
-      <div className="text-5xl mb-2">{badge.emoji}</div>
+      {/* MAIN CONTENT */}
+      <div className="max-w-xl z-10">
+        <h2 className="text-3xl font-bold tracking-wide">
+          {template.title}
+        </h2>
 
-      {/* Title */}
-      <h2 className={`text-2xl md:text-3xl font-display font-bold ${style.titleColor} mb-1`}>
-        {template.title}
-      </h2>
-      <p className={`text-sm ${style.accent} mb-6`}>{template.subtitle}</p>
+        <p className="text-sm text-slate-600 mt-1">
+          {template.subtitle}
+        </p>
 
-      {/* Awarded to */}
-      <p className={`text-sm ${style.accent} mb-1`}>This is awarded to</p>
-      <h3 className={`text-xl md:text-2xl font-display font-bold ${style.titleColor} mb-4 border-b-2 border-current pb-2 px-8`}>
-        {studentName}
-      </h3>
+        <p className="mt-10 text-sm text-slate-600">
+          PRESENTED TO
+        </p>
 
-      {/* Body */}
-      <p className={`text-sm ${style.accent} max-w-md mb-4`}>{template.body_text}</p>
+        <h3 className="text-2xl font-semibold border-b pb-2 w-fit">
+          {studentName}
+        </h3>
 
-      {/* Stats */}
-      <div className="flex items-center gap-4 text-sm">
-        <span className={style.accent}>📚 {booksRead} Books Read</span>
-        <span className={style.accent}>🏆 {badge.label}</span>
+        <p className="mt-6 text-sm text-slate-700 max-w-md">
+          {template.body_text}
+        </p>
+
+        {/* SIGNATURE */}
+        {template.signature_url && (
+          <div className="mt-10">
+            <img
+              src={template.signature_url}
+              className="h-12 object-contain"
+            />
+            <p className="text-xs mt-1 font-semibold">LIBRARIAN</p>
+          </div>
+        )}
       </div>
 
-      {/* Date */}
-      <p className={`text-xs ${style.accent} mt-4 opacity-70`}>{date}</p>
+      {/* LEVEL BADGE BOTTOM RIGHT */}
+      <div className="absolute bottom-10 right-20 text-white text-right">
+        <div className="text-3xl">{level.badge}</div>
+        <p className="text-sm font-semibold">{level.label}</p>
+      </div>
+
+      {/* DATE */}
+      <p className="absolute bottom-6 left-10 text-xs text-slate-500">
+        {date}
+      </p>
     </Card>
   );
 };
