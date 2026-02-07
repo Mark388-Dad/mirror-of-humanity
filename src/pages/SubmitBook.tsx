@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
@@ -9,15 +9,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, Loader2, Calendar, User, FileText, ExternalLink } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { BookOpen, Loader2, Calendar, User, FileText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { READING_CATEGORIES } from '@/lib/constants';
+import { MAX_BOOKS, MAX_BOOKS_PER_CATEGORY } from '@/lib/constants';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { z } from 'zod';
 import BookSearch from '@/components/BookSearch';
 
-
 const submissionSchema = z.object({
-  categoryNumber: z.number().min(1).max(30),
+  categoryNumber: z.number().min(1),
   title: z.string().min(1, 'Title is required').max(200),
   author: z.string().min(1, 'Author is required').max(100),
   dateStarted: z.string().min(1, 'Start date is required'),
@@ -28,6 +29,7 @@ const submissionSchema = z.object({
 const SubmitBook = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { allCategories, loading: categoriesLoading } = useCustomCategories();
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -38,7 +40,35 @@ const SubmitBook = () => {
     reflection: '',
   });
 
-  const currentCategory = READING_CATEGORIES.find(c => c.id === selectedCategory);
+  // Submission limits
+  const [totalSubmissions, setTotalSubmissions] = useState(0);
+  const [categoryCounts, setCategoryCounts] = useState<Record<number, number>>({});
+  const [limitsLoading, setLimitsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) fetchLimits();
+  }, [user]);
+
+  const fetchLimits = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('book_submissions')
+      .select('category_number')
+      .eq('user_id', user.id);
+
+    if (data) {
+      setTotalSubmissions(data.length);
+      const counts: Record<number, number> = {};
+      data.forEach(s => { counts[s.category_number] = (counts[s.category_number] || 0) + 1; });
+      setCategoryCounts(counts);
+    }
+    setLimitsLoading(false);
+  };
+
+  const currentCategory = allCategories.find(c => c.id === selectedCategory);
+  const categoryCount = selectedCategory ? (categoryCounts[selectedCategory] || 0) : 0;
+  const categoryFull = categoryCount >= MAX_BOOKS_PER_CATEGORY;
+  const challengeComplete = totalSubmissions >= MAX_BOOKS;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +78,22 @@ const SubmitBook = () => {
       return;
     }
 
+    if (challengeComplete) {
+      toast.error("You've completed the 45-Book Challenge! No more submissions.");
+      return;
+    }
+
+    if (categoryFull) {
+      toast.error(`You've already submitted ${MAX_BOOKS_PER_CATEGORY} books in this category.`);
+      return;
+    }
+
     try {
       const validatedData = submissionSchema.parse({
         categoryNumber: selectedCategory,
         ...formData,
       });
 
-      // Validate dates
       if (new Date(validatedData.dateFinished) < new Date(validatedData.dateStarted)) {
         toast.error('Finish date cannot be before start date');
         return;
@@ -62,7 +101,6 @@ const SubmitBook = () => {
 
       setLoading(true);
 
-      // Insert submission with pending status
       const { data: submissionData, error } = await supabase.from('book_submissions').insert({
         user_id: user.id,
         category_number: validatedData.categoryNumber,
@@ -87,20 +125,15 @@ const SubmitBook = () => {
           category_name: currentCategory?.name || '',
           reflection: validatedData.reflection.trim(),
         },
-      }).then(() => {
-        console.log('AI review completed');
-      }).catch((err) => {
-        console.error('AI review error:', err);
-      });
+      }).catch((err) => console.error('AI review error:', err));
 
-      // Get user profile for email
+      // Send notification
       const { data: profileData } = await supabase
         .from('profiles')
         .select('email, full_name')
         .eq('user_id', user.id)
         .single();
 
-      // Send notification email
       if (profileData?.email) {
         supabase.functions.invoke('send-notification', {
           body: {
@@ -112,7 +145,6 @@ const SubmitBook = () => {
           },
         }).catch((err) => console.error('Notification error:', err));
 
-        // Check for achievement milestones
         const { data: progressData } = await supabase
           .from('student_progress')
           .select('books_read')
@@ -122,7 +154,8 @@ const SubmitBook = () => {
         const booksRead = (progressData?.books_read || 0) + 1;
         let achievementLevel = null;
         
-        if (booksRead === 15) achievementLevel = 'bronze';
+        if (booksRead === 1) achievementLevel = 'beginner';
+        else if (booksRead === 15) achievementLevel = 'bronze';
         else if (booksRead === 30) achievementLevel = 'silver';
         else if (booksRead === 45) achievementLevel = 'gold';
 
@@ -154,6 +187,24 @@ const SubmitBook = () => {
     }
   };
 
+  if (challengeComplete) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8 max-w-3xl text-center">
+          <Card className="card-elevated py-12">
+            <CardContent>
+              <div className="text-6xl mb-4">🎉</div>
+              <h2 className="text-2xl font-display font-bold mb-2">You've Completed the 45-Book Challenge!</h2>
+              <p className="text-muted-foreground mb-4">Congratulations! You've submitted {totalSubmissions} books. Amazing work!</p>
+              <Button onClick={() => navigate('/progress')}>View Your Progress</Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -166,6 +217,16 @@ const SubmitBook = () => {
           <p className="text-muted-foreground">
             Record your reading journey and earn points for the challenge.
           </p>
+          {!limitsLoading && (
+            <div className="flex gap-3 mt-3">
+              <Badge variant="outline" className="text-sm">
+                📚 {totalSubmissions}/{MAX_BOOKS} books submitted
+              </Badge>
+              <Badge variant="outline" className="text-sm">
+                {MAX_BOOKS - totalSubmissions} remaining overall
+              </Badge>
+            </div>
+          )}
         </div>
 
         <Card className="card-elevated">
@@ -175,7 +236,7 @@ const SubmitBook = () => {
               Book Submission Form
             </CardTitle>
             <CardDescription>
-              Fill in the details of the book you've completed reading.
+              Fill in the details of the book you've completed reading. You can submit any book.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,11 +255,22 @@ const SubmitBook = () => {
                     <SelectValue placeholder="Select a category for your book" />
                   </SelectTrigger>
                   <SelectContent className="max-h-80">
-                    {READING_CATEGORIES.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        <span className="font-medium">#{category.id}</span> - {category.name}
-                      </SelectItem>
-                    ))}
+                    {allCategories.map((category) => {
+                      const count = categoryCounts[category.id] || 0;
+                      const full = count >= MAX_BOOKS_PER_CATEGORY;
+                      return (
+                        <SelectItem key={category.id} value={category.id.toString()} disabled={full}>
+                          <span className="flex items-center gap-2">
+                            <span className="font-medium">#{category.id}</span> - {category.name}
+                            {count > 0 && (
+                              <Badge variant={full ? 'destructive' : 'secondary'} className="ml-1 text-xs">
+                                {count}/{MAX_BOOKS_PER_CATEGORY}
+                              </Badge>
+                            )}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {currentCategory && (
@@ -206,6 +278,12 @@ const SubmitBook = () => {
                     <p className="text-sm text-muted-foreground italic">
                       <span className="font-medium text-gold">Reflection prompt:</span> {currentCategory.prompt}
                     </p>
+                    {categoryFull && (
+                      <p className="text-sm text-destructive mt-2 flex items-center gap-1">
+                        <AlertTriangle className="w-4 h-4" />
+                        You've reached the maximum of {MAX_BOOKS_PER_CATEGORY} books in this category.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -300,7 +378,7 @@ const SubmitBook = () => {
               <Button 
                 type="submit" 
                 className="w-full bg-gold text-navy hover:bg-gold-light h-12 text-lg"
-                disabled={loading || !selectedCategory}
+                disabled={loading || !selectedCategory || categoryFull}
               >
                 {loading && <Loader2 className="w-5 h-5 mr-2 animate-spin" />}
                 Submit Book (+3 points)

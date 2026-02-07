@@ -49,6 +49,7 @@ export const CLASS_BY_YEAR: Record<string, readonly string[]> = {
 };
 
 export const MAX_BOOKS = 45;
+export const MAX_BOOKS_PER_CATEGORY = 2;
 export const MAX_STUDENTS_PER_CLASS = 25;
 
  // House colors: Kenya=Blue, Longonot=Yellow, Elgon=Green, Kilimanjaro=Red
