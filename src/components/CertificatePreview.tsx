@@ -18,18 +18,27 @@ interface CertificatePreviewProps {
   date: string;
 }
 
-const LEVEL_LINES: Record<string, string> = {
-  beginner: '#8CE0FF',
-  bronze: '#CD7F32',
-  silver: '#C0C0C0',
-  gold: '#D4AF37',
-};
-
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: 'Beginner Level',
-  bronze: 'Bronze Achievement',
-  silver: 'Silver Achievement',
-  gold: 'Gold Achievement',
+const LEVEL_STYLES: Record<string, { line: string; badge: string; label: string }> = {
+  beginner: {
+    line: '#9BE7FF',
+    badge: '🌱',
+    label: 'Beginner Level',
+  },
+  bronze: {
+    line: '#CD7F32',
+    badge: '🥉',
+    label: 'Bronze Achievement',
+  },
+  silver: {
+    line: '#C0C0C0',
+    badge: '🥈',
+    label: 'Silver Achievement',
+  },
+  gold: {
+    line: '#D4AF37',
+    badge: '🥇',
+    label: 'Gold Achievement',
+  },
 };
 
 const CertificatePreview = ({
@@ -38,79 +47,79 @@ const CertificatePreview = ({
   booksRead,
   date,
 }: CertificatePreviewProps) => {
-  const lineColor = LEVEL_LINES[template.level] || LEVEL_LINES.beginner;
-  const levelLabel = LEVEL_LABELS[template.level];
+  const level = LEVEL_STYLES[template.level] || LEVEL_STYLES.beginner;
 
   return (
     <Card
-      className="relative w-full aspect-[1.414/1] overflow-hidden bg-white"
+      className="relative overflow-hidden aspect-[1.414/1] flex flex-col justify-center p-10 bg-white"
       style={{
         backgroundImage: template.background_image_url
           ? `url(${template.background_image_url})`
           : undefined,
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
       }}
     >
-      {/* === THIN LEVEL LINE === */}
+      {/* DARK BLUE RIGHT SIDE */}
+      <div className="absolute right-0 top-0 h-full w-1/3 bg-[#1E3A6D]" />
+
+      {/* LEVEL COLORED LINE */}
       <div
         className="absolute inset-0 border-[6px]"
-        style={{ borderColor: lineColor }}
+        style={{ borderColor: level.line }}
       />
 
-      {/* === SCHOOL LOGO (TOP RIGHT CIRCLE) === */}
+      {/* SCHOOL LOGO CIRCLE */}
       {template.school_logo_url && (
-        <img
-          src={template.school_logo_url}
-          className="absolute top-[90px] right-[120px] w-[90px] h-[90px] object-contain"
-        />
+        <div className="absolute top-10 right-20 w-24 h-24 rounded-full bg-white flex items-center justify-center shadow-lg">
+          <img
+            src={template.school_logo_url}
+            className="w-20 h-20 object-contain"
+          />
+        </div>
       )}
 
-      {/* === TITLE === */}
-      <div className="absolute top-[120px] left-[120px] text-center">
-        <h2 className="text-[42px] tracking-widest font-semibold">
+      {/* MAIN CONTENT */}
+      <div className="max-w-xl z-10">
+        <h2 className="text-3xl font-bold tracking-wide">
           {template.title}
         </h2>
-        <p className="text-[16px] tracking-[4px] text-slate-600">
+
+        <p className="text-sm text-slate-600 mt-1">
           {template.subtitle}
         </p>
+
+        <p className="mt-10 text-sm text-slate-600">
+          PRESENTED TO
+        </p>
+
+        <h3 className="text-2xl font-semibold border-b pb-2 w-fit">
+          {studentName}
+        </h3>
+
+        <p className="mt-6 text-sm text-slate-700 max-w-md">
+          {template.body_text}
+        </p>
+
+        {/* SIGNATURE */}
+        {template.signature_url && (
+          <div className="mt-10">
+            <img
+              src={template.signature_url}
+              className="h-12 object-contain"
+            />
+            <p className="text-xs mt-1 font-semibold">LIBRARIAN</p>
+          </div>
+        )}
       </div>
 
-      {/* === PRESENTED TO === */}
-      <p className="absolute top-[260px] left-[300px] text-[12px] tracking-[3px] text-slate-600">
-        PRESENTED TO
-      </p>
-
-      {/* === STUDENT NAME === */}
-      <h3 className="absolute top-[300px] left-[240px] w-[420px] text-center text-[20px] font-semibold border-b border-slate-500 pb-2">
-        {studentName}
-      </h3>
-
-      {/* === BODY TEXT === */}
-      <p className="absolute top-[360px] left-[220px] w-[480px] text-center text-[12px] text-slate-700">
-        {template.body_text}
-      </p>
-
-      {/* === SIGNATURE === */}
-      {template.signature_url && (
-        <img
-          src={template.signature_url}
-          className="absolute bottom-[120px] left-[260px] h-[40px]"
-        />
-      )}
-
-      <p className="absolute bottom-[95px] left-[280px] text-[12px] font-semibold">
-        LIBRARIAN
-      </p>
-
-      {/* === LEVEL BADGE BOTTOM RIGHT === */}
-      <div className="absolute bottom-[110px] right-[140px] text-white text-right">
-        <p className="text-[14px] font-semibold">{levelLabel}</p>
-        <p className="text-[12px]">📚 {booksRead} Books</p>
+      {/* LEVEL BADGE BOTTOM RIGHT */}
+      <div className="absolute bottom-10 right-20 text-white text-right">
+        <div className="text-3xl">{level.badge}</div>
+        <p className="text-sm font-semibold">{level.label}</p>
       </div>
 
-      {/* === DATE === */}
-      <p className="absolute bottom-[60px] left-[120px] text-[10px] text-slate-600">
+      {/* DATE */}
+      <p className="absolute bottom-6 left-10 text-xs text-slate-500">
         {date}
       </p>
     </Card>
