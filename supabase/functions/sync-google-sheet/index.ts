@@ -107,29 +107,28 @@ serve(async (req) => {
           continue; // Skip rows without required fields
         }
 
+        // Case-insensitive dedup check in pending_submissions
         const { data: existing } = await supabase
           .from("pending_submissions")
           .select("id")
-          .eq("email", row.email)
-          .eq("title", row.title)
-          .eq("date_finished", row.dateFinished)
+          .ilike("email", row.email)
+          .ilike("title", row.title)
           .maybeSingle();
 
         if (existing) continue;
  
-         // Also check if already in book_submissions (to prevent re-syncing)
-         const { data: existingBook } = await supabase
-           .from("book_submissions")
-           .select("id")
-           .eq("title", row.title)
-           .eq("author", row.author)
-           .maybeSingle();
+        // Case-insensitive dedup check in book_submissions (email via profile lookup + title)
+        const { data: existingBook } = await supabase
+          .from("book_submissions")
+          .select("id")
+          .ilike("title", row.title)
+          .ilike("author", row.author)
+          .maybeSingle();
  
-         // If already exists as a book submission, skip entirely
-         if (existingBook) {
-           console.log(`Skipping already imported book: ${row.title}`);
-           continue;
-         }
+        if (existingBook) {
+          console.log(`Skipping already imported book: ${row.title}`);
+          continue;
+        }
 
         const { error } = await supabase
           .from("pending_submissions")

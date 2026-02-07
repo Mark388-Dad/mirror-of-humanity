@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      certificate_templates: {
+        Row: {
+          background_image_url: string | null
+          body_text: string
+          created_at: string
+          id: string
+          is_published: boolean
+          level: string
+          school_logo_url: string | null
+          subtitle: string
+          template_preset: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          background_image_url?: string | null
+          body_text?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          level: string
+          school_logo_url?: string | null
+          subtitle?: string
+          template_preset?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          background_image_url?: string | null
+          body_text?: string
+          created_at?: string
+          id?: string
+          is_published?: boolean
+          level?: string
+          school_logo_url?: string | null
+          subtitle?: string
+          template_preset?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       challenge_participants: {
         Row: {
           books_completed: number | null
@@ -154,6 +199,53 @@ export type Database = {
           },
         ]
       }
+      challenge_submissions: {
+        Row: {
+          author: string
+          category_name: string
+          category_number: number
+          challenge_id: string
+          created_at: string
+          id: string
+          points_earned: number
+          reflection: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          author?: string
+          category_name?: string
+          category_number?: number
+          challenge_id: string
+          created_at?: string
+          id?: string
+          points_earned?: number
+          reflection?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          author?: string
+          category_name?: string
+          category_number?: number
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          points_earned?: number
+          reflection?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_submissions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           allowed_classes: string[] | null
@@ -172,6 +264,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_featured: boolean | null
+          is_independent: boolean
           leaderboard_type: string | null
           participation_type: string | null
           points_reward: number | null
@@ -199,6 +292,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          is_independent?: boolean
           leaderboard_type?: string | null
           participation_type?: string | null
           points_reward?: number | null
@@ -226,6 +320,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
+          is_independent?: boolean
           leaderboard_type?: string | null
           participation_type?: string | null
           points_reward?: number | null
@@ -235,6 +330,33 @@ export type Database = {
           target_categories?: number[] | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_categories: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: number
+          is_active: boolean
+          name: string
+          prompt: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: number
+          is_active?: boolean
+          name: string
+          prompt?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: number
+          is_active?: boolean
+          name?: string
+          prompt?: string
         }
         Relationships: []
       }

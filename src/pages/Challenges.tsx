@@ -6,7 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Calendar, Users, Zap, Target, BookOpen, CheckCircle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Trophy, Calendar, Users, Zap, Target, BookOpen, CheckCircle, Loader2, Plus } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -20,6 +24,7 @@ interface Challenge {
   target_books: number;
   points_reward: number;
   is_active: boolean;
+  is_independent: boolean;
 }
 
 interface Participation {
@@ -35,27 +40,21 @@ const Challenges = () => {
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState<string | null>(null);
+  const [submittingFor, setSubmittingFor] = useState<string | null>(null);
+  const [challengeForm, setChallengeForm] = useState({ title: '', author: '', reflection: '' });
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchChallenges();
-  }, [user]);
+  useEffect(() => { fetchChallenges(); }, [user]);
 
   const fetchChallenges = async () => {
-    // Fetch active challenges
-    const { data: challengeData, error } = await supabase
+    const { data: challengeData } = await supabase
       .from('challenges')
       .select('*')
       .eq('is_active', true)
       .order('end_date', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching challenges:', error);
-      return;
-    }
-
     setChallenges((challengeData as Challenge[]) || []);
 
-    // Fetch user's participations
     if (user) {
       const { data: participationData } = await supabase
         .from('challenge_participants')
@@ -63,15 +62,12 @@ const Challenges = () => {
         .eq('user_id', user.id);
 
       if (participationData) {
-        const participationMap: Record<string, Participation> = {};
-        participationData.forEach((p: any) => {
-          participationMap[p.challenge_id] = p;
-        });
-        setParticipations(participationMap);
+        const map: Record<string, Participation> = {};
+        participationData.forEach((p: any) => { map[p.challenge_id] = p; });
+        setParticipations(map);
       }
     }
 
-    // Fetch participant counts
     const counts: Record<string, number> = {};
     for (const challenge of (challengeData as Challenge[]) || []) {
       const { count } = await supabase
@@ -81,44 +77,55 @@ const Challenges = () => {
       counts[challenge.id] = count || 0;
     }
     setParticipantCounts(counts);
-
     setLoading(false);
   };
 
   const joinChallenge = async (challengeId: string) => {
-    if (!user) {
-      toast.error('Please sign in to join challenges');
-      return;
-    }
-
-    if (profile?.role !== 'student') {
-      toast.error('Only students can participate in challenges');
-      return;
-    }
-
+    if (!user) { toast.error('Please sign in'); return; }
+    if (profile?.role !== 'student') { toast.error('Only students can join'); return; }
     setJoining(challengeId);
 
-    const { error } = await supabase
-      .from('challenge_participants')
-      .insert({
-        challenge_id: challengeId,
-        user_id: user.id,
-        books_completed: 0,
-      });
+    const { error } = await supabase.from('challenge_participants').insert({
+      challenge_id: challengeId, user_id: user.id, books_completed: 0,
+    });
 
     if (error) {
-      if (error.code === '23505') {
-        toast.error('You have already joined this challenge');
-      } else {
-        console.error('Error joining challenge:', error);
-        toast.error('Failed to join challenge');
-      }
+      toast.error(error.code === '23505' ? 'Already joined' : 'Failed to join');
     } else {
-      toast.success('You have joined the challenge! 🎉');
+      toast.success('Joined the challenge! 🎉');
       fetchChallenges();
     }
-
     setJoining(null);
+  };
+
+  const submitChallengeBook = async (challengeId: string) => {
+    if (!user || !challengeForm.title.trim()) { toast.error('Title is required'); return; }
+    setSubmitting(true);
+
+    const { error } = await supabase.from('challenge_submissions').insert({
+      challenge_id: challengeId,
+      user_id: user.id,
+      title: challengeForm.title.trim(),
+      author: challengeForm.author.trim() || 'Unknown',
+      reflection: challengeForm.reflection.trim(),
+    });
+
+    if (error) {
+      toast.error('Failed to submit');
+    } else {
+      // Increment books_completed
+      const current = participations[challengeId]?.books_completed || 0;
+      await supabase.from('challenge_participants')
+        .update({ books_completed: current + 1 })
+        .eq('challenge_id', challengeId)
+        .eq('user_id', user.id);
+
+      toast.success('Book submitted for challenge! +3 points');
+      setChallengeForm({ title: '', author: '', reflection: '' });
+      setSubmittingFor(null);
+      fetchChallenges();
+    }
+    setSubmitting(false);
   };
 
   const getChallengeTypeIcon = (type: string) => {
@@ -172,9 +179,7 @@ const Challenges = () => {
             <CardContent>
               <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Active Challenges</h3>
-              <p className="text-muted-foreground">
-                Check back soon for new reading challenges!
-              </p>
+              <p className="text-muted-foreground">Check back soon for new reading challenges!</p>
             </CardContent>
           </Card>
         ) : (
@@ -190,105 +195,104 @@ const Challenges = () => {
                 : 0;
 
               return (
-                <Card 
-                  key={challenge.id} 
-                  className={`card-elevated ${isCompleted ? 'border-green-500 bg-green-50/50' : ''}`}
-                >
+                <Card key={challenge.id} className={`card-elevated ${isCompleted ? 'border-green-500 bg-green-50/50' : ''}`}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
                         {getChallengeTypeIcon(challenge.challenge_type)}
-                        <Badge variant="outline">
-                          {getChallengeTypeLabel(challenge.challenge_type)}
-                        </Badge>
+                        <Badge variant="outline">{getChallengeTypeLabel(challenge.challenge_type)}</Badge>
+                        {challenge.is_independent && <Badge variant="secondary" className="text-xs">Independent</Badge>}
                       </div>
-                      <Badge 
-                        variant={isExpired ? 'secondary' : daysLeft <= 3 ? 'destructive' : 'default'}
-                        className="text-xs"
-                      >
+                      <Badge variant={isExpired ? 'secondary' : daysLeft <= 3 ? 'destructive' : 'default'} className="text-xs">
                         {isExpired ? 'Ended' : `${daysLeft} days left`}
                       </Badge>
                     </div>
-                    <CardTitle className="text-xl font-display mt-2">
-                      {challenge.title}
-                    </CardTitle>
+                    <CardTitle className="text-xl font-display mt-2">{challenge.title}</CardTitle>
                     <CardDescription>{challenge.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {/* Challenge Stats */}
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div className="bg-secondary rounded-lg p-2">
-                        <div className="text-lg font-bold text-foreground">
-                          {challenge.target_books}
-                        </div>
+                        <div className="text-lg font-bold text-foreground">{challenge.target_books}</div>
                         <div className="text-xs text-muted-foreground">Books</div>
                       </div>
                       <div className="bg-secondary rounded-lg p-2">
-                        <div className="text-lg font-bold text-gold">
-                          +{challenge.points_reward}
-                        </div>
+                        <div className="text-lg font-bold text-gold">+{challenge.points_reward}</div>
                         <div className="text-xs text-muted-foreground">Points</div>
                       </div>
                       <div className="bg-secondary rounded-lg p-2">
-                        <div className="text-lg font-bold text-foreground">
-                          {participantCounts[challenge.id] || 0}
-                        </div>
+                        <div className="text-lg font-bold text-foreground">{participantCounts[challenge.id] || 0}</div>
                         <div className="text-xs text-muted-foreground">Joined</div>
                       </div>
                     </div>
 
-                    {/* Date Range */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="w-4 h-4" />
                       {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d, yyyy')}
                     </div>
 
-                    {/* Progress (if joined) */}
                     {hasJoined && (
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Your Progress</span>
-                          <span className="font-medium">
-                            {participation.books_completed || 0} / {challenge.target_books}
-                          </span>
+                          <span className="font-medium">{participation.books_completed || 0} / {challenge.target_books}</span>
                         </div>
-                        <Progress value={progress} className="h-2" />
+                        <Progress value={Math.min(progress, 100)} className="h-2" />
                       </div>
                     )}
 
-                    {/* Action Button */}
                     {isStudent && !isExpired && (
-                      <Button
-                        className="w-full"
-                        variant={hasJoined ? (isCompleted ? 'secondary' : 'outline') : 'default'}
-                        disabled={hasJoined || joining === challenge.id}
-                        onClick={() => joinChallenge(challenge.id)}
-                      >
-                        {joining === challenge.id ? (
-                          'Joining...'
+                      <div className="space-y-2">
+                        {!hasJoined ? (
+                          <Button className="w-full" disabled={joining === challenge.id} onClick={() => joinChallenge(challenge.id)}>
+                            {joining === challenge.id ? 'Joining...' : <><Zap className="w-4 h-4 mr-2" />Join Challenge</>}
+                          </Button>
                         ) : isCompleted ? (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Completed!
-                          </>
-                        ) : hasJoined ? (
-                          <>
-                            <Users className="w-4 h-4 mr-2" />
-                            Already Joined
-                          </>
+                          <Button className="w-full" variant="secondary" disabled>
+                            <CheckCircle className="w-4 h-4 mr-2" />Completed!
+                          </Button>
                         ) : (
-                          <>
-                            <Zap className="w-4 h-4 mr-2" />
-                            Join Challenge
-                          </>
+                          <Dialog open={submittingFor === challenge.id} onOpenChange={(open) => !open && setSubmittingFor(null)}>
+                            <DialogTrigger asChild>
+                              <Button className="w-full" variant="outline" onClick={() => setSubmittingFor(challenge.id)}>
+                                <Plus className="w-4 h-4 mr-2" />Submit for this Challenge
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Submit Book for: {challenge.title}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                {challenge.is_independent && (
+                                  <p className="text-sm text-muted-foreground bg-secondary p-3 rounded-lg">
+                                    ℹ️ This is an independent challenge — submissions do NOT count toward your 45-book total.
+                                  </p>
+                                )}
+                                <div>
+                                  <Label>Book Title *</Label>
+                                  <Input value={challengeForm.title} onChange={e => setChallengeForm(f => ({ ...f, title: e.target.value }))} placeholder="Book title" />
+                                </div>
+                                <div>
+                                  <Label>Author</Label>
+                                  <Input value={challengeForm.author} onChange={e => setChallengeForm(f => ({ ...f, author: e.target.value }))} placeholder="Author name" />
+                                </div>
+                                <div>
+                                  <Label>Reflection</Label>
+                                  <Textarea value={challengeForm.reflection} onChange={e => setChallengeForm(f => ({ ...f, reflection: e.target.value }))} placeholder="Your thoughts..." rows={3} />
+                                </div>
+                                <Button onClick={() => submitChallengeBook(challenge.id)} disabled={submitting} className="w-full">
+                                  {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                                  Submit (+3 pts)
+                                </Button>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         )}
-                      </Button>
+                      </div>
                     )}
 
                     {!isStudent && (
-                      <p className="text-sm text-center text-muted-foreground">
-                        Only students can join challenges
-                      </p>
+                      <p className="text-sm text-center text-muted-foreground">Only students can join challenges</p>
                     )}
                   </CardContent>
                 </Card>

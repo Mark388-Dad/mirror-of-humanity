@@ -6,12 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Medal, Award, Crown, Target, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
-import { READING_CATEGORIES } from '@/lib/constants';
+import { BookOpen, Medal, Award, Crown, Target, CheckCircle2, Pencil, Trash2, Download } from 'lucide-react';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
+import { MAX_BOOKS_PER_CATEGORY } from '@/lib/constants';
 import { format } from 'date-fns';
 import EditSubmissionDialog from '@/components/EditSubmissionDialog';
 import DeleteSubmissionDialog from '@/components/DeleteSubmissionDialog';
 import AchievementBadges from '@/components/AchievementBadges';
+import CertificateGenerator from '@/components/CertificateGenerator';
 
 interface BookSubmission {
   id: string;
@@ -26,30 +28,49 @@ interface BookSubmission {
   created_at: string;
 }
 
+interface CertTemplate {
+  level: string;
+  title: string;
+  subtitle: string;
+  body_text: string;
+  background_image_url: string | null;
+  school_logo_url: string | null;
+  template_preset: string;
+  is_published: boolean;
+}
+
 const MyProgress = () => {
   const { user, profile } = useAuth();
+  const { allCategories } = useCustomCategories();
   const [submissions, setSubmissions] = useState<BookSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSubmission, setEditingSubmission] = useState<BookSubmission | null>(null);
   const [deletingSubmission, setDeletingSubmission] = useState<BookSubmission | null>(null);
+  const [certTemplates, setCertTemplates] = useState<CertTemplate[]>([]);
+  const [showCert, setShowCert] = useState<string | null>(null);
 
   const fetchSubmissions = async () => {
     if (!user) return;
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('book_submissions')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
-    if (!error && data) {
-      setSubmissions(data);
-    }
+    if (data) setSubmissions(data);
     setLoading(false);
+  };
+
+  const fetchCertTemplates = async () => {
+    const { data } = await supabase
+      .from('certificate_templates')
+      .select('*')
+      .eq('is_published', true);
+    if (data) setCertTemplates(data as CertTemplate[]);
   };
 
   useEffect(() => {
     fetchSubmissions();
+    fetchCertTemplates();
   }, [user]);
 
   const booksRead = submissions.length;
@@ -65,6 +86,13 @@ const MyProgress = () => {
 
   const achievement = getAchievementLevel();
   const AchievementIcon = achievement.icon;
+
+  // Certificate levels the student has earned
+  const earnedLevels: { key: string; label: string; threshold: number }[] = [];
+  if (booksRead >= 1) earnedLevels.push({ key: 'beginner', label: 'Beginner', threshold: 1 });
+  if (booksRead >= 15) earnedLevels.push({ key: 'bronze', label: 'Bronze', threshold: 15 });
+  if (booksRead >= 30) earnedLevels.push({ key: 'silver', label: 'Silver', threshold: 30 });
+  if (booksRead >= 45) earnedLevels.push({ key: 'gold', label: 'Gold', threshold: 45 });
 
   return (
     <div className="min-h-screen bg-background">
@@ -172,6 +200,49 @@ const MyProgress = () => {
           </Card>
         </div>
 
+        {/* Certificates */}
+        {earnedLevels.length > 0 && certTemplates.length > 0 && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5 text-gold" />
+                Your Certificates
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {earnedLevels.map(level => {
+                  const template = certTemplates.find(t => t.level === level.key);
+                  if (!template) return null;
+                  return (
+                    <div key={level.key}>
+                      <Button
+                        variant="outline"
+                        className="w-full h-auto py-4 flex flex-col gap-2"
+                        onClick={() => setShowCert(showCert === level.key ? null : level.key)}
+                      >
+                        <Download className="w-5 h-5" />
+                        <span className="font-semibold">{level.label} Certificate</span>
+                        <span className="text-xs text-muted-foreground">{level.threshold} books</span>
+                      </Button>
+                      {showCert === level.key && (
+                        <div className="mt-4">
+                          <CertificateGenerator
+                            template={template}
+                            studentName={profile?.full_name || 'Student'}
+                            booksRead={level.threshold}
+                            date={new Date().toLocaleDateString()}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Achievement Badges */}
         <div className="mt-6">
           <AchievementBadges />
@@ -184,18 +255,21 @@ const MyProgress = () => {
           </CardHeader>
           <CardContent>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {READING_CATEGORIES.map((category) => {
-                const isCompleted = completedCategories.has(category.id);
+              {allCategories.map((category) => {
                 const count = submissions.filter(s => s.category_number === category.id).length;
+                const isCompleted = count > 0;
+                const isFull = count >= MAX_BOOKS_PER_CATEGORY;
                 return (
                   <div 
                     key={category.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border ${
-                      isCompleted ? 'bg-green-500/5 border-green-500/30' : 'bg-secondary border-transparent'
+                      isFull ? 'bg-green-500/5 border-green-500/30' : isCompleted ? 'bg-gold/5 border-gold/20' : 'bg-secondary border-transparent'
                     }`}
                   >
-                    {isCompleted ? (
+                    {isFull ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    ) : isCompleted ? (
+                      <CheckCircle2 className="w-5 h-5 text-gold flex-shrink-0" />
                     ) : (
                       <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
                     )}
@@ -204,9 +278,9 @@ const MyProgress = () => {
                         #{category.id} {category.name}
                       </p>
                     </div>
-                    {count > 0 && (
-                      <Badge variant="secondary" className="flex-shrink-0">{count}</Badge>
-                    )}
+                    <Badge variant="secondary" className="flex-shrink-0">
+                      {count}/{MAX_BOOKS_PER_CATEGORY}
+                    </Badge>
                   </div>
                 );
               })}
@@ -248,22 +322,12 @@ const MyProgress = () => {
                           {format(new Date(submission.date_finished), 'MMM d, yyyy')}
                         </p>
                         <div className="flex gap-2 mt-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSubmission(submission)}
-                          >
-                            <Pencil className="w-3 h-3 mr-1" />
-                            Edit
+                          <Button size="sm" variant="outline" onClick={() => setEditingSubmission(submission)}>
+                            <Pencil className="w-3 h-3 mr-1" />Edit
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => setDeletingSubmission(submission)}
-                          >
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            Delete
+                          <Button size="sm" variant="outline" className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => setDeletingSubmission(submission)}>
+                            <Trash2 className="w-3 h-3 mr-1" />Delete
                           </Button>
                         </div>
                       </div>
@@ -276,7 +340,6 @@ const MyProgress = () => {
         </Card>
       </main>
 
-      {/* Edit Dialog */}
       {editingSubmission && (
         <EditSubmissionDialog
           open={!!editingSubmission}
@@ -286,7 +349,6 @@ const MyProgress = () => {
         />
       )}
 
-      {/* Delete Dialog */}
       {deletingSubmission && (
         <DeleteSubmissionDialog
           open={!!deletingSubmission}

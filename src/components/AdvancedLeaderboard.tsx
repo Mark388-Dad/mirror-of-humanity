@@ -446,7 +446,7 @@ const AdvancedLeaderboard = () => {
             <CardContent>
               <div className="space-y-3">
                 <AnimatePresence>
-                  {filteredStudents.slice(0, 50).map((student, index) => {
+                  {filteredStudents.map((student, index) => {
                     const xpLevel = getXPLevel(student.total_points);
                     const config = houseConfig[student.house] || { bg: 'bg-muted', gradient: 'from-slate-400 to-slate-500' };
                     

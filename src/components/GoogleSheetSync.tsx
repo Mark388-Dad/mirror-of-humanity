@@ -177,7 +177,8 @@ const GoogleSheetSync = () => {
           </Button>
 
           <p className="text-xs text-muted-foreground mt-4">
-            Pulls new submissions from Google Sheets and auto-imports for registered students
+            Pulls new submissions from Google Sheets and auto-imports for registered students.
+            Duplicate records (same email + title) are automatically skipped.
           </p>
         </CardContent>
       </Card>

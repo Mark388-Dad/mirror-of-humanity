@@ -156,9 +156,25 @@ const LibrarianUserManager = () => {
             <p className="text-muted-foreground">Review, edit points, and manage all book submissions</p>
           </div>
         </div>
-        <Button onClick={fetchData} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => {
+            const csvRows = ['Student,Title,Author,Category,Points,Status,Date'];
+            submissions.forEach(s => {
+              csvRows.push(`"${s.profiles?.full_name || ''}","${s.title}","${s.author}","${s.category_name}",${s.points_earned},"${s.approval_status || 'pending'}","${new Date(s.created_at).toLocaleDateString()}"`);
+            });
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'submissions-export.csv'; a.click();
+            URL.revokeObjectURL(url);
+            toast.success('CSV exported!');
+          }} variant="outline" size="sm">
+            📥 Export CSV
+          </Button>
+          <Button onClick={fetchData} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Quick filter shortcuts */}
