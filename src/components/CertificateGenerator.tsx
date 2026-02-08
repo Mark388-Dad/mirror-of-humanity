@@ -1,7 +1,8 @@
-import { useState, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
-import Certificate from './CertificatePreview'; // ✅ NEW CERTIFICATE VERSION
+import { useState, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import Certificate from "./CertificatePreview"; // ✅ NEW CERTIFICATE VERSION
+import domtoimage from "dom-to-image-more";
 
 interface CertificateTemplate {
   level: string;
@@ -34,24 +35,40 @@ const CertificateGenerator = ({
     setGenerating(true);
 
     try {
-      const { default: html2canvas } = await import('html2canvas');
+      // Wait for images to load before capture
+      const images = Array.from(certRef.current.querySelectorAll("img"));
+      await Promise.all(
+        images.map((img) =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise<void>((res) => {
+                img.onload = () => res();
+                img.onerror = () => res();
+              })
+        )
+      );
 
-      const canvas = await html2canvas(certRef.current, {
-        scale: 3, // ✅ higher resolution for new premium design
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
+      // Use dom-to-image-more for better rendering
+      const blob = await domtoimage.toBlob(certRef.current, {
+        bgcolor: "#ffffff",
+        quality: 1,
+        width: certRef.current.scrollWidth * 3, // high-res
+        height: certRef.current.scrollHeight * 3,
+        style: {
+          transform: "scale(3)",
+          transformOrigin: "top left",
+        },
       });
 
-      const link = document.createElement('a');
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
       link.download = `certificate-${template.level}-${studentName.replace(
         /\s+/g,
-        '-'
+        "-"
       )}.png`;
-      link.href = canvas.toDataURL('image/png');
       link.click();
     } catch (err) {
-      console.error('Certificate generation failed:', err);
+      console.error("Certificate generation failed:", err);
     } finally {
       setGenerating(false);
     }
@@ -62,15 +79,13 @@ const CertificateGenerator = ({
       {/* CERTIFICATE RENDER AREA */}
       <div
         ref={certRef}
-        className="bg-white rounded-xl overflow-hidden shadow-xl"
+        className="bg-white rounded-xl overflow-visible shadow-xl"
       >
         <Certificate
-          recipientName={studentName}
-          achievementTitle={template.title}
-          achievementLevel={template.subtitle}
-          description={template.body_text}
-          role="LIBRARIAN"
-          organizationName="MPESA FOUNDATION ACADEMY"
+          template={template}
+          studentName={studentName}
+          booksRead={booksRead}
+          date={date}
         />
       </div>
 
