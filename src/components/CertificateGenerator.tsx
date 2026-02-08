@@ -1,8 +1,8 @@
-import { useState, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
-import Certificate from "./CertificatePreview"; // ✅ NEW CERTIFICATE VERSION
-import domtoimage from "dom-to-image-more";
+import { useState, useRef, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Download, Loader2 } from 'lucide-react';
+import Certificate from './CertificatePreview';
+import domtoimage from 'dom-to-image-more';
 
 interface CertificateTemplate {
   level: string;
@@ -35,40 +35,42 @@ const CertificateGenerator = ({
     setGenerating(true);
 
     try {
-      // Wait for images to load before capture
-      const images = Array.from(certRef.current.querySelectorAll("img"));
+      // ✅ Wait for images (logo/background) to load fully
+      const images = certRef.current.querySelectorAll('img');
       await Promise.all(
-        images.map((img) =>
-          img.complete
-            ? Promise.resolve()
-            : new Promise<void>((res) => {
-                img.onload = () => res();
-                img.onerror = () => res();
-              })
+        Array.from(images).map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) resolve();
+              else img.onload = () => resolve();
+              img.onerror = () => resolve();
+            })
         )
       );
 
-      // Use dom-to-image-more for better rendering
+      // Use dom-to-image-more for better compatibility with gradients and skewed elements
       const blob = await domtoimage.toBlob(certRef.current, {
-        bgcolor: "#ffffff",
-        quality: 1,
+        bgcolor: '#ffffff',
         width: certRef.current.scrollWidth * 3, // high-res
         height: certRef.current.scrollHeight * 3,
         style: {
-          transform: "scale(3)",
-          transformOrigin: "top left",
+          transform: 'scale(3)',
+          transformOrigin: 'top left',
         },
+        filter: (node) => node.tagName !== 'BUTTON', // exclude buttons
       });
 
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
+      const link = document.createElement('a');
       link.download = `certificate-${template.level}-${studentName.replace(
         /\s+/g,
-        "-"
+        '-'
       )}.png`;
+      link.href = URL.createObjectURL(blob);
       link.click();
+
+      URL.revokeObjectURL(link.href);
     } catch (err) {
-      console.error("Certificate generation failed:", err);
+      console.error('Certificate generation failed:', err);
     } finally {
       setGenerating(false);
     }
@@ -76,11 +78,7 @@ const CertificateGenerator = ({
 
   return (
     <div className="space-y-6">
-      {/* CERTIFICATE RENDER AREA */}
-      <div
-        ref={certRef}
-        className="bg-white rounded-xl overflow-visible shadow-xl"
-      >
+      <div ref={certRef} className="bg-white rounded-xl overflow-hidden shadow-xl">
         <Certificate
           template={template}
           studentName={studentName}
@@ -89,17 +87,12 @@ const CertificateGenerator = ({
         />
       </div>
 
-      {/* DOWNLOAD BUTTON */}
       <Button
         onClick={downloadCertificate}
         disabled={generating}
         className="w-full h-12 text-sm font-semibold"
       >
-        {generating ? (
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        ) : (
-          <Download className="h-4 w-4 mr-2" />
-        )}
+        {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
         Download Certificate
       </Button>
     </div>
@@ -107,3 +100,4 @@ const CertificateGenerator = ({
 };
 
 export default CertificateGenerator;
+
