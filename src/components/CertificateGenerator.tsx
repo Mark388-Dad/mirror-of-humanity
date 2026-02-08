@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
-import Certificate from './Certificate'; // ✅ NEW CERTIFICATE VERSION
+import Certificate from './CertificatePreview'; // ✅ NEW CERTIFICATE VERSION
 
 interface CertificateTemplate {
   level: string;
