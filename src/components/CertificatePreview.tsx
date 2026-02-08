@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Shield, Star, CheckCircle2 } from 'lucide-react';
+import React from "react";
+import { Card } from "@/components/ui/card";
+import { Shield, Star, CheckCircle2 } from "lucide-react";
 
 interface CertificateTemplate {
   level: string;
@@ -20,25 +20,29 @@ interface CertificatePreviewProps {
   date: string;
 }
 
-/* =========================================
-   NEW CERTIFICATE PREVIEW — MATCHES NEW UI
-   EXACT STRUCTURE LIKE YOUR NEW CERTIFICATE
-   ========================================= */
+const LEVEL_BORDER_COLORS: Record<string, string> = {
+  beginner: "border-gray-300",
+  bronze: "border-[#cd7f32]",
+  silver: "border-silver-400",
+  gold: "border-yellow-400",
+};
 
 const CertificatePreview = ({
   template,
   studentName,
 }: CertificatePreviewProps) => {
+  const borderColorClass = LEVEL_BORDER_COLORS[template.level] || "border-gray-300";
+
   return (
-    <Card className="relative w-full aspect-[1.414/1] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden border-[12px] border-white">
-      
+    <Card
+      className={`relative w-full aspect-[1.414/1] bg-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] overflow-hidden border-8 ${borderColorClass}`}
+    >
       {/* BACKGROUND PATTERN */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage:
-            'radial-gradient(#002855 1px, transparent 1px)',
-          backgroundSize: '20px 20px',
+          backgroundImage: "radial-gradient(#002855 1px, transparent 1px)",
+          backgroundSize: "20px 20px",
         }}
       />
 
@@ -58,6 +62,17 @@ const CertificatePreview = ({
 
       {/* MAIN CONTENT */}
       <div className="relative z-10 flex flex-col items-center justify-between h-full px-24 py-16">
+
+        {/* SCHOOL LOGO — TOP RIGHT, nicely inset */}
+        {template.school_logo_url && (
+          <div className="absolute top-10 right-10 w-20 h-20 rounded-full bg-white p-2 flex items-center justify-center shadow-lg border border-gray-200">
+            <img
+              src={template.school_logo_url}
+              alt="School Logo"
+              className="w-full h-full object-contain rounded-full"
+            />
+          </div>
+        )}
 
         {/* HEADER */}
         <div className="text-center space-y-2">
@@ -147,14 +162,7 @@ const CertificatePreview = ({
 
               <div className="absolute inset-1 bg-gradient-to-br from-[#d4af37] via-[#f9e29c] to-[#b8860b] rounded-full flex items-center justify-center shadow-inner border-2 border-white">
                 <div className="w-[85%] h-[85%] bg-[#002855] rounded-full flex flex-col items-center justify-center border border-[#d4af37]/50">
-                  {template.school_logo_url ? (
-                    <img
-                      src={template.school_logo_url}
-                      className="w-10 h-10 object-contain"
-                    />
-                  ) : (
-                    <Shield className="text-[#d4af37] w-8 h-8" />
-                  )}
+                  <Shield className="text-[#d4af37] w-8 h-8" />
                   <CheckCircle2 className="text-white w-3 h-3 absolute bottom-4 right-4" />
                 </div>
               </div>
