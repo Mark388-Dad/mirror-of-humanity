@@ -76,7 +76,16 @@ const CertificateGenerator = ({
         />
       </div>
 
-     
+      {/* DOWNLOAD BUTTON */}
+      <Button
+        onClick={downloadCertificate}
+        disabled={generating}
+        className="w-full h-12 text-sm font-semibold"
+      >
+        {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+        Download Certificate
+      </Button>
+    </div>
   );
 };
 
