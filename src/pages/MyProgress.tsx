@@ -35,6 +35,7 @@ interface CertTemplate {
   body_text: string;
   background_image_url: string | null;
   school_logo_url: string | null;
+  signature_url?: string | null;
   template_preset: string;
   is_published: boolean;
 }

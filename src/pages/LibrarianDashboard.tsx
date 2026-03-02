@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -31,7 +31,19 @@ interface Challenge {
   target_books: number | null;
   points_reward: number | null;
   is_active: boolean | null;
+  is_featured: boolean | null;
+  is_independent: boolean;
   created_at: string;
+  category: string | null;
+  difficulty_level: string | null;
+  participation_type: string | null;
+  allowed_year_groups: string[] | null;
+  allowed_houses: string[] | null;
+  allowed_classes: string[] | null;
+  requires_submission: boolean | null;
+  evidence_type: string | null;
+  leaderboard_type: string | null;
+  badge_name: string | null;
 }
 
 interface FlaggedSubmission {
@@ -62,6 +74,8 @@ const LibrarianDashboard = () => {
   const [flaggedSubmissions, setFlaggedSubmissions] = useState<FlaggedSubmission[]>([]);
   const [stats, setStats] = useState<Stats>({ totalStudents: 0, totalSubmissions: 0, activeChallenges: 0, pendingReviews: 0 });
   const [loading, setLoading] = useState(true);
+  const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
+  const [activeTab, setActiveTab] = useState('submissions');
 
   useEffect(() => { fetchData(); }, []);
 
@@ -140,12 +154,12 @@ const LibrarianDashboard = () => {
           <VibrantDashboardCard title="Pending Reviews" value={stats.pendingReviews} icon={<AlertCircle className="h-5 w-5" />} color="orange" />
         </div>
 
-        <Tabs defaultValue="submissions" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="flex flex-wrap gap-1 h-auto p-1 bg-muted/50">
             <TabsTrigger value="submissions" className="flex items-center gap-2"><BookOpen className="w-4 h-4" />All Submissions</TabsTrigger>
             <TabsTrigger value="flagged" className="flex items-center gap-2"><AlertCircle className="w-4 h-4" />Flagged ({flaggedSubmissions.length})</TabsTrigger>
             <TabsTrigger value="challenges" className="flex items-center gap-2"><Trophy className="w-4 h-4" />Challenges</TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-2"><Sparkles className="w-4 h-4" />Create New</TabsTrigger>
+            <TabsTrigger value="create" className="flex items-center gap-2"><Sparkles className="w-4 h-4" />{editingChallenge ? 'Edit Challenge' : 'Create New'}</TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2"><Tag className="w-4 h-4" />Categories</TabsTrigger>
             <TabsTrigger value="certificates" className="flex items-center gap-2"><Award className="w-4 h-4" />Certificates</TabsTrigger>
             <TabsTrigger value="homepage" className="flex items-center gap-2"><Home className="w-4 h-4" />Homepage</TabsTrigger>
@@ -216,11 +230,14 @@ const LibrarianDashboard = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {challenges.map((challenge, index) => (
                   <motion.div key={challenge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-                    <Card className="h-full">
+                    <Card className={`h-full ${challenge.is_featured ? 'border-2 border-yellow-500/30 bg-yellow-500/5' : ''}`}>
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                          <Badge variant={challenge.is_active ? 'default' : 'secondary'}>{challenge.is_active ? '✅ Active' : '⏸️ Inactive'}</Badge>
+                          <div className="flex gap-1">
+                            {challenge.is_featured && <Badge className="bg-yellow-500 text-white text-xs">⭐</Badge>}
+                            <Badge variant={challenge.is_active ? 'default' : 'secondary'}>{challenge.is_active ? '✅ Active' : '⏸️ Inactive'}</Badge>
+                          </div>
                         </div>
                         <CardDescription className="line-clamp-2">{challenge.description}</CardDescription>
                       </CardHeader>
@@ -231,10 +248,25 @@ const LibrarianDashboard = () => {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span>{challenge.target_books || 1} books • +{challenge.points_reward || 5} pts</span>
+                          <span className="text-xs text-muted-foreground capitalize">{challenge.difficulty_level}</span>
                         </div>
-                        <Button variant="outline" size="sm" className="w-full" onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}>
-                          {challenge.is_active ? 'Deactivate' : 'Activate'}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="flex-1" onClick={() => { setEditingChallenge(challenge); setActiveTab('create'); }}>
+                            <Pencil className="w-3 h-3 mr-1" />Edit
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => {
+                            const dup = { ...challenge, id: '', title: challenge.title + ' (copy)' };
+                            setEditingChallenge(null);
+                            setActiveTab('create');
+                            // We use a timeout so the tab switches first
+                            setTimeout(() => setEditingChallenge({ ...dup, id: '' } as any), 100);
+                          }}>
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                          <Button variant="outline" size="sm" onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}>
+                            {challenge.is_active ? '⏸️' : '▶️'}
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -243,7 +275,13 @@ const LibrarianDashboard = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="create"><EnhancedChallengeCreator /></TabsContent>
+          <TabsContent value="create">
+            <EnhancedChallengeCreator
+              editingChallenge={editingChallenge}
+              onSaved={() => { setEditingChallenge(null); fetchData(); setActiveTab('challenges'); }}
+              onCancel={editingChallenge ? () => { setEditingChallenge(null); setActiveTab('challenges'); } : undefined}
+            />
+          </TabsContent>
           <TabsContent value="categories"><CategoryManager /></TabsContent>
           <TabsContent value="certificates"><CertificateManager /></TabsContent>
           <TabsContent value="homepage"><HomepageEditor /></TabsContent>
