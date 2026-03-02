@@ -11,6 +11,7 @@ import ReflectionPrompts from "@/components/ReflectionPrompts";
 import IBConnectionsSection from "@/components/IBConnectionsSection";
 import OutcomesSection from "@/components/OutcomesSection";
 import Footer from "@/components/Footer";
+import FeaturedChallenges from "@/components/FeaturedChallenges";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogIn, LayoutDashboard, Sparkles, ExternalLink } from 'lucide-react';
@@ -155,6 +156,10 @@ const Index = () => {
 
       {isVisible('goals') && <GoalsSection title={goals?.title} content={goals?.content} />}
       {isVisible('points') && <PointsSection title={points?.title} content={points?.content} />}
+      
+      {/* Featured Challenges - auto-populated from DB */}
+      <FeaturedChallenges />
+      
       <AchievementLevels />
       {isVisible('categories') && <CategoriesSection title={categories?.title} content={categories?.content} />}
       <ReflectionPrompts />

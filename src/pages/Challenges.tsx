@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Trophy, Calendar, Users, Zap, Target, BookOpen, CheckCircle, Loader2, Plus } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 interface Challenge {
   id: string;
@@ -153,14 +154,18 @@ const Challenges = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-2">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 mb-4">
+            <Trophy className="w-4 h-4 text-primary" />
+            <span className="text-sm font-semibold text-primary">Active Challenges</span>
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
             Reading Challenges 🏆
           </h1>
           <p className="text-muted-foreground">
             Join exciting challenges to earn extra points and compete with fellow readers!
           </p>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
