@@ -139,11 +139,36 @@ const MyProgress = () => {
               <div className="space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">Overall Progress</span>
-                    <span className="text-sm text-muted-foreground">{booksRead}/45 books</span>
+                    <span className="text-sm font-medium">📚 Books Submitted</span>
+                    <span className="text-sm font-bold">{booksRead} / 45</span>
                   </div>
                   <Progress value={(booksRead / 45) * 100} className="h-4" />
                 </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">⭐ Points Earned</span>
+                    <span className="text-sm font-bold">{totalPoints} / 135</span>
+                  </div>
+                  <Progress value={(totalPoints / 135) * 100} className="h-4" />
+                </div>
+
+                {/* Milestone encouragement */}
+                {booksRead >= 40 && booksRead < 45 && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                    <p className="text-sm font-semibold text-primary">🔥 Almost there! Only {45 - booksRead} books to go for Gold!</p>
+                  </div>
+                )}
+                {booksRead >= 25 && booksRead < 30 && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                    <p className="text-sm font-semibold text-primary">💪 Keep pushing! {30 - booksRead} more books to Silver!</p>
+                  </div>
+                )}
+                {booksRead >= 10 && booksRead < 15 && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                    <p className="text-sm font-semibold text-primary">📖 Great start! {15 - booksRead} more books to Bronze!</p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className={`p-4 rounded-xl border-2 ${booksRead >= 15 ? 'border-amber-700 bg-amber-700/5' : 'border-border'}`}>
@@ -152,7 +177,7 @@ const MyProgress = () => {
                       <span className="font-semibold">Bronze</span>
                     </div>
                     <Progress value={Math.min((booksRead / 15) * 100, 100)} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">{Math.min(booksRead, 15)}/15</p>
+                    <p className="text-xs text-muted-foreground mt-1">{Math.min(booksRead, 15)}/15 • {Math.min(booksRead * 3, 45)}/45 pts</p>
                   </div>
                   <div className={`p-4 rounded-xl border-2 ${booksRead >= 30 ? 'border-slate-400 bg-slate-400/5' : 'border-border'}`}>
                     <div className="flex items-center gap-2 mb-2">
@@ -160,15 +185,15 @@ const MyProgress = () => {
                       <span className="font-semibold">Silver</span>
                     </div>
                     <Progress value={Math.min((booksRead / 30) * 100, 100)} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">{Math.min(booksRead, 30)}/30</p>
+                    <p className="text-xs text-muted-foreground mt-1">{Math.min(booksRead, 30)}/30 • {Math.min(booksRead * 3, 90)}/90 pts</p>
                   </div>
-                  <div className={`p-4 rounded-xl border-2 ${booksRead >= 45 ? 'border-gold bg-gold/5' : 'border-border'}`}>
+                  <div className={`p-4 rounded-xl border-2 ${booksRead >= 45 ? 'border-yellow-500 bg-yellow-500/5' : 'border-border'}`}>
                     <div className="flex items-center gap-2 mb-2">
-                      <Crown className={`w-5 h-5 ${booksRead >= 45 ? 'text-gold' : 'text-muted-foreground'}`} />
+                      <Crown className={`w-5 h-5 ${booksRead >= 45 ? 'text-yellow-500' : 'text-muted-foreground'}`} />
                       <span className="font-semibold">Gold</span>
                     </div>
                     <Progress value={(booksRead / 45) * 100} className="h-2" />
-                    <p className="text-xs text-muted-foreground mt-1">{booksRead}/45</p>
+                    <p className="text-xs text-muted-foreground mt-1">{booksRead}/45 • {totalPoints}/135 pts</p>
                   </div>
                 </div>
               </div>
