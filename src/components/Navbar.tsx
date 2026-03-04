@@ -37,15 +37,13 @@ const Navbar = () => {
   if (!user) return null;
 
   return (
-    <nav className="sticky top-0 z-50 bg-navy/95 backdrop-blur border-b border-gold/20">
+    <nav className="sticky top-0 z-50 bg-[hsl(220,75%,12%)]/95 backdrop-blur border-b border-primary/20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gold/20 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-gold" />
-            </div>
-            <span className="font-display font-semibold text-primary-foreground hidden sm:block">
+            <img src="/mpesa-logo.png" alt="Mpesa Foundation Academy" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
+            <span className="font-display font-semibold text-white hidden sm:block">
               45-Book Challenge
             </span>
           </Link>
@@ -59,8 +57,8 @@ const Navbar = () => {
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
                   location.pathname === item.path
-                    ? "bg-gold/20 text-gold"
-                    : "text-primary-foreground/70 hover:text-gold hover:bg-gold/10"
+                    ? "bg-primary/20 text-primary"
+                    : "text-white/70 hover:text-primary hover:bg-primary/10"
                 )}
               >
                 <item.icon className="w-4 h-4" />
@@ -72,11 +70,11 @@ const Navbar = () => {
           {/* User Info */}
           <div className="flex items-center gap-3">
             <NotificationBell />
-            <div className="hidden sm:flex items-center gap-2 text-primary-foreground/80 text-sm">
+            <div className="hidden sm:flex items-center gap-2 text-white/80 text-sm">
               <User className="w-4 h-4" />
               <span className="font-medium">{profile?.full_name || 'User'}</span>
               {profile?.house && (
-                <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">
                   {profile.house}
                 </span>
               )}
@@ -85,7 +83,7 @@ const Navbar = () => {
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
-              className="text-primary-foreground/70 hover:text-destructive hover:bg-destructive/10"
+              className="text-white/70 hover:text-destructive hover:bg-destructive/10"
             >
               <LogOut className="w-4 h-4" />
             </Button>
@@ -93,7 +91,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Nav */}
-        <div className="md:hidden flex items-center justify-around py-2 border-t border-gold/10">
+        <div className="md:hidden flex items-center justify-around py-2 border-t border-primary/10">
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -101,8 +99,8 @@ const Navbar = () => {
               className={cn(
                 "flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors",
                 location.pathname === item.path
-                  ? "text-gold"
-                  : "text-primary-foreground/60"
+                  ? "text-primary"
+                  : "text-white/60"
               )}
             >
               <item.icon className="w-5 h-5" />
