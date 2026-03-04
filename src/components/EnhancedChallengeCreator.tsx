@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { differenceInDays } from 'date-fns';
+import { differenceInDays, format } from 'date-fns';
 
 const CHALLENGE_CATEGORIES = [
   { value: 'reading', label: '📚 Reading Challenge', color: 'from-blue-500 to-cyan-500' },
@@ -416,49 +416,72 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
             </Card>
           </motion.div>
 
-          {/* Live Preview */}
+          {/* Live Preview — Enhanced Full Card */}
           <AnimatePresence>
             {showPreview && title && (
-              <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
-                <Card className={`border-2 border-dashed border-primary/30 overflow-hidden`}>
-                  <div className={`h-2 bg-gradient-to-r ${categoryMeta?.color || 'from-primary to-purple-500'}`} />
-                  <CardHeader className="pb-2">
+              <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}>
+                <Card className="border-2 border-dashed border-primary/30 overflow-hidden">
+                  <div className={`h-3 bg-gradient-to-r ${categoryMeta?.color || 'from-primary to-purple-500'}`} />
+                  <CardContent className="p-6 space-y-5">
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary" className="text-xs">👁️ Student Preview</Badge>
-                      {daysLeft !== null && daysLeft > 0 && (
-                        <Badge variant="outline" className="text-xs animate-pulse">
-                          <Clock className="w-3 h-3 mr-1" />{daysLeft}d left
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isFeatured && <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-xs">⭐ Featured</Badge>}
+                        {isIndependent && <Badge variant="secondary" className="text-xs">🔓 Independent</Badge>}
+                        {daysLeft !== null && daysLeft > 0 && (
+                          <Badge variant="outline" className="text-xs animate-pulse">
+                            <Clock className="w-3 h-3 mr-1" />{daysLeft}d left
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{categoryMeta?.label}</Badge>
-                      <Badge className={`${DIFFICULTY_LEVELS.find(d => d.value === difficultyLevel)?.color} text-white text-xs`}>
-                        {difficultyLevel}
-                      </Badge>
-                      {isIndependent && <Badge variant="secondary" className="text-xs">Independent</Badge>}
-                      {isFeatured && <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white text-xs">⭐ Featured</Badge>}
+
+                    <div className="flex items-start gap-4">
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${categoryMeta?.color || 'from-primary to-purple-500'} flex items-center justify-center text-3xl shadow-lg`}>
+                        {categoryMeta?.label.split(' ')[0] || '📚'}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <Badge variant="outline">{categoryMeta?.label}</Badge>
+                          <Badge className={`${DIFFICULTY_LEVELS.find(d => d.value === difficultyLevel)?.color} text-white text-xs`}>
+                            {difficultyLevel}
+                          </Badge>
+                        </div>
+                        <h3 className="text-2xl font-display font-bold mb-1">{title}</h3>
+                        <p className="text-sm text-muted-foreground">{description || 'No description yet...'}</p>
+                      </div>
                     </div>
-                    <h3 className="text-xl font-display font-bold">{title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{description || 'No description yet...'}</p>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div className="bg-secondary rounded-xl p-3">
-                        <Target className="w-4 h-4 mx-auto mb-1 text-primary" />
-                        <div className="text-lg font-bold">{targetBooks || '?'}</div>
+
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 rounded-xl p-4 text-center border border-blue-500/10">
+                        <Target className="w-5 h-5 mx-auto mb-1 text-blue-600" />
+                        <div className="text-xl font-bold">{targetBooks || '?'}</div>
                         <div className="text-xs text-muted-foreground">Books</div>
                       </div>
-                      <div className="bg-secondary rounded-xl p-3">
-                        <Zap className="w-4 h-4 mx-auto mb-1 text-yellow-500" />
-                        <div className="text-lg font-bold text-yellow-600">+{pointsReward || '?'}</div>
+                      <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-xl p-4 text-center border border-yellow-500/10">
+                        <Zap className="w-5 h-5 mx-auto mb-1 text-yellow-600" />
+                        <div className="text-xl font-bold text-yellow-700">+{pointsReward || '?'}</div>
                         <div className="text-xs text-muted-foreground">Points</div>
                       </div>
-                      <div className="bg-secondary rounded-xl p-3">
-                        <Users className="w-4 h-4 mx-auto mb-1 text-purple-500" />
-                        <div className="text-lg font-bold">0</div>
+                      <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/5 rounded-xl p-4 text-center border border-purple-500/10">
+                        <Users className="w-5 h-5 mx-auto mb-1 text-purple-600" />
+                        <div className="text-xl font-bold">0</div>
                         <div className="text-xs text-muted-foreground">Joined</div>
                       </div>
+                      <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 rounded-xl p-4 text-center border border-green-500/10">
+                        <Calendar className="w-5 h-5 mx-auto mb-1 text-green-600" />
+                        <div className="text-sm font-bold">{startDate ? format(new Date(startDate), 'MMM d') : '?'}</div>
+                        <div className="text-xs text-muted-foreground">→ {endDate ? format(new Date(endDate), 'MMM d') : '?'}</div>
+                      </div>
+                    </div>
+
+                    {badgeName && <Badge variant="secondary" className="text-xs">🏅 Earn: {badgeName}</Badge>}
+
+                    <div className="flex gap-3">
+                      <Button className="bg-gradient-to-r from-green-500 to-emerald-600 text-white" disabled>
+                        <Zap className="w-4 h-4 mr-2" />Join Challenge
+                      </Button>
+                      <Button variant="outline" disabled>View Details</Button>
                     </div>
                   </CardContent>
                 </Card>
