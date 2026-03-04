@@ -138,7 +138,7 @@ const LibrarianDashboard = () => {
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2">
+              <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 Librarian Command Center 📚
               </h1>
               <p className="text-muted-foreground">Full control over challenges, content, and the reading program</p>
