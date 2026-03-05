@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, GraduationCap, BookOpen, Home, UserCircle, Search, Loader2, Star, Trophy, BarChart3, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -28,7 +29,7 @@ interface Profile {
 interface StudentProgress {
   user_id: string;
   full_name: string;
-  email: string;
+  email?: string;
   house: string | null;
   year_group: string | null;
   class_name: string | null;
@@ -71,6 +72,9 @@ const MemberManagement = () => {
   const [editingStudent, setEditingStudent] = useState<StudentProgress | null>(null);
   const [editPoints, setEditPoints] = useState('');
   const [editLoading, setEditLoading] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [editProfileData, setEditProfileData] = useState({ house: '', year_group: '', class_name: '', full_name: '' });
+  const [editProfileLoading, setEditProfileLoading] = useState(false);
 
   useEffect(() => {
     fetchAll();
@@ -92,7 +96,6 @@ const MemberManagement = () => {
     setEditLoading(true);
     
     const targetPoints = parseInt(editPoints);
-    // Get all submissions for this student
     const { data: subs } = await supabase
       .from('book_submissions')
       .select('id, points_earned')
@@ -100,14 +103,9 @@ const MemberManagement = () => {
       .order('created_at', { ascending: true });
     
     if (subs && subs.length > 0) {
-      // Distribute points evenly across submissions (3 pts each, adjust last one)
-      const perBook = 3;
-      const totalBooks = subs.length;
       const cappedPoints = Math.min(targetPoints, MAX_POINTS);
-      
-      // Set each submission to the correct per-book value
-      const pointsPerSub = Math.floor(cappedPoints / totalBooks);
-      const remainder = cappedPoints - (pointsPerSub * totalBooks);
+      const pointsPerSub = Math.floor(cappedPoints / subs.length);
+      const remainder = cappedPoints - (pointsPerSub * subs.length);
       
       for (let i = 0; i < subs.length; i++) {
         const pts = i === subs.length - 1 ? pointsPerSub + remainder : pointsPerSub;
@@ -122,6 +120,55 @@ const MemberManagement = () => {
     setEditingStudent(null);
     setEditLoading(false);
     fetchAll();
+  };
+
+  const handleEditProfile = async () => {
+    if (!editingProfile) return;
+    setEditProfileLoading(true);
+
+    const updateData: Record<string, unknown> = {
+      full_name: editProfileData.full_name,
+    };
+    if (editProfileData.house && editProfileData.house !== 'none') {
+      updateData.house = editProfileData.house;
+    } else {
+      updateData.house = null;
+    }
+    if (editProfileData.year_group && editProfileData.year_group !== 'none') {
+      updateData.year_group = editProfileData.year_group;
+    } else {
+      updateData.year_group = null;
+    }
+    if (editProfileData.class_name && editProfileData.class_name !== 'none') {
+      updateData.class_name = editProfileData.class_name;
+    } else {
+      updateData.class_name = null;
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update(updateData as any)
+      .eq('id', editingProfile.id);
+
+    if (error) {
+      toast.error('Failed to update profile: ' + error.message);
+    } else {
+      toast.success(`✅ Profile updated for ${editProfileData.full_name}`);
+    }
+
+    setEditingProfile(null);
+    setEditProfileLoading(false);
+    fetchAll();
+  };
+
+  const openEditProfile = (profile: Profile) => {
+    setEditingProfile(profile);
+    setEditProfileData({
+      full_name: profile.full_name,
+      house: profile.house || '',
+      year_group: profile.year_group || '',
+      class_name: profile.class_name || '',
+    });
   };
 
   const filterProfiles = (roleFilter?: string) => {
@@ -159,7 +206,12 @@ const MemberManagement = () => {
             <p className="text-sm text-muted-foreground">{profile.email}</p>
           </div>
         </div>
-        <Badge variant="outline">{roleLabels[profile.role] || profile.role}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{roleLabels[profile.role] || profile.role}</Badge>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => openEditProfile(profile)}>
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </Button>
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {profile.house && <Badge className={`${houseColors[profile.house]} text-white`}>{profile.house}</Badge>}
@@ -186,7 +238,7 @@ const MemberManagement = () => {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
               Member Management
             </h2>
-            <p className="text-muted-foreground">View all members, track student progress & edit points</p>
+            <p className="text-muted-foreground">View all members, edit profiles, track progress & manage points</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -255,6 +307,7 @@ const MemberManagement = () => {
               <Trophy className="h-5 w-5 text-yellow-500" />
               Student Progress & Points ({filteredProgress.length} students)
             </CardTitle>
+            <p className="text-xs text-muted-foreground">Points auto-calculated: Books × 3 = Total Points (max {MAX_POINTS})</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -262,8 +315,12 @@ const MemberManagement = () => {
                 <p className="text-center py-8 text-muted-foreground">No student progress data found.</p>
               ) : (
                 filteredProgress.map((student, index) => {
-                  const booksPercent = Math.min(((student.books_read || 0) / MAX_BOOKS) * 100, 100);
-                  const pointsPercent = Math.min(((student.total_points || 0) / MAX_POINTS) * 100, 100);
+                  const booksRead = student.books_read || 0;
+                  const autoCalcPoints = booksRead * 3;
+                  const displayPoints = student.total_points || 0;
+                  const pointsMismatch = displayPoints !== autoCalcPoints;
+                  const booksPercent = Math.min((booksRead / MAX_BOOKS) * 100, 100);
+                  const pointsPercent = Math.min((displayPoints / MAX_POINTS) * 100, 100);
                   const level = student.achievement_level || 'none';
                   
                   return (
@@ -271,14 +328,12 @@ const MemberManagement = () => {
                       animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(index * 0.02, 0.5) }}
                       className="flex items-center gap-4 p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
                       
-                      {/* Avatar */}
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
                         student.house ? houseColors[student.house] || 'bg-primary' : 'bg-primary'
                       }`}>
                         {(student.full_name || '?').charAt(0).toUpperCase()}
                       </div>
 
-                      {/* Name & Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm truncate">{student.full_name}</span>
@@ -291,20 +346,25 @@ const MemberManagement = () => {
                         </div>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>📚 {student.books_read || 0}/{MAX_BOOKS}</span>
+                            <span>📚 {booksRead}/{MAX_BOOKS}</span>
                             <Progress value={booksPercent} className="h-1.5 w-16" />
                           </div>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>⭐ {student.total_points || 0}/{MAX_POINTS}</span>
+                            <span>⭐ {displayPoints}/{MAX_POINTS}</span>
                             <Progress value={pointsPercent} className="h-1.5 w-16" />
                           </div>
+                          <span className="text-xs text-muted-foreground/70">
+                            ({booksRead} × 3 = {autoCalcPoints})
+                          </span>
+                          {pointsMismatch && (
+                            <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">⚠️ Mismatch</Badge>
+                          )}
                         </div>
                       </div>
 
-                      {/* Points Display & Edit */}
                       <div className="flex items-center gap-2">
                         <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm px-3 py-1">
-                          {student.total_points || 0} pts
+                          {displayPoints} pts
                         </Badge>
                         <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
                           onClick={() => {
@@ -494,6 +554,9 @@ const MemberManagement = () => {
                   <span>📚 Books: {editingStudent.books_read || 0}/{MAX_BOOKS}</span>
                   <span>⭐ Points: {editingStudent.total_points || 0}/{MAX_POINTS}</span>
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Auto-calc: {editingStudent.books_read || 0} books × 3 = {(editingStudent.books_read || 0) * 3} points
+                </p>
               </div>
               <div>
                 <Label htmlFor="edit-points">New Total Points (max {MAX_POINTS})</Label>
@@ -508,6 +571,68 @@ const MemberManagement = () => {
               className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
               {editLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Star className="h-4 w-4 mr-2" />}
               Update Points
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={!!editingProfile} onOpenChange={(open) => !open && setEditingProfile(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="h-5 w-5 text-primary" />Edit Member Profile
+            </DialogTitle>
+          </DialogHeader>
+          {editingProfile && (
+            <div className="space-y-4">
+              <div className="bg-muted p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">{editingProfile.email}</p>
+                <Badge variant="outline" className="mt-1">{roleLabels[editingProfile.role]}</Badge>
+              </div>
+              <div>
+                <Label htmlFor="edit-name">Full Name</Label>
+                <Input id="edit-name" value={editProfileData.full_name}
+                  onChange={(e) => setEditProfileData(prev => ({ ...prev, full_name: e.target.value }))} />
+              </div>
+              <div>
+                <Label>House</Label>
+                <Select value={editProfileData.house} onValueChange={(v) => setEditProfileData(prev => ({ ...prev, house: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select house" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— No House —</SelectItem>
+                    {HOUSES.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Year Group</Label>
+                <Select value={editProfileData.year_group} onValueChange={(v) => setEditProfileData(prev => ({ ...prev, year_group: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select year group" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— No Year Group —</SelectItem>
+                    {YEAR_GROUPS.map(yg => <SelectItem key={yg} value={yg}>{yg}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Class</Label>
+                <Select value={editProfileData.class_name} onValueChange={(v) => setEditProfileData(prev => ({ ...prev, class_name: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select class" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— No Class —</SelectItem>
+                    {CLASSES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingProfile(null)}>Cancel</Button>
+            <Button onClick={handleEditProfile} disabled={editProfileLoading}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+              {editProfileLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Pencil className="h-4 w-4 mr-2" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
