@@ -60,6 +60,7 @@ const LibrarianUserManager = () => {
   const [notifyMessage, setNotifyMessage] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<Submission | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [bulkApproving, setBulkApproving] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -277,6 +278,27 @@ const LibrarianUserManager = () => {
     toast.success('📥 CSV exported!');
   };
 
+  const approveAllPending = async () => {
+    const pendingSubs = submissions.filter(s => !s.approval_status || s.approval_status === 'pending');
+    if (pendingSubs.length === 0) {
+      toast.info('No pending submissions to approve');
+      return;
+    }
+    setBulkApproving(true);
+    const ids = pendingSubs.map(s => s.id);
+    const { error } = await supabase
+      .from('book_submissions')
+      .update({ approval_status: 'approved', reviewed_at: new Date().toISOString() })
+      .in('id', ids);
+    if (error) {
+      toast.error('Failed to bulk approve');
+    } else {
+      toast.success(`✅ ${pendingSubs.length} submissions approved!`);
+    }
+    setBulkApproving(false);
+    fetchData();
+  };
+
   const filteredSubmissions = submissions.filter(sub => {
     const matchesSearch = 
       sub.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -329,7 +351,14 @@ const LibrarianUserManager = () => {
             <p className="text-muted-foreground">Review, approve, reject, flag, and manage all book submissions</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {pendingCount > 0 && (
+            <Button onClick={approveAllPending} size="sm" disabled={bulkApproving}
+              className="bg-green-600 hover:bg-green-700 text-white">
+              {bulkApproving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle className="h-4 w-4 mr-2" />}
+              Approve All Pending ({pendingCount})
+            </Button>
+          )}
           <Button onClick={exportCSV} variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />Export CSV
           </Button>
