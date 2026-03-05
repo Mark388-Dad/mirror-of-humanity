@@ -95,19 +95,25 @@ serve(async (req) => {
         `;
     }
 
-    const { error: emailError } = await resend.emails.send({
-      from: "45-Book Challenge <noreply@resend.dev>",
-      to: [email],
-      subject,
-      html: emailHtml,
-    });
+    let emailSent = false;
+    try {
+      const { error: emailError } = await resend.emails.send({
+        from: "45-Book Challenge <noreply@resend.dev>",
+        to: [email],
+        subject,
+        html: emailHtml,
+      });
 
-    if (emailError) {
-      console.error("Email send error:", emailError);
-      throw new Error("Failed to send email");
+      if (emailError) {
+        console.error("Email send warning (non-fatal):", emailError);
+      } else {
+        emailSent = true;
+      }
+    } catch (emailErr) {
+      console.error("Email delivery failed (non-fatal):", emailErr);
     }
 
-    // Store notification in database
+    // Always store in-app notification regardless of email outcome
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       await supabase.from("notifications").insert({
@@ -115,7 +121,7 @@ serve(async (req) => {
         type,
         title,
         message,
-        email_sent: true,
+        email_sent: emailSent,
       });
     }
 
