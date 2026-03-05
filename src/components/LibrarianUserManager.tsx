@@ -74,16 +74,26 @@ const LibrarianUserManager = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const { data: submissionData } = await supabase
-      .from('book_submissions')
-      .select(`
-        id, title, author, points_earned, approval_status, created_at, category_name, category_number,
-        reflection, ai_feedback, user_id, date_started, date_finished, reviewed_at,
-        profiles!book_submissions_user_id_fkey (full_name, house, year_group, class_name, email)
-      `)
-      .order('created_at', { ascending: false })
-      .limit(500);
-    setSubmissions((submissionData as unknown as Submission[]) || []);
+    const [{ data: submissionData }, { data: profileData }] = await Promise.all([
+      supabase
+        .from('book_submissions')
+        .select('id, title, author, points_earned, approval_status, created_at, category_name, category_number, reflection, ai_feedback, user_id, date_started, date_finished, reviewed_at')
+        .order('created_at', { ascending: false })
+        .limit(500),
+      supabase.from('profiles').select('user_id, full_name, house, year_group, class_name, email'),
+    ]);
+
+    const profileMap = new Map<string, { full_name: string; house: string | null; year_group: string | null; class_name: string | null; email: string }>();
+    (profileData || []).forEach((p: any) => {
+      profileMap.set(p.user_id, { full_name: p.full_name, house: p.house, year_group: p.year_group, class_name: p.class_name, email: p.email });
+    });
+
+    const merged = (submissionData || []).map((s: any) => ({
+      ...s,
+      profiles: profileMap.get(s.user_id) || null,
+    }));
+
+    setSubmissions(merged as Submission[]);
     setLoading(false);
   };
 
