@@ -73,14 +73,28 @@ const LibrarianUserManager = () => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    const [{ data: submissionData }, { data: profileData }] = await Promise.all([
-      supabase
+  const fetchAllSubmissions = async () => {
+    const allData: any[] = [];
+    const pageSize = 1000;
+    let from = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await supabase
         .from('book_submissions')
         .select('id, title, author, points_earned, approval_status, created_at, category_name, category_number, reflection, ai_feedback, user_id, date_started, date_finished, reviewed_at')
         .order('created_at', { ascending: false })
-        .limit(500),
+        .range(from, from + pageSize - 1);
+      if (error || !data || data.length === 0) { hasMore = false; break; }
+      allData.push(...data);
+      if (data.length < pageSize) { hasMore = false; } else { from += pageSize; }
+    }
+    return allData;
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    const [submissionData, { data: profileData }] = await Promise.all([
+      fetchAllSubmissions(),
       supabase.from('profiles').select('user_id, full_name, house, year_group, class_name, email'),
     ]);
 
