@@ -73,7 +73,7 @@ const MemberManagement = () => {
   const [editPoints, setEditPoints] = useState('');
   const [editLoading, setEditLoading] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
-  const [editProfileData, setEditProfileData] = useState({ house: '', year_group: '', class_name: '', full_name: '' });
+  const [editProfileData, setEditProfileData] = useState({ house: '', year_group: '', class_name: '', full_name: '', email: '', role: '' });
   const [editProfileLoading, setEditProfileLoading] = useState(false);
 
   useEffect(() => {
@@ -128,7 +128,11 @@ const MemberManagement = () => {
 
     const updateData: Record<string, unknown> = {
       full_name: editProfileData.full_name,
+      email: editProfileData.email,
     };
+    if (editProfileData.role) {
+      updateData.role = editProfileData.role;
+    }
     if (editProfileData.house && editProfileData.house !== 'none') {
       updateData.house = editProfileData.house;
     } else {
@@ -165,6 +169,8 @@ const MemberManagement = () => {
     setEditingProfile(profile);
     setEditProfileData({
       full_name: profile.full_name,
+      email: profile.email,
+      role: profile.role,
       house: profile.house || '',
       year_group: profile.year_group || '',
       class_name: profile.class_name || '',
@@ -587,13 +593,31 @@ const MemberManagement = () => {
           {editingProfile && (
             <div className="space-y-4">
               <div className="bg-muted p-3 rounded-lg">
-                <p className="text-sm text-muted-foreground">{editingProfile.email}</p>
-                <Badge variant="outline" className="mt-1">{roleLabels[editingProfile.role]}</Badge>
+                <p className="text-sm text-muted-foreground">User ID: {editingProfile.user_id}</p>
               </div>
               <div>
                 <Label htmlFor="edit-name">Full Name</Label>
                 <Input id="edit-name" value={editProfileData.full_name}
                   onChange={(e) => setEditProfileData(prev => ({ ...prev, full_name: e.target.value }))} />
+              </div>
+              <div>
+                <Label htmlFor="edit-email">Email</Label>
+                <Input id="edit-email" type="email" value={editProfileData.email}
+                  onChange={(e) => setEditProfileData(prev => ({ ...prev, email: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Role</Label>
+                <Select value={editProfileData.role} onValueChange={(v) => setEditProfileData(prev => ({ ...prev, role: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="homeroom_tutor">Homeroom Tutor</SelectItem>
+                    <SelectItem value="head_of_year">Head of Year</SelectItem>
+                    <SelectItem value="house_patron">House Patron</SelectItem>
+                    <SelectItem value="librarian">Librarian</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label>House</Label>
