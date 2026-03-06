@@ -90,11 +90,11 @@ export const MAX_STUDENTS_PER_CLASS = 25;
  
 export const USER_ROLES = [
   { value: 'student', label: 'Student', requiresCode: true },
-  { value: 'homeroom_tutor', label: 'Homeroom Tutor', requiresCode: false },
-  { value: 'head_of_year', label: 'Head of Year', requiresCode: false },
-  { value: 'house_patron', label: 'House Patron', requiresCode: false },
+  { value: 'homeroom_tutor', label: 'Homeroom Tutor', requiresCode: true },
+  { value: 'head_of_year', label: 'Head of Year', requiresCode: true },
+  { value: 'house_patron', label: 'House Patron', requiresCode: true },
   { value: 'librarian', label: 'Librarian Staff', requiresCode: true },
-  { value: 'staff', label: 'Other Staff', requiresCode: false },
+  { value: 'staff', label: 'Other Staff', requiresCode: true },
 ] as const;
 
 export type House = typeof HOUSES[number];

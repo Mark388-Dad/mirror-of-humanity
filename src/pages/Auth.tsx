@@ -36,11 +36,11 @@ const signInSchema = z.object({
 
 const ROLE_FIELD_CONFIG: Record<UserRole, string[]> = {
   student: ['yearGroup', 'className', 'house', 'accessCode'],
-  homeroom_tutor: ['yearGroup', 'className'],
-  head_of_year: ['yearGroup'],
-  house_patron: ['house'],
+  homeroom_tutor: ['yearGroup', 'className', 'accessCode'],
+  head_of_year: ['yearGroup', 'accessCode'],
+  house_patron: ['house', 'accessCode'],
   librarian: ['accessCode'],
-  staff: [],
+  staff: ['accessCode'],
 };
 
 const Auth = () => {
@@ -60,7 +60,7 @@ const Auth = () => {
   });
 
   const roleFields = ROLE_FIELD_CONFIG[formData.role] || [];
-  const requiresCode = formData.role === 'student' || formData.role === 'librarian';
+  const requiresCode = true; // All roles require access codes for security
 
   // Get available classes for selected year group
   const availableClasses = formData.yearGroup ? (CLASS_BY_YEAR[formData.yearGroup] || []) : [];
@@ -115,9 +115,14 @@ const Auth = () => {
       return false;
     }
 
-    const validCodeTypes = role === 'student' ? ['student'] : ['librarian', 'staff'];
+    const validCodeTypes = role === 'student' ? ['student'] : ['librarian', 'staff', 'tutor', 'patron', 'head_of_year'];
+    // Also check role_restriction if set on the code
     if (!validCodeTypes.includes(data.code_type)) {
       setCodeError(`This code is not valid for ${role} registration`);
+      return false;
+    }
+    if (data.role_restriction && data.role_restriction !== role) {
+      setCodeError(`This code is restricted to ${data.role_restriction} role`);
       return false;
     }
 
@@ -164,20 +169,41 @@ const Auth = () => {
           toast.error('Homeroom tutors must select year group and class');
           return;
         }
+        if (!formData.accessCode) {
+          toast.error('Staff must enter an access code');
+          return;
+        }
       }
 
-      if (formData.role === 'head_of_year' && !formData.yearGroup) {
-        toast.error('Head of Year must select a year group');
-        return;
+      if (formData.role === 'head_of_year') {
+        if (!formData.yearGroup) {
+          toast.error('Head of Year must select a year group');
+          return;
+        }
+        if (!formData.accessCode) {
+          toast.error('Staff must enter an access code');
+          return;
+        }
       }
 
-      if (formData.role === 'house_patron' && !formData.house) {
-        toast.error('House Patrons must select a house');
-        return;
+      if (formData.role === 'house_patron') {
+        if (!formData.house) {
+          toast.error('House Patrons must select a house');
+          return;
+        }
+        if (!formData.accessCode) {
+          toast.error('Staff must enter an access code');
+          return;
+        }
       }
 
       if (formData.role === 'librarian' && !formData.accessCode) {
         toast.error('Librarians must enter an access code');
+        return;
+      }
+
+      if (formData.role === 'staff' && !formData.accessCode) {
+        toast.error('Staff must enter an access code');
         return;
       }
 

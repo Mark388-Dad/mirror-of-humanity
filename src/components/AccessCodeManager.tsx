@@ -33,7 +33,7 @@ const AccessCodeManager = () => {
   const [creating, setCreating] = useState(false);
 
   // New code form
-  const [newCodeType, setNewCodeType] = useState<'librarian' | 'student'>('student');
+  const [newCodeType, setNewCodeType] = useState<string>('student');
   const [newYearGroup, setNewYearGroup] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newHouse, setNewHouse] = useState('');
@@ -58,7 +58,11 @@ const AccessCodeManager = () => {
   };
 
   const generateCode = () => {
-    const prefix = newCodeType === 'librarian' ? 'LIB' : 'STU';
+    const prefixMap: Record<string, string> = {
+      student: 'STU', librarian: 'LIB', staff: 'STF',
+      tutor: 'TUT', patron: 'PAT', head_of_year: 'HOY',
+    };
+    const prefix = prefixMap[newCodeType] || 'COD';
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `${prefix}-${random}`;
   };
@@ -146,7 +150,7 @@ const AccessCodeManager = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
 
             {/* CODE TYPE */}
-            <Select value={newCodeType} onValueChange={(v) => setNewCodeType(v as 'librarian' | 'student')}>
+            <Select value={newCodeType} onValueChange={(v) => setNewCodeType(v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Code Type" />
               </SelectTrigger>
@@ -161,6 +165,30 @@ const AccessCodeManager = () => {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4" />
                     Librarian
+                  </div>
+                </SelectItem>
+                <SelectItem value="staff">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Other Staff
+                  </div>
+                </SelectItem>
+                <SelectItem value="tutor">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Homeroom Tutor
+                  </div>
+                </SelectItem>
+                <SelectItem value="patron">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    House Patron
+                  </div>
+                </SelectItem>
+                <SelectItem value="head_of_year">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Head of Year
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -222,8 +250,10 @@ const AccessCodeManager = () => {
 
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Badge variant={code.code_type === 'librarian' ? 'default' : 'secondary'}>
-                      {code.code_type === 'librarian' ? '👤 Librarian' : '📚 Student'}
+                    <Badge variant={code.code_type === 'student' ? 'secondary' : 'default'}>
+                      {code.code_type === 'student' ? '📚 Student' : code.code_type === 'librarian' ? '👤 Librarian' : 
+                       code.code_type === 'tutor' ? '🧑‍🏫 Tutor' : code.code_type === 'patron' ? '🏠 Patron' :
+                       code.code_type === 'head_of_year' ? '📋 Head of Year' : '👥 Staff'}
                     </Badge>
                     {!code.is_active && <Badge variant="outline">Disabled</Badge>}
                   </div>
