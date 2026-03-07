@@ -17,7 +17,7 @@ import VibrantDashboardCard, { FollettLibraryButton, QuickStats } from '@/compon
 import { HOUSE_COLORS, MAX_BOOKS } from '@/lib/constants';
 import confetti from 'canvas-confetti';
 
-const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793';
+const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com';
 
 interface StudentProgress {
   books_read: number;

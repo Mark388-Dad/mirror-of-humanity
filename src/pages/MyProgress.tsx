@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Medal, Award, Crown, Target, CheckCircle2, Pencil, Trash2, Download } from 'lucide-react';
+import { BookOpen, Medal, Award, Crown, Target, CheckCircle2, Pencil, Trash2, Download, Gift } from 'lucide-react';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
+import { calculateBonusPoints, calculateTotalPoints, getEarnedMilestones, getNextMilestone, MILESTONE_BONUSES, MAX_TOTAL_POINTS, POINTS_PER_BOOK } from '@/lib/milestonePoints';
 import { MAX_BOOKS_PER_CATEGORY } from '@/lib/constants';
 import { format } from 'date-fns';
 import EditSubmissionDialog from '@/components/EditSubmissionDialog';
@@ -75,8 +76,12 @@ const MyProgress = () => {
   }, [user]);
 
   const booksRead = submissions.length;
-  const totalPoints = submissions.reduce((sum, s) => sum + s.points_earned, 0);
+  const bookPoints = booksRead * POINTS_PER_BOOK;
+  const bonusPoints = calculateBonusPoints(booksRead);
+  const totalPoints = calculateTotalPoints(booksRead);
   const completedCategories = new Set(submissions.map(s => s.category_number));
+  const earnedMilestones = getEarnedMilestones(booksRead);
+  const nextMilestone = getNextMilestone(booksRead);
 
   const getAchievementLevel = () => {
     if (booksRead >= 45) return { level: 'Gold', icon: Crown, color: 'text-gold bg-gold/10', next: null };
@@ -147,10 +152,57 @@ const MyProgress = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm font-medium">⭐ Points Earned</span>
-                    <span className="text-sm font-bold">{totalPoints} / 135</span>
+                    <span className="text-sm font-medium">⭐ Book Points</span>
+                    <span className="text-sm font-bold">{bookPoints} / 135</span>
                   </div>
-                  <Progress value={(totalPoints / 135) * 100} className="h-4" />
+                  <Progress value={(bookPoints / 135) * 100} className="h-4" />
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">🎁 Bonus Points</span>
+                    <span className="text-sm font-bold text-primary">{bonusPoints} / 33</span>
+                  </div>
+                  <Progress value={(bonusPoints / 33) * 100} className="h-4" />
+                </div>
+
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-sm font-semibold">🏆 Total Points</span>
+                    <span className="text-lg font-bold text-primary">{totalPoints} / {MAX_TOTAL_POINTS}</span>
+                  </div>
+                  <Progress value={(totalPoints / MAX_TOTAL_POINTS) * 100} className="h-3" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {bookPoints} (books × 3) + {bonusPoints} (milestone bonuses)
+                  </p>
+                </div>
+
+                {/* Milestone Bonuses */}
+                <div className="p-4 rounded-xl bg-secondary">
+                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-primary" /> Milestone Bonuses
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {MILESTONE_BONUSES.map(m => {
+                      const earned = booksRead >= m.books;
+                      return (
+                        <div key={m.books} className={`p-3 rounded-lg border text-sm ${earned ? 'bg-primary/10 border-primary/30' : 'border-border opacity-60'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className={earned ? 'font-semibold' : ''}>{m.label}</span>
+                            <Badge variant={earned ? 'default' : 'secondary'} className="text-xs">
+                              {earned ? '✅' : '🔒'} +{m.bonus}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{m.books} book{m.books > 1 ? 's' : ''}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {nextMilestone && (
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
+                      📖 {nextMilestone.remaining} more book{nextMilestone.remaining > 1 ? 's' : ''} to unlock <strong>{nextMilestone.label}</strong> (+{nextMilestone.bonus} pts)
+                    </p>
+                  )}
                 </div>
 
                 {/* Milestone encouragement */}
@@ -207,8 +259,8 @@ const MyProgress = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 rounded-xl bg-gold/10 border border-gold/20">
-                <div className="text-3xl font-display font-bold text-gold">{totalPoints}</div>
-                <div className="text-sm text-muted-foreground">Total Points</div>
+               <div className="text-3xl font-display font-bold text-gold">{totalPoints}</div>
+                <div className="text-sm text-muted-foreground">Total Points ({bookPoints} + {bonusPoints})</div>
               </div>
               <div className="p-4 rounded-xl bg-secondary">
                 <div className="text-3xl font-display font-bold text-foreground">{booksRead}</div>

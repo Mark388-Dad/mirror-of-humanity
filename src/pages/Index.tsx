@@ -26,7 +26,7 @@ interface HomepageContent {
 }
 
 const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf-u0b7RP1aUMOJGQvGzUaJKEP2hMKyNWvB0cMu68ANHqFq-A/viewform";
-const FOLLETT_URL = "https://search.follettsoftware.com/metasearch/ui/101035";
+const FOLLETT_URL = "https://mfa.follettdestiny.com";
 
 const Index = () => {
   const { user, loading } = useAuth();

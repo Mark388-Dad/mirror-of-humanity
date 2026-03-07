@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { MAX_BOOKS } from '@/lib/constants';
+import { calculateBonusPoints, calculateTotalPoints, POINTS_PER_BOOK, MAX_TOTAL_POINTS, MILESTONE_BONUSES } from '@/lib/milestonePoints';
 
 interface Submission {
   id: string;
@@ -338,12 +339,14 @@ const LibrarianUserManager = () => {
   const approvedCount = submissions.filter(s => s.approval_status === 'approved').length;
   const rejectedCount = submissions.filter(s => s.approval_status === 'rejected').length;
 
-  // Student-level stats
+  // Student-level stats with milestone bonuses
   const getStudentStats = (userId: string) => {
     const userSubs = submissions.filter(s => s.user_id === userId);
     const totalBooks = userSubs.length;
-    const totalPoints = userSubs.reduce((sum, s) => sum + s.points_earned, 0);
-    return { totalBooks, totalPoints, maxBooks: MAX_BOOKS, maxPoints: MAX_BOOKS * 3 };
+    const bookPoints = totalBooks * POINTS_PER_BOOK;
+    const bonusPoints = calculateBonusPoints(totalBooks);
+    const totalPoints = calculateTotalPoints(totalBooks);
+    return { totalBooks, bookPoints, bonusPoints, totalPoints, maxBooks: MAX_BOOKS, maxPoints: MAX_TOTAL_POINTS };
   };
 
   if (loading) {
@@ -457,11 +460,13 @@ const LibrarianUserManager = () => {
                           {submission.profiles?.class_name && <Badge variant="outline" className="ml-1 text-xs">{submission.profiles.class_name}</Badge>}
                           {submission.profiles?.house && <Badge variant="outline" className="ml-1 text-xs">{submission.profiles.house}</Badge>}
                         </p>
-                        {/* Student progress mini-bar */}
-                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                        {/* Student progress mini-bar with bonus */}
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
                           <span>📚 {stats.totalBooks}/{stats.maxBooks}</span>
                           <Progress value={(stats.totalBooks / stats.maxBooks) * 100} className="h-1.5 w-20" />
-                          <span>⭐ {stats.totalPoints}/{stats.maxPoints} pts</span>
+                          <span>⭐ {stats.bookPoints} pts</span>
+                          <span className="text-primary font-semibold">+{stats.bonusPoints} bonus</span>
+                          <span>= {stats.totalPoints}/{stats.maxPoints}</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(submission.created_at).toLocaleDateString()}
