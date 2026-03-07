@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { BookOpen, Loader2, Calendar, User, FileText, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { MAX_BOOKS, MAX_BOOKS_PER_CATEGORY } from '@/lib/constants';
+import { calculateTotalPoints, calculateBonusPoints, getNextMilestone, POINTS_PER_BOOK, MAX_TOTAL_POINTS } from '@/lib/milestonePoints';
 import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { z } from 'zod';
 import BookSearch from '@/components/BookSearch';
@@ -218,13 +219,18 @@ const SubmitBook = () => {
             Record your reading journey and earn points for the challenge.
           </p>
           {!limitsLoading && (
-            <div className="flex gap-3 mt-3">
+            <div className="flex gap-3 mt-3 flex-wrap">
               <Badge variant="outline" className="text-sm">
                 📚 {totalSubmissions}/{MAX_BOOKS} books submitted
               </Badge>
               <Badge variant="outline" className="text-sm">
-                {MAX_BOOKS - totalSubmissions} remaining overall
+                ⭐ {calculateTotalPoints(totalSubmissions)} / {MAX_TOTAL_POINTS} total points
               </Badge>
+              {getNextMilestone(totalSubmissions) && (
+                <Badge className="text-sm bg-primary/10 text-primary border-primary/20">
+                  🎁 {getNextMilestone(totalSubmissions)!.remaining} books to next bonus (+{getNextMilestone(totalSubmissions)!.bonus} pts)
+                </Badge>
+              )}
             </div>
           )}
         </div>
