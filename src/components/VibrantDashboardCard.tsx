@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ExternalLink, BookOpen, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const FOLLETT_LIBRARY_URL = 'https://search.follettsoftware.com/metasearch/ui/101035';
+const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com';
 
 interface VibrantDashboardCardProps {
   title: string;
