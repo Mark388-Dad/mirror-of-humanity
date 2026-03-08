@@ -186,6 +186,24 @@ const SessionCountdown = ({ endDate, startDate, title, description, sessionName 
               ))}
             </div>
           )}
+
+          {/* Progress Bar */}
+          {startDate && !isExpired && (
+            <div className="mt-8 max-w-md mx-auto">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground font-medium">Session Progress</span>
+                <span className="text-xs font-bold text-primary">{Math.round(progress)}%</span>
+              </div>
+              <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden border border-border/50">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1.2, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.section>

@@ -131,6 +131,24 @@ const DashboardCountdown = () => {
               ))}
             </div>
           )}
+
+          {/* Progress Bar */}
+          {startDate && (
+            <div className="mt-3 relative z-10">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-muted-foreground font-medium">Session Progress</span>
+                <span className="text-[10px] font-semibold text-primary">{Math.round(progress)}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
