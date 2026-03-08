@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, GraduationCap, BookOpen, Home, UserCircle, Search, Loader2, Star, Trophy, BarChart3, Pencil } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, Home, UserCircle, Search, Loader2, Star, Trophy, BarChart3, Pencil, Download, ArrowUpDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { HOUSES, YEAR_GROUPS, CLASSES, HOUSE_COLORS, MAX_BOOKS } from '@/lib/constants';
