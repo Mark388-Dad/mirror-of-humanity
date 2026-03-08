@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
