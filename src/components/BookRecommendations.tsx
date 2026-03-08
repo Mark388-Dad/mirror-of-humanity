@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Sparkles, BookOpen, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,18 +16,30 @@ interface Recommendation {
   reading_level: string;
 }
 
+const INTEREST_OPTIONS = [
+  'Adventure', 'Mystery', 'Fantasy', 'Science Fiction', 'Romance',
+  'Historical Fiction', 'Horror', 'Sports', 'Biography', 'Poetry',
+  'Graphic Novels', 'Comedy', 'Drama', 'Thriller', 'True Crime',
+];
+
 const BookRecommendations = () => {
   const { user } = useAuth();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+
+  const toggleInterest = (interest: string) => {
+    setSelectedInterests(prev =>
+      prev.includes(interest) ? prev.filter(i => i !== interest) : [...prev, interest].slice(0, 5)
+    );
+  };
 
   const fetchRecommendations = async () => {
     if (!user) return;
 
     setLoading(true);
     try {
-      // Get user's completed categories
       const { data: submissions } = await supabase
         .from('book_submissions')
         .select('category_number, category_name')
@@ -38,7 +50,7 @@ const BookRecommendations = () => {
       const { data, error } = await supabase.functions.invoke('recommend-books', {
         body: {
           completed_categories: completedCategories,
-          interests: ['adventure', 'mystery', 'fantasy'],
+          interests: selectedInterests.length > 0 ? selectedInterests : ['adventure', 'mystery', 'fantasy'],
         },
       });
 
@@ -74,30 +86,42 @@ const BookRecommendations = () => {
           <Sparkles className="w-5 h-5 text-purple-500" />
           Book Recommendations
         </CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={fetchRecommendations}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <RefreshCw className="w-4 h-4" />
-          )}
-        </Button>
+        {hasLoaded && (
+          <Button variant="ghost" size="sm" onClick={fetchRecommendations} disabled={loading}>
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {!hasLoaded && !loading ? (
-          <div className="text-center py-6">
-            <Sparkles className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground mb-3">
-              Get personalized book recommendations based on your reading history
+          <div className="space-y-4">
+            <div className="text-center">
+              <Sparkles className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-3">
+                Select your interests for personalized recommendations
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {INTEREST_OPTIONS.map(interest => (
+                <Badge
+                  key={interest}
+                  variant={selectedInterests.includes(interest) ? 'default' : 'outline'}
+                  className="cursor-pointer transition-colors"
+                  onClick={() => toggleInterest(interest)}
+                >
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {selectedInterests.length}/5 interests selected
             </p>
-            <Button onClick={fetchRecommendations} variant="outline" className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              Get Recommendations
-            </Button>
+            <div className="text-center">
+              <Button onClick={fetchRecommendations} variant="outline" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Get Recommendations
+              </Button>
+            </div>
           </div>
         ) : loading ? (
           <div className="flex items-center justify-center py-8">
