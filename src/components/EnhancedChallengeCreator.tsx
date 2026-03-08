@@ -200,7 +200,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         setTargetBooks('5'); setPointsReward('10'); setStartDate(''); setEndDate('');
         setParticipationType('all'); setAllowedYearGroups([]); setAllowedHouses([]); setAllowedClasses([]);
         setRequiresSubmission(true); setEvidenceType('reflection'); setLeaderboardType('individual');
-        setIsFeatured(false); setIsIndependent(false); setBadgeName('');
+        setIsFeatured(false); setIsIndependent(false); setBadgeName(''); setTargetCategories([]);
       }
       onSaved?.();
     } catch (err: any) {
