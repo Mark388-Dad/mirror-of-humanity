@@ -12,6 +12,7 @@ import IBConnectionsSection from "@/components/IBConnectionsSection";
 import OutcomesSection from "@/components/OutcomesSection";
 import Footer from "@/components/Footer";
 import FeaturedChallenges from "@/components/FeaturedChallenges";
+import SessionCountdown from "@/components/SessionCountdown";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogIn, LayoutDashboard, Sparkles, ExternalLink } from 'lucide-react';
