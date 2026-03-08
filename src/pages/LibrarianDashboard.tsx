@@ -19,6 +19,7 @@ import MemberManagement from '@/components/MemberManagement';
 import LibrarianUserManager from '@/components/LibrarianUserManager';
 import CategoryManager from '@/components/CategoryManager';
 import CertificateManager from '@/components/CertificateManager';
+import ChallengesManager from '@/components/ChallengesManager';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 
 interface Challenge {
