@@ -70,6 +70,7 @@ const Navbar = () => {
 
           {/* User Info */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NotificationBell />
             <div className="hidden sm:flex items-center gap-2 text-white/80 text-sm">
               <User className="w-4 h-4" />
