@@ -257,6 +257,7 @@ const LibrarianDashboard = () => {
           <TabsContent value="codes"><AccessCodeManager /></TabsContent>
           <TabsContent value="files"><FileUploadManager /></TabsContent>
           <TabsContent value="members"><MemberManagement /></TabsContent>
+          <TabsContent value="import"><BulkStudentImport /></TabsContent>
         </Tabs>
       </main>
     </div>
