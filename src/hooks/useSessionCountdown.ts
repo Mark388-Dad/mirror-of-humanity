@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface CountdownData {
   endDate: string | null;
+  startDate: string | null;
   title: string | null;
   sessionName: string | null;
   description: string | null;
