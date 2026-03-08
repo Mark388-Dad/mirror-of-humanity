@@ -16,6 +16,7 @@ import { Download, Search, Users, BookOpen, Trophy, Filter, Upload, Brain, Loade
 import { HOUSES, YEAR_GROUPS, CLASSES } from '@/lib/constants';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import DashboardCountdown from '@/components/DashboardCountdown';
 
 interface Submission {
   id: string;
