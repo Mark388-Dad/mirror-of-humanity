@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import BulkStudentImport from '@/components/BulkStudentImport';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy, Timer } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy, Timer, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -173,6 +174,7 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="codes" className="flex items-center gap-2"><Key className="w-4 h-4" />Access Codes</TabsTrigger>
             <TabsTrigger value="files" className="flex items-center gap-2"><Upload className="w-4 h-4" />Files</TabsTrigger>
             <TabsTrigger value="members" className="flex items-center gap-2"><Users className="w-4 h-4" />Members</TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2"><UserPlus className="w-4 h-4" />Bulk Import</TabsTrigger>
           </TabsList>
 
           <TabsContent value="submissions"><LibrarianUserManager /></TabsContent>
@@ -255,6 +257,7 @@ const LibrarianDashboard = () => {
           <TabsContent value="codes"><AccessCodeManager /></TabsContent>
           <TabsContent value="files"><FileUploadManager /></TabsContent>
           <TabsContent value="members"><MemberManagement /></TabsContent>
+          <TabsContent value="import"><BulkStudentImport /></TabsContent>
         </Tabs>
       </main>
     </div>
