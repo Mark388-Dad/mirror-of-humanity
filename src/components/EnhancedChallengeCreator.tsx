@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit } from 'lucide-react';
+import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { differenceInDays, format } from 'date-fns';
 
@@ -378,6 +378,11 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                           const { error } = await supabase.from('custom_categories').update({ name: editCatName.trim(), prompt: editCatPrompt.trim() }).eq('id', cat.id);
                           if (error) { toast.error('Failed to update'); } else { toast.success('Category updated'); setEditingCatId(null); refreshCategories(); }
                         }}><Save className="h-3 w-3 mr-1" />Save</Button>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={async () => {
+                          if (!confirm('Delete this custom category?')) return;
+                          const { error } = await supabase.from('custom_categories').delete().eq('id', cat.id);
+                          if (error) { toast.error('Failed to delete'); } else { toast.success('Category deleted'); setEditingCatId(null); setTargetCategories(prev => prev.filter(id => id !== cat.id)); refreshCategories(); }
+                        }}><Trash2 className="h-3 w-3 mr-1" />Delete</Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingCatId(null)}>Cancel</Button>
                       </div>
                     </div>
@@ -606,6 +611,25 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Preview: Target Categories Card */}
+                    {targetCategories.length > 0 && (
+                      <Card className="border border-border/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">📚 Target Reading Categories</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {targetCategories.map(catId => {
+                              const cat = allCategories.find(c => c.id === catId);
+                              return cat ? (
+                                <Badge key={catId} variant="secondary" className="text-xs">
+                                  #{cat.id} {cat.name}
+                                </Badge>
+                              ) : null;
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
                     {/* Preview: Actions Card */}
                     <Card className="border border-border/50">
