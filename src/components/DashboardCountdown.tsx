@@ -137,11 +137,11 @@ const DashboardCountdown = () => {
             <div className="mt-3 relative z-10">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-[10px] text-muted-foreground font-medium">Session Progress</span>
-                <span className="text-[10px] font-semibold text-primary">{Math.round(progress)}%</span>
+                <span className={`text-[10px] font-semibold ${progress >= 90 ? 'text-red-500' : progress >= 75 ? 'text-yellow-500' : 'text-green-500'}`}>{Math.round(progress)}%</span>
               </div>
               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  className={`h-full rounded-full ${progress >= 90 ? 'bg-gradient-to-r from-red-400 to-red-600' : progress >= 75 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-green-400 to-green-600'}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 1, ease: 'easeOut' }}
