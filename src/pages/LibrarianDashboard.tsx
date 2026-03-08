@@ -167,6 +167,7 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="create" className="flex items-center gap-2"><Sparkles className="w-4 h-4" />{editingChallenge ? 'Edit Challenge' : 'Create New'}</TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2"><Tag className="w-4 h-4" />Categories</TabsTrigger>
             <TabsTrigger value="certificates" className="flex items-center gap-2"><Award className="w-4 h-4" />Certificates</TabsTrigger>
+            <TabsTrigger value="countdown" className="flex items-center gap-2"><Timer className="w-4 h-4" />Countdown</TabsTrigger>
             <TabsTrigger value="homepage" className="flex items-center gap-2"><Home className="w-4 h-4" />Homepage</TabsTrigger>
             <TabsTrigger value="sync" className="flex items-center gap-2"><Cloud className="w-4 h-4" />Google Sync</TabsTrigger>
             <TabsTrigger value="codes" className="flex items-center gap-2"><Key className="w-4 h-4" />Access Codes</TabsTrigger>
