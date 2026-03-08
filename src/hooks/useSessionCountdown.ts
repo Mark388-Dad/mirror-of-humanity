@@ -12,7 +12,7 @@ interface CountdownData {
 
 export const useSessionCountdown = () => {
   const [data, setData] = useState<CountdownData>({
-    endDate: null, title: null, sessionName: null, description: null, isVisible: false,
+    endDate: null, startDate: null, title: null, sessionName: null, description: null, isVisible: false,
   });
 
   useEffect(() => {
