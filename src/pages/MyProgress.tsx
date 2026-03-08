@@ -103,6 +103,7 @@ const MyProgress = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="My Progress" description="Track your reading journey — books completed, achievements earned, and milestones reached." path="/progress" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">

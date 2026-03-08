@@ -329,6 +329,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-6">
+      <SEOHead title="Sign In" description="Sign in or create an account for the 45-Book Reading Challenge at M-PESA Foundation Academy." path="/auth" />
       <Card className="w-full max-w-lg bg-card/95 backdrop-blur">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">

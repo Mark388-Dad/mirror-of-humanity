@@ -86,6 +86,7 @@ const BookGallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Book Gallery" description="Browse books submitted by students in the 45-Book Reading Challenge. Filter by category, house, and year group." path="/gallery" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
