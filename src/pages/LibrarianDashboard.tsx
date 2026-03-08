@@ -19,6 +19,7 @@ import MemberManagement from '@/components/MemberManagement';
 import LibrarianUserManager from '@/components/LibrarianUserManager';
 import CategoryManager from '@/components/CategoryManager';
 import CertificateManager from '@/components/CertificateManager';
+import ChallengesManager from '@/components/ChallengesManager';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 
 interface Challenge {
@@ -219,60 +220,19 @@ const LibrarianDashboard = () => {
           </TabsContent>
 
           <TabsContent value="challenges">
-            {loading ? (
-              <div className="text-center py-8"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>
-            ) : challenges.length === 0 ? (
-              <Card className="py-12 text-center"><CardContent>
-                <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No challenges created yet.</p>
-              </CardContent></Card>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {challenges.map((challenge, index) => (
-                  <motion.div key={challenge.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
-                    <Card className={`h-full ${challenge.is_featured ? 'border-2 border-yellow-500/30 bg-yellow-500/5' : ''}`}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">{challenge.title}</CardTitle>
-                          <div className="flex gap-1">
-                            {challenge.is_featured && <Badge className="bg-yellow-500 text-white text-xs">⭐</Badge>}
-                            <Badge variant={challenge.is_active ? 'default' : 'secondary'}>{challenge.is_active ? '✅ Active' : '⏸️ Inactive'}</Badge>
-                          </div>
-                        </div>
-                        <CardDescription className="line-clamp-2">{challenge.description}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
-                          {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d')}
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{challenge.target_books || 1} books • +{challenge.points_reward || 5} pts</span>
-                          <span className="text-xs text-muted-foreground capitalize">{challenge.difficulty_level}</span>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1" onClick={() => { setEditingChallenge(challenge); setActiveTab('create'); }}>
-                            <Pencil className="w-3 h-3 mr-1" />Edit
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => {
-                            const dup = { ...challenge, id: '', title: challenge.title + ' (copy)' };
-                            setEditingChallenge(null);
-                            setActiveTab('create');
-                            // We use a timeout so the tab switches first
-                            setTimeout(() => setEditingChallenge({ ...dup, id: '' } as any), 100);
-                          }}>
-                            <Copy className="w-3 h-3" />
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => toggleChallengeStatus(challenge.id, challenge.is_active)}>
-                            {challenge.is_active ? '⏸️' : '▶️'}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+            <ChallengesManager
+              challenges={challenges}
+              loading={loading}
+              onEdit={(challenge) => { setEditingChallenge(challenge); setActiveTab('create'); }}
+              onDuplicate={(challenge) => {
+                const dup = { ...challenge, id: '', title: challenge.title + ' (copy)' };
+                setEditingChallenge(null);
+                setActiveTab('create');
+                setTimeout(() => setEditingChallenge({ ...dup, id: '' } as any), 100);
+              }}
+              onToggleStatus={toggleChallengeStatus}
+              onRefresh={fetchData}
+            />
           </TabsContent>
 
           <TabsContent value="create">
