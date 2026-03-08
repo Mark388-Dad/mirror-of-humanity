@@ -132,6 +132,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       setIsFeatured(editingChallenge.is_featured ?? false);
       setIsIndependent(editingChallenge.is_independent);
       setBadgeName(editingChallenge.badge_name || '');
+      setTargetCategories((editingChallenge as any).target_categories || []);
     }
   }, [editingChallenge]);
 
