@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import SEOHead from '@/components/SEOHead';
 import HeroSection from "@/components/HeroSection";
 import GoalsSection from "@/components/GoalsSection";
 import PointsSection from "@/components/PointsSection";
