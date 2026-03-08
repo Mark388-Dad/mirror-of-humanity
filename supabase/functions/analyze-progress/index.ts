@@ -100,6 +100,22 @@ Provide comprehensive insights and actionable recommendations.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            analysis: "⚠️ **AI Analysis Temporarily Unavailable**\n\nThe AI analysis feature has run out of credits. Please contact your administrator to add more credits under **Settings → Workspace → Usage**.\n\nIn the meantime, you can still view all data in the dashboard tables and charts above." 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            analysis: "⚠️ **Rate Limit Reached**\n\nToo many analysis requests. Please wait a moment and try again." 
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       throw new Error("Failed to analyze data");
     }
 
