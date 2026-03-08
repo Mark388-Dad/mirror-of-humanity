@@ -241,50 +241,78 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
 
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-8">
-        {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-primary/5 border-2 border-primary/20 p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,hsl(var(--primary)/0.08),transparent_70%)]" />
-          <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => setSelectedChallenge(null)} className="gap-2 hover:bg-primary/10">
-                  <ArrowLeft className="w-4 h-4" /> Back to Challenges
-                </Button>
-              </div>
+        {/* Navigation Header */}
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => setSelectedChallenge(null)} className="gap-2 hover:bg-primary/10">
+            <ArrowLeft className="w-4 h-4" /> Back to Challenges
+          </Button>
+        </div>
+
+        {/* Title & Status Card */}
+        <Card className="border-2 border-primary/20 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/3 to-transparent pointer-events-none" />
+          <CardHeader className="relative pb-3">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="space-y-3">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <motion.h2 
-                    initial={{ opacity: 0, x: -20 }} 
-                    animate={{ opacity: 1, x: 0 }} 
-                    className="text-3xl lg:text-4xl font-display font-bold tracking-tight"
-                  >
-                    {ch.title}
-                  </motion.h2>
-                </div>
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                  <CardTitle className="text-3xl lg:text-4xl font-display font-bold tracking-tight">{ch.title}</CardTitle>
+                </motion.div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className={`text-sm px-3 py-1 ${catInfo.color}`}>{catInfo.emoji} {catInfo.label}</Badge>
                   <Badge variant="outline" className={`text-sm px-3 py-1 ${status.color}`}>{status.icon} {status.label}</Badge>
                   {ch.is_featured && <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30 text-sm px-3 py-1"><Star className="w-4 h-4 mr-1" />Featured</Badge>}
                   {diffInfo && <Badge variant="outline" className={`text-sm px-3 py-1 ${diffInfo.color}`}>{diffInfo.icon} {diffInfo.label}</Badge>}
                 </div>
-                <p className="text-base text-muted-foreground max-w-2xl leading-relaxed">{ch.description}</p>
+              </div>
+              <div className="flex gap-3 shrink-0">
+                <Button variant="outline" size="lg" onClick={() => onEdit(ch)} className="gap-2 h-12 px-6">
+                  <Pencil className="w-5 h-5" /> Edit
+                </Button>
+                <Button 
+                  variant={ch.is_active ? "destructive" : "default"} 
+                  size="lg" 
+                  onClick={() => onToggleStatus(ch.id, ch.is_active)}
+                  className="gap-2 h-12 px-6"
+                >
+                  {ch.is_active ? '⏸️ Pause' : '▶️ Activate'}
+                </Button>
               </div>
             </div>
-            <div className="flex gap-3">
-              <Button variant="outline" size="lg" onClick={() => onEdit(ch)} className="gap-2 h-12 px-6">
-                <Pencil className="w-5 h-5" /> Edit Challenge
-              </Button>
-              <Button 
-                variant={ch.is_active ? "destructive" : "default"} 
-                size="lg" 
-                onClick={() => onToggleStatus(ch.id, ch.is_active)}
-                className="gap-2 h-12 px-6"
-              >
-                {ch.is_active ? '⏸️ Pause' : '▶️ Activate'}
-              </Button>
+          </CardHeader>
+        </Card>
+
+        {/* Description Card */}
+        <Card className="border-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-display flex items-center gap-2">📝 Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-base text-muted-foreground leading-relaxed">{ch.description}</p>
+          </CardContent>
+        </Card>
+
+        {/* Metadata & Tags Card */}
+        <Card className="border-2">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-display flex items-center gap-2">🏷️ Metadata & Restrictions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {ch.badge_name && <Badge variant="outline" className="text-sm px-4 py-2">🏅 Badge: {ch.badge_name}</Badge>}
+              {ch.participation_type && <Badge variant="outline" className="text-sm px-4 py-2">👤 {ch.participation_type}</Badge>}
+              {ch.requires_submission && <Badge variant="outline" className="text-sm px-4 py-2 bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30">📤 Requires Submission</Badge>}
+              {ch.evidence_type && <Badge variant="outline" className="text-sm px-4 py-2">📎 Evidence: {ch.evidence_type}</Badge>}
+              {ch.leaderboard_type && <Badge variant="outline" className="text-sm px-4 py-2">📊 Leaderboard: {ch.leaderboard_type}</Badge>}
+              {ch.is_independent && <Badge variant="outline" className="text-sm px-4 py-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30">🧍 Independent</Badge>}
+              {ch.allowed_year_groups?.length ? <Badge variant="outline" className="text-sm px-4 py-2 bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30">📚 Years: {ch.allowed_year_groups.join(', ')}</Badge> : null}
+              {ch.allowed_houses?.length ? <Badge variant="outline" className="text-sm px-4 py-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30">🏠 Houses: {ch.allowed_houses.join(', ')}</Badge> : null}
+              {ch.allowed_classes?.length ? <Badge variant="outline" className="text-sm px-4 py-2 bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30">🏫 Classes: {ch.allowed_classes.join(', ')}</Badge> : null}
+              {!ch.badge_name && !ch.participation_type && !ch.requires_submission && !ch.evidence_type && !ch.leaderboard_type && !ch.is_independent && !ch.allowed_year_groups?.length && !ch.allowed_houses?.length && !ch.allowed_classes?.length && (
+                <p className="text-sm text-muted-foreground">No restrictions — open to all students</p>
+              )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Big stats row */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
