@@ -109,6 +109,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [isFeatured, setIsFeatured] = useState(false);
   const [isIndependent, setIsIndependent] = useState(false);
   const [badgeName, setBadgeName] = useState('');
+  const [targetCategories, setTargetCategories] = useState<number[]>([]);
 
   // Populate form when editing
   useEffect(() => {
