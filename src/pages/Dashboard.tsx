@@ -15,6 +15,7 @@ import NotificationBell from '@/components/NotificationBell';
 import XPProgressBar, { getXPLevel } from '@/components/XPProgressBar';
 import VibrantDashboardCard, { FollettLibraryButton, QuickStats } from '@/components/VibrantDashboardCard';
 import { HOUSE_COLORS, MAX_BOOKS } from '@/lib/constants';
+import DashboardCountdown from '@/components/DashboardCountdown';
 import confetti from 'canvas-confetti';
 
 const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com';
@@ -164,6 +165,8 @@ const Dashboard = () => {
           </div>
           <NotificationBell />
         </motion.div>
+
+        <DashboardCountdown />
 
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="mb-8">
           <FollettLibraryButton className="w-full sm:w-auto" />

@@ -16,6 +16,7 @@ import { Download, Search, Users, BookOpen, Trophy, Filter, Upload, Brain, Loade
 import { HOUSES, YEAR_GROUPS, CLASSES } from '@/lib/constants';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import DashboardCountdown from '@/components/DashboardCountdown';
 
 interface Submission {
   id: string;
@@ -367,6 +368,8 @@ const AdminDashboard = () => {
             View, analyze, and manage all student submissions.
           </p>
         </div>
+
+        <DashboardCountdown />
 
         {/* Stats Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

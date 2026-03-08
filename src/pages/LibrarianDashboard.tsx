@@ -21,6 +21,7 @@ import CategoryManager from '@/components/CategoryManager';
 import CertificateManager from '@/components/CertificateManager';
 import ChallengesManager from '@/components/ChallengesManager';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
+import DashboardCountdown from '@/components/DashboardCountdown';
 
 interface Challenge {
   id: string;
@@ -147,6 +148,8 @@ const LibrarianDashboard = () => {
             <FollettLibraryButton />
           </div>
         </motion.div>
+
+        <DashboardCountdown />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <VibrantDashboardCard title="Total Students" value={stats.totalStudents} icon={<BookOpen className="h-5 w-5" />} color="blue" />
