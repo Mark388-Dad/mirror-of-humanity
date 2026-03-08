@@ -346,6 +346,43 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
           </Card>
         </motion.div>
 
+          {/* Target Reading Categories Card */}
+          <Card className="border-2 border-primary/10 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Tag className="h-5 w-5 text-primary" />Target Reading Categories
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Select which reading categories this challenge covers. Leave empty for all categories.</p>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto pr-1">
+                {allCategories.map(cat => {
+                  const isSelected = targetCategories.includes(cat.id);
+                  return (
+                    <Badge
+                      key={cat.id}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className={`cursor-pointer transition-all hover:scale-105 text-xs ${isSelected ? 'shadow-md' : 'hover:bg-primary/10'}`}
+                      onClick={() => {
+                        setTargetCategories(prev =>
+                          prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                        );
+                      }}
+                    >
+                      {cat.id}. {cat.name}
+                    </Badge>
+                  );
+                })}
+              </div>
+              {targetCategories.length > 0 && (
+                <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                  <p className="text-xs text-muted-foreground">{targetCategories.length} categor{targetCategories.length === 1 ? 'y' : 'ies'} selected</p>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setTargetCategories([])}>Clear all</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
         {/* Right: Rules + Preview */}
         <div className="space-y-6">
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
