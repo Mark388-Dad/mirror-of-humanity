@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import AdvancedLeaderboard from '@/components/AdvancedLeaderboard';
 import { FollettLibraryButton } from '@/components/VibrantDashboardCard';
+import SEOHead from '@/components/SEOHead';
 import { motion } from 'framer-motion';
 import { Trophy, Sparkles } from 'lucide-react';
 
