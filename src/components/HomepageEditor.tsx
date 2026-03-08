@@ -229,39 +229,92 @@ const HomepageEditor = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor={`title-${section.id}`}>Title</Label>
-                  <Input
-                    id={`title-${section.id}`}
-                    value={section.title || ''}
-                    onChange={(e) => handleInputChange(section.id, 'title', e.target.value)}
-                    placeholder="Section title..."
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`content-${section.id}`}>Content</Label>
-                  <Textarea
-                    id={`content-${section.id}`}
-                    value={section.content || ''}
-                    onChange={(e) => handleInputChange(section.id, 'content', e.target.value)}
-                    placeholder="Section content..."
-                    rows={4}
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor={`image-${section.id}`}>Image URL (optional)</Label>
-                  <Input
-                    id={`image-${section.id}`}
-                    value={section.image_url || ''}
-                    onChange={(e) => handleInputChange(section.id, 'image_url', e.target.value)}
-                    placeholder="https://..."
-                    className="mt-1"
-                  />
-                </div>
+                {section.section_key === 'session_countdown' ? (
+                  <>
+                    <div>
+                      <Label htmlFor={`title-${section.id}`}>Countdown Title</Label>
+                      <Input
+                        id={`title-${section.id}`}
+                        value={section.title || ''}
+                        onChange={(e) => handleInputChange(section.id, 'title', e.target.value)}
+                        placeholder="e.g. 45-Book Challenge Countdown"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`content-${section.id}`}>End Date (YYYY-MM-DD)</Label>
+                      <Input
+                        id={`content-${section.id}`}
+                        value={section.content || ''}
+                        onChange={(e) => handleInputChange(section.id, 'content', e.target.value)}
+                        placeholder="2025-06-30"
+                        className="mt-1 font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">The countdown will tick down to this date</p>
+                    </div>
+                    <div>
+                      <Label htmlFor={`session-name-${section.id}`}>Session Name (badge label)</Label>
+                      <Input
+                        id={`session-name-${section.id}`}
+                        value={(() => { try { return JSON.parse(section.image_url || '{}').sessionName || ''; } catch { return ''; } })()}
+                        onChange={(e) => {
+                          const extra = (() => { try { return JSON.parse(section.image_url || '{}'); } catch { return {}; } })();
+                          handleInputChange(section.id, 'image_url', JSON.stringify({ ...extra, sessionName: e.target.value }));
+                        }}
+                        placeholder="e.g. 2025/2026 Reading Session"
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`session-desc-${section.id}`}>Session Description</Label>
+                      <Textarea
+                        id={`session-desc-${section.id}`}
+                        value={(() => { try { return JSON.parse(section.image_url || '{}').description || ''; } catch { return ''; } })()}
+                        onChange={(e) => {
+                          const extra = (() => { try { return JSON.parse(section.image_url || '{}'); } catch { return {}; } })();
+                          handleInputChange(section.id, 'image_url', JSON.stringify({ ...extra, description: e.target.value }));
+                        }}
+                        placeholder="e.g. Read 45 books across 30 categories before the deadline!"
+                        rows={2}
+                        className="mt-1"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Label htmlFor={`title-${section.id}`}>Title</Label>
+                      <Input
+                        id={`title-${section.id}`}
+                        value={section.title || ''}
+                        onChange={(e) => handleInputChange(section.id, 'title', e.target.value)}
+                        placeholder="Section title..."
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`content-${section.id}`}>Content</Label>
+                      <Textarea
+                        id={`content-${section.id}`}
+                        value={section.content || ''}
+                        onChange={(e) => handleInputChange(section.id, 'content', e.target.value)}
+                        placeholder="Section content..."
+                        rows={4}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`image-${section.id}`}>Image URL (optional)</Label>
+                      <Input
+                        id={`image-${section.id}`}
+                        value={section.image_url || ''}
+                        onChange={(e) => handleInputChange(section.id, 'image_url', e.target.value)}
+                        placeholder="https://..."
+                        className="mt-1"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <Button
                   onClick={() => updateSection(section.id, {
