@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCustomCategories } from '@/hooks/useCustomCategories';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock } from 'lucide-react';
+import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { differenceInDays, format } from 'date-fns';
 
@@ -84,6 +85,7 @@ interface EnhancedChallengeCreatorProps {
 
 const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: EnhancedChallengeCreatorProps) => {
   const { user } = useAuth();
+  const { allCategories } = useCustomCategories();
   const isEditing = !!editingChallenge;
 
   const [saving, setSaving] = useState(false);
@@ -107,6 +109,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [isFeatured, setIsFeatured] = useState(false);
   const [isIndependent, setIsIndependent] = useState(false);
   const [badgeName, setBadgeName] = useState('');
+  const [targetCategories, setTargetCategories] = useState<number[]>([]);
 
   // Populate form when editing
   useEffect(() => {
@@ -129,6 +132,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       setIsFeatured(editingChallenge.is_featured ?? false);
       setIsIndependent(editingChallenge.is_independent);
       setBadgeName(editingChallenge.badge_name || '');
+      setTargetCategories((editingChallenge as any).target_categories || []);
     }
   }, [editingChallenge]);
 
@@ -179,6 +183,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       is_featured: isFeatured,
       is_independent: isIndependent,
       badge_name: badgeName || null,
+      target_categories: targetCategories.length ? targetCategories : null,
     };
 
     try {
@@ -195,7 +200,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         setTargetBooks('5'); setPointsReward('10'); setStartDate(''); setEndDate('');
         setParticipationType('all'); setAllowedYearGroups([]); setAllowedHouses([]); setAllowedClasses([]);
         setRequiresSubmission(true); setEvidenceType('reflection'); setLeaderboardType('individual');
-        setIsFeatured(false); setIsIndependent(false); setBadgeName('');
+        setIsFeatured(false); setIsIndependent(false); setBadgeName(''); setTargetCategories([]);
       }
       onSaved?.();
     } catch (err: any) {
@@ -340,6 +345,43 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
             </CardContent>
           </Card>
         </motion.div>
+
+          {/* Target Reading Categories Card */}
+          <Card className="border-2 border-primary/10 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Tag className="h-5 w-5 text-primary" />Target Reading Categories
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Select which reading categories this challenge covers. Leave empty for all categories.</p>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto pr-1">
+                {allCategories.map(cat => {
+                  const isSelected = targetCategories.includes(cat.id);
+                  return (
+                    <Badge
+                      key={cat.id}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className={`cursor-pointer transition-all hover:scale-105 text-xs ${isSelected ? 'shadow-md' : 'hover:bg-primary/10'}`}
+                      onClick={() => {
+                        setTargetCategories(prev =>
+                          prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
+                        );
+                      }}
+                    >
+                      {cat.id}. {cat.name}
+                    </Badge>
+                  );
+                })}
+              </div>
+              {targetCategories.length > 0 && (
+                <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                  <p className="text-xs text-muted-foreground">{targetCategories.length} categor{targetCategories.length === 1 ? 'y' : 'ies'} selected</p>
+                  <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setTargetCategories([])}>Clear all</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
         {/* Right: Rules + Preview */}
         <div className="space-y-6">
