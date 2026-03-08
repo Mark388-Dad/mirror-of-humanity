@@ -80,6 +80,8 @@ const MemberManagement = () => {
   const [filterYearGroup, setFilterYearGroup] = useState('all');
   const [filterClass, setFilterClass] = useState('all');
   const [filterRole, setFilterRole] = useState('all');
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'house'>('name');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     fetchAll();
