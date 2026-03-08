@@ -183,6 +183,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       is_featured: isFeatured,
       is_independent: isIndependent,
       badge_name: badgeName || null,
+      target_categories: targetCategories.length ? targetCategories : null,
     };
 
     try {
