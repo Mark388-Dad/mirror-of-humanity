@@ -110,6 +110,14 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [isIndependent, setIsIndependent] = useState(false);
   const [badgeName, setBadgeName] = useState('');
   const [targetCategories, setTargetCategories] = useState<number[]>([]);
+  // Inline category management
+  const [editingCatId, setEditingCatId] = useState<number | null>(null);
+  const [editCatName, setEditCatName] = useState('');
+  const [editCatPrompt, setEditCatPrompt] = useState('');
+  const [showNewCatForm, setShowNewCatForm] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatPrompt, setNewCatPrompt] = useState('');
+  const [creatingCat, setCreatingCat] = useState(false);
 
   // Populate form when editing
   useEffect(() => {
