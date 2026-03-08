@@ -174,6 +174,7 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="codes" className="flex items-center gap-2"><Key className="w-4 h-4" />Access Codes</TabsTrigger>
             <TabsTrigger value="files" className="flex items-center gap-2"><Upload className="w-4 h-4" />Files</TabsTrigger>
             <TabsTrigger value="members" className="flex items-center gap-2"><Users className="w-4 h-4" />Members</TabsTrigger>
+            <TabsTrigger value="import" className="flex items-center gap-2"><UserPlus className="w-4 h-4" />Bulk Import</TabsTrigger>
           </TabsList>
 
           <TabsContent value="submissions"><LibrarianUserManager /></TabsContent>
