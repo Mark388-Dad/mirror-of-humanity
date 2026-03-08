@@ -12,3 +12,9 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /librarian
+Disallow: /tutor
+Disallow: /house
+
+Sitemap: https://page-turn-journey.lovable.app/sitemap.xml
