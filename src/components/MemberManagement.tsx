@@ -245,7 +245,40 @@ const MemberManagement = () => {
     .filter(p =>
       p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    )
+    .sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      if (sortBy === 'name') return a.full_name.localeCompare(b.full_name) * dir;
+      if (sortBy === 'date') return (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) * dir;
+      if (sortBy === 'house') return (a.house || '').localeCompare(b.house || '') * dir;
+      return 0;
+    });
+
+  const exportCSV = () => {
+    const headers = ['Full Name', 'Email', 'Role', 'House', 'Year Group', 'Class', 'Joined'];
+    const rows = filteredMembers.map(p => [
+      p.full_name,
+      p.email,
+      roleLabels[p.role] || p.role,
+      p.house || '',
+      p.year_group || '',
+      p.class_name || '',
+      format(new Date(p.created_at), 'yyyy-MM-dd'),
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `members-export-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const toggleSort = (field: 'name' | 'date' | 'house') => {
+    if (sortBy === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(field); setSortDir('asc'); }
+  };
 
   if (loading) {
     return (
