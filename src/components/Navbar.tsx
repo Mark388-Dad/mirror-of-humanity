@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
@@ -69,6 +70,7 @@ const Navbar = () => {
 
           {/* User Info */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <NotificationBell />
             <div className="hidden sm:flex items-center gap-2 text-white/80 text-sm">
               <User className="w-4 h-4" />

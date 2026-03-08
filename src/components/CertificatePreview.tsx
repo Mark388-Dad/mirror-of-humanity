@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Shield, CheckCircle2, Star, Award, Crown, Medal, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import SocialShareButton from './SocialShareButton';
 
 export interface CertificatePreviewProps {
   template: {
@@ -327,14 +328,20 @@ const CertificatePreview = ({ template, studentName, booksRead = 0, date }: Cert
         </div>
       </div>
 
-      <button onClick={handleDownload} disabled={downloading}
-        className={`mt-6 px-10 py-3.5 rounded-xl font-bold text-white transition-all duration-300 ${
-          downloading 
-            ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]'
-        }`}>
-        {downloading ? '⏳ Preparing High-Quality PNG...' : '📥 Download Certificate'}
-      </button>
+      <div className="mt-6 flex items-center gap-4">
+        <button onClick={handleDownload} disabled={downloading}
+          className={`px-10 py-3.5 rounded-xl font-bold text-white transition-all duration-300 ${
+            downloading 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98]'
+          }`}>
+          {downloading ? '⏳ Preparing High-Quality PNG...' : '📥 Download Certificate'}
+        </button>
+        <SocialShareButton
+          title={`${config.label} Achievement Certificate`}
+          text={`🎉 ${studentName} earned a ${config.label} certificate in the 45-Book Reading Challenge at M-PESA Foundation Academy! ${config.emoji} #ReadingChallenge #MPESAAcademy`}
+        />
+      </div>
     </div>
   );
 };
