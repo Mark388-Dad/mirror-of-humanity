@@ -688,7 +688,7 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
           </CardContent>
         </Card>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-7">
           <AnimatePresence mode="popLayout">
             {filtered.map((challenge, index) => {
               const status = getChallengeStatus(challenge);
@@ -714,31 +714,36 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
                     } ${status.label === 'Live' ? 'ring-2 ring-green-500/20' : ''}`}
                     onClick={() => openDetailView(challenge)}
                   >
-                    <CardHeader className="pb-3 p-6 space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge variant="outline" className={`text-sm px-3 py-1 ${catInfo.color}`}>{catInfo.emoji} {catInfo.label}</Badge>
-                        <div className="flex items-center gap-2">
-                          {challenge.is_featured && (
-                            <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30 text-sm px-2.5 py-0.5">
-                              <Star className="w-3.5 h-3.5 mr-1" />Featured
-                            </Badge>
-                          )}
-                          <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${status.color}`}>{status.icon} {status.label}</Badge>
+                    <CardContent className="p-5 flex flex-col gap-4 flex-1">
+                      {/* Section 1: Title & Status Badges */}
+                      <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <Badge variant="outline" className={`text-sm px-3 py-1 ${catInfo.color}`}>{catInfo.emoji} {catInfo.label}</Badge>
+                          <div className="flex items-center gap-2">
+                            {challenge.is_featured && (
+                              <Badge className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30 text-sm px-2.5 py-0.5">
+                                <Star className="w-3.5 h-3.5 mr-1" />Featured
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${status.color}`}>{status.icon} {status.label}</Badge>
+                          </div>
                         </div>
+                        <h3 className="text-xl font-display font-bold leading-snug group-hover:text-primary transition-colors">{challenge.title}</h3>
                       </div>
-                      <CardTitle className="text-xl leading-snug font-display group-hover:text-primary transition-colors">{challenge.title}</CardTitle>
-                      <CardDescription className="line-clamp-2 text-sm leading-relaxed">{challenge.description}</CardDescription>
-                    </CardHeader>
 
-                    <CardContent className="flex-1 flex flex-col justify-between gap-5 p-6 pt-0">
-                      {/* Stats row */}
+                      {/* Section 2: Description */}
+                      <div className="rounded-xl border bg-card p-4">
+                        <p className="text-sm leading-relaxed text-muted-foreground">{challenge.description}</p>
+                      </div>
+
+                      {/* Section 3: Engagement Stats */}
                       <div className="grid grid-cols-3 gap-3">
                         {[
-                          { icon: <Users className="w-5 h-5 text-blue-500" />, val: participants, label: 'Joined', bg: 'bg-blue-500/8' },
-                          { icon: <BookOpen className="w-5 h-5 text-green-500" />, val: submissions, label: 'Submissions', bg: 'bg-green-500/8' },
-                          { icon: <Target className="w-5 h-5 text-purple-500" />, val: challenge.target_books || 1, label: 'Target', bg: 'bg-purple-500/8' },
+                          { icon: <Users className="w-5 h-5 text-blue-500" />, val: participants, label: 'Joined', bg: 'bg-blue-500/8 border-blue-500/15' },
+                          { icon: <BookOpen className="w-5 h-5 text-green-500" />, val: submissions, label: 'Submissions', bg: 'bg-green-500/8 border-green-500/15' },
+                          { icon: <Target className="w-5 h-5 text-purple-500" />, val: challenge.target_books || 1, label: 'Target', bg: 'bg-purple-500/8 border-purple-500/15' },
                         ].map(s => (
-                          <div key={s.label} className={`p-3 rounded-xl ${s.bg} text-center`}>
+                          <div key={s.label} className={`p-3 rounded-xl border text-center ${s.bg}`}>
                             <div className="flex justify-center mb-1">{s.icon}</div>
                             <div className="text-lg font-bold">{s.val}</div>
                             <div className="text-xs text-muted-foreground">{s.label}</div>
@@ -746,15 +751,15 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
                         ))}
                       </div>
 
-                      {/* Timeline */}
-                      <div className="space-y-3">
+                      {/* Section 4: Timeline & Progress */}
+                      <div className="rounded-xl border bg-card p-4 space-y-3">
                         <div className="flex items-center justify-between text-sm">
                           <span className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
+                            <Calendar className="w-4 h-4 text-primary" />
                             {format(new Date(challenge.start_date), 'MMM d')} – {format(new Date(challenge.end_date), 'MMM d, yyyy')}
                           </span>
                           <Badge variant="outline" className={`text-sm font-semibold ${
-                            daysLeft === 'Last day!' ? 'bg-red-500/10 text-red-600 border-red-500/30' : ''
+                            daysLeft === 'Last day!' ? 'bg-red-500/10 text-red-600 border-red-500/30' : 'bg-primary/10 text-primary border-primary/20'
                           }`}>{daysLeft}</Badge>
                         </div>
                         <Progress value={timeProgress} className="h-2.5 rounded-full" />
@@ -762,16 +767,19 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
                           <span>{Math.round(timeProgress)}% elapsed</span>
                           <span className="font-semibold text-primary">+{challenge.points_reward || 5} pts reward</span>
                         </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {diffInfo && <Badge variant="outline" className={`text-xs px-2 py-0.5 ${diffInfo.color}`}>{diffInfo.icon} {diffInfo.label}</Badge>}
-                          {challenge.allowed_year_groups?.length ? <Badge variant="outline" className="text-xs px-2 py-0.5">{challenge.allowed_year_groups.join(', ')}</Badge> : null}
-                          {challenge.allowed_houses?.length ? <Badge variant="outline" className="text-xs px-2 py-0.5">🏠 {challenge.allowed_houses.length} houses</Badge> : null}
-                          {challenge.is_independent && <Badge variant="outline" className="text-xs px-2 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Independent</Badge>}
-                        </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-2" onClick={e => e.stopPropagation()}>
+                      {/* Section 5: Tags & Metadata */}
+                      <div className="rounded-xl border bg-muted/20 p-3 flex flex-wrap gap-1.5">
+                        {diffInfo && <Badge variant="outline" className={`text-xs px-2.5 py-0.5 ${diffInfo.color}`}>{diffInfo.icon} {diffInfo.label}</Badge>}
+                        {challenge.allowed_year_groups?.length ? <Badge variant="outline" className="text-xs px-2.5 py-0.5">{challenge.allowed_year_groups.join(', ')}</Badge> : null}
+                        {challenge.allowed_houses?.length ? <Badge variant="outline" className="text-xs px-2.5 py-0.5">🏠 {challenge.allowed_houses.length} houses</Badge> : null}
+                        {challenge.is_independent && <Badge variant="outline" className="text-xs px-2.5 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Independent</Badge>}
+                        {challenge.badge_name && <Badge variant="outline" className="text-xs px-2.5 py-0.5">🏅 {challenge.badge_name}</Badge>}
+                      </div>
+
+                      {/* Section 6: Actions */}
+                      <div className="flex gap-2 pt-1 mt-auto" onClick={e => e.stopPropagation()}>
                         <Button variant="default" size="sm" className="flex-1 h-10 text-sm gap-2" onClick={() => openDetailView(challenge)}>
                           <Eye className="w-4 h-4" /> View Details
                         </Button>
