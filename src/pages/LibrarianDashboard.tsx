@@ -249,6 +249,7 @@ const LibrarianDashboard = () => {
           </TabsContent>
           <TabsContent value="categories"><CategoryManager /></TabsContent>
           <TabsContent value="certificates"><CertificateManager /></TabsContent>
+          <TabsContent value="countdown"><CountdownEditor /></TabsContent>
           <TabsContent value="homepage"><HomepageEditor /></TabsContent>
           <TabsContent value="sync"><GoogleSheetSync /></TabsContent>
           <TabsContent value="codes"><AccessCodeManager /></TabsContent>
