@@ -62,6 +62,7 @@ const Index = () => {
   const tipOfDay = getContent('tip_of_day');
   const featuredChallenge = getContent('featured_challenge');
   const motivation = getContent('motivation');
+  const sessionCountdown = getContent('session_countdown');
 
   return (
     <main className="min-h-screen relative">
