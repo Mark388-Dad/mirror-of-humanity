@@ -280,15 +280,31 @@ const SubmitBook = () => {
                   </SelectContent>
                 </Select>
                 {currentCategory && (
-                  <div className="p-4 rounded-lg bg-gold/5 border border-gold/20 mt-2">
-                    <p className="text-sm text-muted-foreground italic">
-                      <span className="font-medium text-gold">Reflection prompt:</span> {currentCategory.prompt}
-                    </p>
-                    {categoryFull && (
-                      <p className="text-sm text-destructive mt-2 flex items-center gap-1">
-                        <AlertTriangle className="w-4 h-4" />
-                        You've reached the maximum of {MAX_BOOKS_PER_CATEGORY} books in this category.
+                  <div className="rounded-xl overflow-hidden border border-primary/20 mt-2">
+                    <div className="bg-primary/10 px-4 py-2 flex items-center gap-2">
+                      <BookOpen className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-semibold text-primary">
+                        #{currentCategory.id} — {currentCategory.name}
+                      </span>
+                      {categoryFull && (
+                        <Badge variant="destructive" className="ml-auto text-xs">
+                          <AlertTriangle className="w-3 h-3 mr-1" />Full
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="bg-muted/30 px-4 py-3">
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">📝 Reflection Prompt — follow this when writing your reflection:</p>
+                      <p className="text-sm text-foreground leading-relaxed italic">
+                        "{currentCategory.prompt}"
                       </p>
+                    </div>
+                    {categoryFull && (
+                      <div className="bg-destructive/10 px-4 py-2">
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertTriangle className="w-4 h-4" />
+                          You've reached the maximum of {MAX_BOOKS_PER_CATEGORY} books in this category.
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
