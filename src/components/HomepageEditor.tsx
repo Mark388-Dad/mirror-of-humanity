@@ -253,6 +253,20 @@ const HomepageEditor = () => {
                       <p className="text-xs text-muted-foreground mt-1">The countdown will tick down to this date</p>
                     </div>
                     <div>
+                      <Label htmlFor={`start-date-${section.id}`}>Start Date (YYYY-MM-DD)</Label>
+                      <Input
+                        id={`start-date-${section.id}`}
+                        value={(() => { try { return JSON.parse(section.image_url || '{}').startDate || ''; } catch { return ''; } })()}
+                        onChange={(e) => {
+                          const extra = (() => { try { return JSON.parse(section.image_url || '{}'); } catch { return {}; } })();
+                          handleInputChange(section.id, 'image_url', JSON.stringify({ ...extra, startDate: e.target.value }));
+                        }}
+                        placeholder="2024-09-01"
+                        className="mt-1 font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Used to calculate the progress bar percentage</p>
+                    </div>
+                    <div>
                       <Label htmlFor={`session-name-${section.id}`}>Session Name (badge label)</Label>
                       <Input
                         id={`session-name-${section.id}`}

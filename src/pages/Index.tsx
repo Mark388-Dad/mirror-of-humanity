@@ -83,11 +83,12 @@ const Index = () => {
       {isVisible('hero') && <HeroSection title={hero?.title} content={hero?.content} />}
 
       {sessionCountdown?.is_visible && (() => {
-        let extra: { sessionName?: string; description?: string } = {};
+        let extra: { sessionName?: string; description?: string; startDate?: string } = {};
         try { extra = JSON.parse(sessionCountdown.image_url || '{}'); } catch {}
         return (
           <SessionCountdown
             endDate={sessionCountdown.content}
+            startDate={extra.startDate}
             title={sessionCountdown.title}
             sessionName={extra.sessionName}
             description={extra.description}

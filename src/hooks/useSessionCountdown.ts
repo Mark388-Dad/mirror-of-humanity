@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface CountdownData {
   endDate: string | null;
+  startDate: string | null;
   title: string | null;
   sessionName: string | null;
   description: string | null;
@@ -11,7 +12,7 @@ interface CountdownData {
 
 export const useSessionCountdown = () => {
   const [data, setData] = useState<CountdownData>({
-    endDate: null, title: null, sessionName: null, description: null, isVisible: false,
+    endDate: null, startDate: null, title: null, sessionName: null, description: null, isVisible: false,
   });
 
   useEffect(() => {
@@ -23,10 +24,11 @@ export const useSessionCountdown = () => {
         .maybeSingle();
 
       if (row) {
-        let extra: { sessionName?: string; description?: string } = {};
+        let extra: { sessionName?: string; description?: string; startDate?: string } = {};
         try { extra = JSON.parse(row.image_url || '{}'); } catch {}
         setData({
           endDate: row.content,
+          startDate: extra.startDate || null,
           title: row.title,
           sessionName: extra.sessionName || null,
           description: extra.description || null,

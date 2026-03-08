@@ -41,27 +41,35 @@ const MiniFlipDigit = ({ value, label }: { value: number; label: string }) => {
 };
 
 const DashboardCountdown = () => {
-  const { endDate, title, sessionName, isVisible } = useSessionCountdown();
+  const { endDate, startDate, title, sessionName, isVisible } = useSessionCountdown();
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!endDate) return;
     const target = new Date(endDate).getTime();
+    const start = startDate ? new Date(startDate).getTime() : null;
     const update = () => {
-      const diff = target - Date.now();
-      if (diff <= 0) { setIsExpired(true); return; }
+      const now = Date.now();
+      const diff = target - now;
+      if (diff <= 0) { setIsExpired(true); setProgress(100); return; }
       setTimeLeft({
         days: Math.floor(diff / (1000 * 60 * 60 * 24)),
         hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((diff / (1000 * 60)) % 60),
         seconds: Math.floor((diff / 1000) % 60),
       });
+      if (start) {
+        const total = target - start;
+        const elapsed = now - start;
+        setProgress(Math.min(100, Math.max(0, (elapsed / total) * 100)));
+      }
     };
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [endDate, startDate]);
 
   if (!isVisible || !endDate) return null;
 
@@ -121,6 +129,24 @@ const DashboardCountdown = () => {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Progress Bar */}
+          {startDate && (
+            <div className="mt-3 relative z-10">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-muted-foreground font-medium">Session Progress</span>
+                <span className="text-[10px] font-semibold text-primary">{Math.round(progress)}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                />
+              </div>
             </div>
           )}
         </div>
