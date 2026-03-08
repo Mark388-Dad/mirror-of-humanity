@@ -343,9 +343,12 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
           ))}
         </div>
 
-        {/* Timeline & metadata bar */}
+        {/* Timeline Progress Card */}
         <Card className="border-2">
-          <CardContent className="p-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-display flex items-center gap-2">⏱️ Timeline & Progress</CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="flex flex-wrap items-center gap-5 text-sm mb-5">
               <span className="flex items-center gap-2 text-muted-foreground text-base">
                 <Calendar className="w-5 h-5 text-primary" />
@@ -358,10 +361,6 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
               }`}>
                 <Clock className="w-4 h-4 mr-1.5" /> {daysLeft}
               </Badge>
-              {ch.badge_name && <Badge variant="outline" className="text-sm px-3 py-1">🏅 {ch.badge_name}</Badge>}
-              {ch.allowed_year_groups?.length ? <Badge variant="outline" className="text-sm px-3 py-1">📚 {ch.allowed_year_groups.join(', ')}</Badge> : null}
-              {ch.allowed_houses?.length ? <Badge variant="outline" className="text-sm px-3 py-1">🏠 {ch.allowed_houses.join(', ')}</Badge> : null}
-              {ch.is_independent && <Badge variant="outline" className="text-sm px-3 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">Independent</Badge>}
             </div>
             <div>
               <Progress value={timeProgress} className="h-3 rounded-full" />
