@@ -34,6 +34,7 @@ const sectionLabels: Record<string, { label: string; description: string; icon: 
   featured_challenge: { label: 'Featured Challenge', description: 'Highlight current challenge', icon: '🏆' },
   motivation: { label: 'Motivational Quote', description: 'Inspiring quote section', icon: '✨' },
   tip_of_day: { label: 'Tip of the Day', description: 'Daily reading tips', icon: '💡' },
+  session_countdown: { label: 'Session Countdown', description: 'Countdown timer — set end date in Content field (YYYY-MM-DD)', icon: '⏱️' },
 };
 
 const HomepageEditor = () => {
