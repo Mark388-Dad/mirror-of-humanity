@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy, Timer } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -20,6 +20,7 @@ import LibrarianUserManager from '@/components/LibrarianUserManager';
 import CategoryManager from '@/components/CategoryManager';
 import CertificateManager from '@/components/CertificateManager';
 import ChallengesManager from '@/components/ChallengesManager';
+import CountdownEditor from '@/components/CountdownEditor';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 import DashboardCountdown from '@/components/DashboardCountdown';
 
@@ -166,6 +167,7 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="create" className="flex items-center gap-2"><Sparkles className="w-4 h-4" />{editingChallenge ? 'Edit Challenge' : 'Create New'}</TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2"><Tag className="w-4 h-4" />Categories</TabsTrigger>
             <TabsTrigger value="certificates" className="flex items-center gap-2"><Award className="w-4 h-4" />Certificates</TabsTrigger>
+            <TabsTrigger value="countdown" className="flex items-center gap-2"><Timer className="w-4 h-4" />Countdown</TabsTrigger>
             <TabsTrigger value="homepage" className="flex items-center gap-2"><Home className="w-4 h-4" />Homepage</TabsTrigger>
             <TabsTrigger value="sync" className="flex items-center gap-2"><Cloud className="w-4 h-4" />Google Sync</TabsTrigger>
             <TabsTrigger value="codes" className="flex items-center gap-2"><Key className="w-4 h-4" />Access Codes</TabsTrigger>
@@ -247,6 +249,7 @@ const LibrarianDashboard = () => {
           </TabsContent>
           <TabsContent value="categories"><CategoryManager /></TabsContent>
           <TabsContent value="certificates"><CertificateManager /></TabsContent>
+          <TabsContent value="countdown"><CountdownEditor /></TabsContent>
           <TabsContent value="homepage"><HomepageEditor /></TabsContent>
           <TabsContent value="sync"><GoogleSheetSync /></TabsContent>
           <TabsContent value="codes"><AccessCodeManager /></TabsContent>

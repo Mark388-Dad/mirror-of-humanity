@@ -192,11 +192,11 @@ const SessionCountdown = ({ endDate, startDate, title, description, sessionName 
             <div className="mt-8 max-w-md mx-auto">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-muted-foreground font-medium">Session Progress</span>
-                <span className="text-xs font-bold text-primary">{Math.round(progress)}%</span>
+                <span className={`text-xs font-bold ${progress >= 90 ? 'text-red-500' : progress >= 75 ? 'text-yellow-500' : 'text-green-500'}`}>{Math.round(progress)}%</span>
               </div>
               <div className="h-2.5 rounded-full bg-muted/60 overflow-hidden border border-border/50">
                 <motion.div
-                  className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent"
+                  className={`h-full rounded-full ${progress >= 90 ? 'bg-gradient-to-r from-red-400 to-red-600' : progress >= 75 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 'bg-gradient-to-r from-green-400 to-green-600'}`}
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 1.2, ease: 'easeOut' }}
