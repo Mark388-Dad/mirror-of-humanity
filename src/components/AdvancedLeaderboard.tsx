@@ -13,6 +13,7 @@ import {
   Zap, Target
 } from 'lucide-react';
 import { HOUSES, YEAR_GROUPS, CLASSES, HOUSE_COLORS, MAX_BOOKS } from '@/lib/constants';
+import { POINTS_PER_BOOK, calculateBonusPoints } from '@/lib/milestonePoints';
 import confetti from 'canvas-confetti';
 
 interface HouseLeaderboard {
@@ -427,6 +428,20 @@ const AdvancedLeaderboard = () => {
                             <span className="text-xs font-medium">Lv.{xpLevel.level} {xpLevel.title}</span>
                           </div>
                         </div>
+                        <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                          <div className="p-1.5 rounded bg-blue-500/10">
+                            <div className="text-sm font-bold text-blue-500">{Math.min(student.books_read, MAX_BOOKS) * POINTS_PER_BOOK}</div>
+                            <div className="text-[10px] text-muted-foreground">Book Pts</div>
+                          </div>
+                          <div className="p-1.5 rounded bg-amber-500/10">
+                            <div className="text-sm font-bold text-amber-500">{calculateBonusPoints(Math.min(student.books_read, MAX_BOOKS))}</div>
+                            <div className="text-[10px] text-muted-foreground">Bonus</div>
+                          </div>
+                          <div className="p-1.5 rounded bg-green-500/10">
+                            <div className="text-sm font-bold text-green-500">{student.total_points}</div>
+                            <div className="text-[10px] text-muted-foreground">Total</div>
+                          </div>
+                        </div>
                         <div className="text-sm text-muted-foreground mt-2">📚 {Math.min(student.books_read, MAX_BOOKS)} books read</div>
                       </CardContent>
                     </Card>
@@ -470,13 +485,21 @@ const AdvancedLeaderboard = () => {
                             <span className="text-xs font-medium text-muted-foreground">Lv.{xpLevel.level} {xpLevel.title}</span>
                           </div>
                         </div>
-                        <div className="text-center px-4">
+                        <div className="text-center px-2">
                           <div className="font-semibold">{Math.min(student.books_read, MAX_BOOKS)}</div>
                           <div className="text-xs text-muted-foreground">books</div>
                         </div>
+                        <div className="text-center px-2">
+                          <div className="font-semibold text-blue-500">{Math.min(student.books_read, MAX_BOOKS) * POINTS_PER_BOOK}</div>
+                          <div className="text-xs text-muted-foreground">book pts</div>
+                        </div>
+                        <div className="text-center px-2">
+                          <div className="font-semibold text-amber-500">{calculateBonusPoints(Math.min(student.books_read, MAX_BOOKS))}</div>
+                          <div className="text-xs text-muted-foreground">bonus</div>
+                        </div>
                         <div className="text-right">
                           <div className={`text-2xl font-display font-bold bg-gradient-to-r ${xpLevel.color} bg-clip-text text-transparent`}>{student.total_points}</div>
-                          <div className="text-xs text-muted-foreground">XP</div>
+                          <div className="text-xs text-muted-foreground">total XP</div>
                         </div>
                       </motion.div>
                     );
