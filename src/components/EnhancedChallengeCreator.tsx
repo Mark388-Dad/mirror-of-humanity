@@ -612,6 +612,25 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                       </CardContent>
                     </Card>
 
+                    {/* Preview: Target Categories Card */}
+                    {targetCategories.length > 0 && (
+                      <Card className="border border-border/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">📚 Target Reading Categories</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {targetCategories.map(catId => {
+                              const cat = allCategories.find(c => c.id === catId);
+                              return cat ? (
+                                <Badge key={catId} variant="secondary" className="text-xs">
+                                  #{cat.id} {cat.name}
+                                </Badge>
+                              ) : null;
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
                     {/* Preview: Actions Card */}
                     <Card className="border border-border/50">
                       <CardContent className="p-4 flex items-center justify-between gap-3">
