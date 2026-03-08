@@ -10,6 +10,7 @@ import { Users, BookOpen, Trophy, TrendingUp, Medal, Award, Crown, Sparkles, Zap
 import { motion } from 'framer-motion';
 import XPProgressBar, { getXPLevel } from '@/components/XPProgressBar';
 import VibrantDashboardCard, { FollettLibraryButton, QuickStats } from '@/components/VibrantDashboardCard';
+import DashboardCountdown from '@/components/DashboardCountdown';
 import confetti from 'canvas-confetti';
 
 const FOLLETT_LIBRARY_URL = 'https://mfa.follettdestiny.com/portal/portal?app=Destiny%20Discover&appId=destiny-B896-BHZF&siteGuid=8A7E2238-818E-42A2-AFD1-33425ECB934C&nav=https:%2F%2Fmfa.follettdestiny.com%2Fmetasearch%2Fui%2F54793';
