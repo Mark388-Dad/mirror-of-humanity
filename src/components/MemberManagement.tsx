@@ -228,9 +228,22 @@ const MemberManagement = () => {
         {profile.house && <Badge className={`${houseColors[profile.house]} text-white`}>{profile.house}</Badge>}
         {profile.year_group && <Badge variant="secondary">{profile.year_group}</Badge>}
         {profile.class_name && <Badge variant="outline">{profile.class_name}</Badge>}
+        <Badge variant="outline" className="text-xs text-muted-foreground">
+          Joined {format(new Date(profile.created_at), 'MMM d, yyyy')}
+        </Badge>
       </div>
     </motion.div>
   );
+
+  const filteredMembers = profiles
+    .filter(p => filterRole === 'all' || p.role === filterRole)
+    .filter(p => filterHouse === 'all' || p.house === filterHouse)
+    .filter(p => filterYearGroup === 'all' || p.year_group === filterYearGroup)
+    .filter(p => filterClass === 'all' || p.class_name === filterClass)
+    .filter(p =>
+      p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
   if (loading) {
     return (
