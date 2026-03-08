@@ -246,29 +246,20 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Details */}
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+        {/* Left: Details — broken into separate cards */}
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="space-y-4">
+          {/* Title & Category Card */}
           <Card className="border-2 border-primary/10 shadow-lg hover:shadow-xl transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />Challenge Details
+                <BookOpen className="h-5 w-5 text-primary" />Title & Category
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4 pt-4">
+            <CardContent className="space-y-4 pt-2">
               <div>
                 <Label className="text-sm font-semibold">Title *</Label>
                 <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Genre Explorer Sprint 🌟"
                   className="mt-1 border-primary/20 focus:border-primary" />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold">Description *</Label>
-                <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
-                  placeholder="Describe the challenge, rules, and what makes it exciting..."
-                  className="mt-1 border-primary/20 focus:border-primary" />
-                <div className="flex justify-between mt-1">
-                  <p className="text-xs text-muted-foreground">{description.length} characters</p>
-                  {description.length > 20 && <Badge variant="secondary" className="text-xs">✨ Great description!</Badge>}
-                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -286,6 +277,35 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                   </Select>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Description Card */}
+          <Card className="border-2 border-primary/10 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />Description
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} rows={4}
+                placeholder="Describe the challenge, rules, and what makes it exciting..."
+                className="border-primary/20 focus:border-primary" />
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-muted-foreground">{description.length} characters</p>
+                {description.length > 20 && <Badge variant="secondary" className="text-xs">✨ Great description!</Badge>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Goals & Timeline Card */}
+          <Card className="border-2 border-primary/10 shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />Goals & Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-semibold">📚 Target Books</Label>
@@ -306,7 +326,6 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                   <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1" />
                 </div>
               </div>
-
               {/* Independent Toggle */}
               <motion.div whileHover={{ scale: 1.01 }}
                 className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
