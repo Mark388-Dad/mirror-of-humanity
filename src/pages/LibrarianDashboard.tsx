@@ -20,6 +20,7 @@ import LibrarianUserManager from '@/components/LibrarianUserManager';
 import CategoryManager from '@/components/CategoryManager';
 import CertificateManager from '@/components/CertificateManager';
 import ChallengesManager from '@/components/ChallengesManager';
+import CountdownEditor from '@/components/CountdownEditor';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 import DashboardCountdown from '@/components/DashboardCountdown';
 
