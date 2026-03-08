@@ -225,6 +225,8 @@ const TutorDashboard = () => {
           </div>
         </motion.div>
 
+        <DashboardCountdown />
+
         {/* Quick Stats */}
         {stats && (
           <QuickStats

@@ -149,6 +149,8 @@ const LibrarianDashboard = () => {
           </div>
         </motion.div>
 
+        <DashboardCountdown />
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <VibrantDashboardCard title="Total Students" value={stats.totalStudents} icon={<BookOpen className="h-5 w-5" />} color="blue" />
           <VibrantDashboardCard title="Book Submissions" value={stats.totalSubmissions} icon={<Trophy className="h-5 w-5" />} color="green" />

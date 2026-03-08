@@ -238,6 +238,8 @@ const HousePatronDashboard = () => {
           </motion.div>
         </motion.div>
 
+        <DashboardCountdown />
+
         {/* Stats Cards */}
         {stats && (
           <QuickStats

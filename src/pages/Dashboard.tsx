@@ -166,6 +166,8 @@ const Dashboard = () => {
           <NotificationBell />
         </motion.div>
 
+        <DashboardCountdown />
+
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="mb-8">
           <FollettLibraryButton className="w-full sm:w-auto" />
         </motion.div>
