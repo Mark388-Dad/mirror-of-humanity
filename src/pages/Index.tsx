@@ -82,6 +82,10 @@ const Index = () => {
 
       {isVisible('hero') && <HeroSection title={hero?.title} content={hero?.content} />}
 
+      {sessionCountdown?.is_visible && (
+        <SessionCountdown endDate={sessionCountdown.content} title={sessionCountdown.title} />
+      )}
+
       <AnimatePresence>
         {announcement?.is_visible && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
