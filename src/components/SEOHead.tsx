@@ -7,7 +7,7 @@ interface SEOHeadProps {
 }
 
 const SITE_NAME = 'M-PESA Foundation Academy Reading Challenge';
-const BASE_URL = 'https://page-turn-journey.lovable.app';
+const BASE_URL = 'https://mfareadingchallenge.netlify.app';
 
 const SEOHead = ({ title, description, path = '' }: SEOHeadProps) => {
   useEffect(() => {
