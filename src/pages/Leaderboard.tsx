@@ -11,6 +11,7 @@ const Leaderboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Leaderboard" description="See how houses, students, and classes rank in the 45-Book Reading Challenge at M-PESA Foundation Academy." path="/leaderboard" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
