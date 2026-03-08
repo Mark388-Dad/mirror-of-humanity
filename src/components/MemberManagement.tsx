@@ -427,154 +427,70 @@ const MemberManagement = () => {
 
       {/* Members View */}
       {activeView === 'members' && (
-        <Tabs defaultValue="students" className="space-y-4">
-          <TabsList className="flex flex-wrap gap-1 h-auto p-1">
-            <TabsTrigger value="students">Students ({students.length})</TabsTrigger>
-            <TabsTrigger value="librarians">Librarians ({librarians.length})</TabsTrigger>
-            <TabsTrigger value="house_patrons">House Patrons ({housePatrons.length})</TabsTrigger>
-            <TabsTrigger value="heads_of_year">Heads of Year ({headsOfYear.length})</TabsTrigger>
-            <TabsTrigger value="tutors">Tutors ({homeroomTutors.length})</TabsTrigger>
-            <TabsTrigger value="all_staff">All Staff ({allStaff.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="students">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5" />Students by House & Year Group
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="all" className="space-y-4">
-                  <TabsList className="flex flex-wrap gap-1 h-auto">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    {HOUSES.map(house => (
-                      <TabsTrigger key={house} value={house}>{house}</TabsTrigger>
-                    ))}
-                  </TabsList>
-                  <TabsContent value="all">
-                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                      {students.map(profile => <MemberCard key={profile.id} profile={profile} />)}
-                    </div>
-                  </TabsContent>
-                  {HOUSES.map(house => (
-                    <TabsContent key={house} value={house}>
-                      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                        {students.filter(p => p.house === house).map(profile => (
-                          <MemberCard key={profile.id} profile={profile} />
-                        ))}
-                      </div>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="librarians">
-            <Card><CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="h-5 w-5" />Librarians</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {librarians.map(profile => <MemberCard key={profile.id} profile={profile} />)}
-                  {librarians.length === 0 && <p className="text-muted-foreground col-span-full text-center py-8">No librarians registered yet</p>}
+        <div className="space-y-4">
+          {/* Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Role</Label>
+                  <Select value={filterRole} onValueChange={setFilterRole}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="student">Student</SelectItem>
+                      <SelectItem value="librarian">Librarian</SelectItem>
+                      <SelectItem value="homeroom_tutor">Tutor</SelectItem>
+                      <SelectItem value="head_of_year">Head of Year</SelectItem>
+                      <SelectItem value="house_patron">House Patron</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="house_patrons">
-            <Card><CardHeader><CardTitle className="flex items-center gap-2"><Home className="h-5 w-5" />House Patrons</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {HOUSES.map(house => {
-                    const patron = housePatrons.find(p => p.house === house);
-                    return (
-                      <Card key={house} className={`border-2 ${patron ? 'border-green-500/30' : 'border-dashed border-muted'}`}>
-                        <CardContent className="pt-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 rounded-full ${houseColors[house]} flex items-center justify-center text-white font-bold text-lg`}>
-                              {house.charAt(0)}
-                            </div>
-                            <div>
-                              <p className="font-bold">{house} House</p>
-                              {patron ? (<><p className="text-sm">{patron.full_name}</p><p className="text-xs text-muted-foreground">{patron.email}</p></>)
-                                : (<p className="text-sm text-muted-foreground">No patron assigned</p>)}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">House</Label>
+                  <Select value={filterHouse} onValueChange={setFilterHouse}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Houses</SelectItem>
+                      {HOUSES.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="heads_of_year">
-            <Card><CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Heads of Year</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
-                  {YEAR_GROUPS.map(yearGroup => {
-                    const head = headsOfYear.find(p => p.year_group === yearGroup);
-                    return (
-                      <Card key={yearGroup} className={`border-2 ${head ? 'border-green-500/30' : 'border-dashed border-muted'}`}>
-                        <CardContent className="pt-4">
-                          <Badge variant="secondary" className="mb-2">{yearGroup}</Badge>
-                          {head ? (<><p className="font-medium">{head.full_name}</p><p className="text-sm text-muted-foreground">{head.email}</p></>)
-                            : (<p className="text-sm text-muted-foreground">No head assigned</p>)}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Year Group</Label>
+                  <Select value={filterYearGroup} onValueChange={setFilterYearGroup}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Year Groups</SelectItem>
+                      {YEAR_GROUPS.map(yg => <SelectItem key={yg} value={yg}>{yg}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="tutors">
-            <Card><CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="h-5 w-5" />Homeroom Tutors & Their Classes</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {CLASSES.map(className => {
-                    const tutors = homeroomTutors.filter(p => p.class_name === className);
-                    const classStudents = students.filter(s => s.class_name === className);
-                    return (
-                      <Card key={className}>
-                        <CardContent className="pt-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <Badge variant="outline" className="text-lg font-bold">{className}</Badge>
-                            <span className="text-sm text-muted-foreground">{classStudents.length} students</span>
-                          </div>
-                          {tutors.length > 0 ? tutors.map(tutor => (
-                            <div key={tutor.id} className="flex items-center gap-2 mb-2">
-                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                                {tutor.full_name.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">{tutor.full_name}</p>
-                                <p className="text-xs text-muted-foreground">{tutor.year_group}</p>
-                              </div>
-                            </div>
-                          )) : <p className="text-sm text-muted-foreground">No tutor assigned</p>}
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                <div>
+                  <Label className="text-xs text-muted-foreground mb-1 block">Class</Label>
+                  <Select value={filterClass} onValueChange={setFilterClass}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Classes</SelectItem>
+                      {CLASSES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="all_staff">
-            <Card><CardHeader><CardTitle>All Staff Members</CardTitle></CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {allStaff.map(profile => <MemberCard key={profile.id} profile={profile} />)}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          <p className="text-sm text-muted-foreground">{filteredMembers.length} members found</p>
+
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
+            {filteredMembers.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground col-span-full">No members match your filters.</p>
+            ) : (
+              filteredMembers.map(profile => <MemberCard key={profile.id} profile={profile} />)
+            )}
+          </div>
+        </div>
       )}
 
       {/* Edit Points Dialog */}
