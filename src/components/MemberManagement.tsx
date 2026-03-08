@@ -318,7 +318,7 @@ const MemberManagement = () => {
             </CardHeader>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {filteredProgress.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground col-span-full">No student progress data found.</p>
             ) : (
