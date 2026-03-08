@@ -85,7 +85,7 @@ interface EnhancedChallengeCreatorProps {
 
 const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: EnhancedChallengeCreatorProps) => {
   const { user } = useAuth();
-  const { allCategories } = useCustomCategories();
+  const { allCategories, refresh: refreshCategories } = useCustomCategories();
   const isEditing = !!editingChallenge;
 
   const [saving, setSaving] = useState(false);
