@@ -40,7 +40,7 @@ const SEOHead = ({ title, description, path = '' }: SEOHeadProps) => {
     canonical.href = `${BASE_URL}${path}`;
 
     return () => {
-      document.title = '45-Book Reading Challenge | M-PESA Foundation Academy';
+      document.title = 'M-PESA Foundation Academy – 45-Book Reading Challenge';
     };
   }, [title, description, path]);
 

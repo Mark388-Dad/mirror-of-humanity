@@ -67,7 +67,7 @@ const Index = () => {
 
   return (
     <main className="min-h-screen relative">
-      <SEOHead title="45-Book Reading Challenge" description="Join the 45-Book Reading Challenge at M-PESA Foundation Academy. Track progress, earn achievements, and explore fiction as a mirror of humanity." path="/" />
+      <SEOHead title="M-PESA Foundation Academy Reading Challenge" description="Join the MPESA Foundation Academy 45-Book Reading Challenge. Track your reading progress, earn achievements, compete on leaderboards, and explore fiction as a mirror of humanity." path="/" />
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         {!loading && (
           user ? (
