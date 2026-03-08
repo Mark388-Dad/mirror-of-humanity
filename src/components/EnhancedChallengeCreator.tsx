@@ -455,53 +455,77 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-4">
-                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${categoryMeta?.color || 'from-primary to-purple-500'} flex items-center justify-center text-3xl shadow-lg`}>
-                        {categoryMeta?.label.split(' ')[0] || '📚'}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-2">
-                          <Badge variant="outline">{categoryMeta?.label}</Badge>
-                          <Badge className={`${DIFFICULTY_LEVELS.find(d => d.value === difficultyLevel)?.color} text-white text-xs`}>
-                            {difficultyLevel}
-                          </Badge>
+                    {/* Preview: Title Card */}
+                    <Card className="border border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${categoryMeta?.color || 'from-primary to-purple-500'} flex items-center justify-center text-2xl shadow-lg shrink-0`}>
+                            {categoryMeta?.label.split(' ')[0] || '📚'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <Badge variant="outline" className="text-xs">{categoryMeta?.label}</Badge>
+                              <Badge className={`${DIFFICULTY_LEVELS.find(d => d.value === difficultyLevel)?.color} text-white text-xs`}>
+                                {difficultyLevel}
+                              </Badge>
+                            </div>
+                            <h3 className="text-xl font-display font-bold truncate">{title}</h3>
+                          </div>
                         </div>
-                        <h3 className="text-2xl font-display font-bold mb-1">{title}</h3>
-                        <p className="text-sm text-muted-foreground">{description || 'No description yet...'}</p>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
 
-                    <div className="grid grid-cols-4 gap-3">
-                      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 rounded-xl p-4 text-center border border-blue-500/10">
-                        <Target className="w-5 h-5 mx-auto mb-1 text-blue-600" />
-                        <div className="text-xl font-bold">{targetBooks || '?'}</div>
-                        <div className="text-xs text-muted-foreground">Books</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-xl p-4 text-center border border-yellow-500/10">
-                        <Zap className="w-5 h-5 mx-auto mb-1 text-yellow-600" />
-                        <div className="text-xl font-bold text-yellow-700">+{pointsReward || '?'}</div>
-                        <div className="text-xs text-muted-foreground">Points</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/5 rounded-xl p-4 text-center border border-purple-500/10">
-                        <Users className="w-5 h-5 mx-auto mb-1 text-purple-600" />
-                        <div className="text-xl font-bold">0</div>
-                        <div className="text-xs text-muted-foreground">Joined</div>
-                      </div>
-                      <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 rounded-xl p-4 text-center border border-green-500/10">
-                        <Calendar className="w-5 h-5 mx-auto mb-1 text-green-600" />
-                        <div className="text-sm font-bold">{startDate ? format(new Date(startDate), 'MMM d') : '?'}</div>
-                        <div className="text-xs text-muted-foreground">→ {endDate ? format(new Date(endDate), 'MMM d') : '?'}</div>
-                      </div>
-                    </div>
+                    {/* Preview: Description Card */}
+                    {description && (
+                      <Card className="border border-border/50">
+                        <CardContent className="p-4">
+                          <p className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-wrap break-words">{description}</p>
+                        </CardContent>
+                      </Card>
+                    )}
 
-                    {badgeName && <Badge variant="secondary" className="text-xs">🏅 Earn: {badgeName}</Badge>}
+                    {/* Preview: Stats Card */}
+                    <Card className="border border-border/50">
+                      <CardContent className="p-4">
+                        <div className="grid grid-cols-4 gap-2">
+                          <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5 rounded-xl p-3 text-center border border-blue-500/10">
+                            <Target className="w-4 h-4 mx-auto mb-1 text-blue-600" />
+                            <div className="text-lg font-bold">{targetBooks || '?'}</div>
+                            <div className="text-xs text-muted-foreground">Books</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-yellow-500/10 to-amber-500/5 rounded-xl p-3 text-center border border-yellow-500/10">
+                            <Zap className="w-4 h-4 mx-auto mb-1 text-yellow-600" />
+                            <div className="text-lg font-bold text-yellow-700">+{pointsReward || '?'}</div>
+                            <div className="text-xs text-muted-foreground">Points</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/5 rounded-xl p-3 text-center border border-purple-500/10">
+                            <Users className="w-4 h-4 mx-auto mb-1 text-purple-600" />
+                            <div className="text-lg font-bold">0</div>
+                            <div className="text-xs text-muted-foreground">Joined</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 rounded-xl p-3 text-center border border-green-500/10">
+                            <Calendar className="w-4 h-4 mx-auto mb-1 text-green-600" />
+                            <div className="text-xs font-bold">{startDate ? format(new Date(startDate), 'MMM d') : '?'}</div>
+                            <div className="text-xs text-muted-foreground">→ {endDate ? format(new Date(endDate), 'MMM d') : '?'}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                    <div className="flex gap-3">
-                      <Button className="bg-gradient-to-r from-green-500 to-emerald-600 text-white" disabled>
-                        <Zap className="w-4 h-4 mr-2" />Join Challenge
-                      </Button>
-                      <Button variant="outline" disabled>View Details</Button>
-                    </div>
+                    {/* Preview: Actions Card */}
+                    <Card className="border border-border/50">
+                      <CardContent className="p-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {badgeName && <Badge variant="secondary" className="text-xs">🏅 Earn: {badgeName}</Badge>}
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <Button size="sm" className="bg-gradient-to-r from-green-500 to-emerald-600 text-white" disabled>
+                            <Zap className="w-3 h-3 mr-1" />Join
+                          </Button>
+                          <Button size="sm" variant="outline" disabled>Details</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </CardContent>
                 </Card>
               </motion.div>
