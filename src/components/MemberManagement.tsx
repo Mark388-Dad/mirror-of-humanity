@@ -516,7 +516,25 @@ const MemberManagement = () => {
             </CardContent>
           </Card>
 
-          <p className="text-sm text-muted-foreground">{filteredMembers.length} members found</p>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-sm text-muted-foreground">{filteredMembers.length} members found</p>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 border rounded-md p-0.5">
+                <Button variant={sortBy === 'name' ? 'secondary' : 'ghost'} size="sm" className="h-7 text-xs" onClick={() => toggleSort('name')}>
+                  Name {sortBy === 'name' && (sortDir === 'asc' ? '↑' : '↓')}
+                </Button>
+                <Button variant={sortBy === 'date' ? 'secondary' : 'ghost'} size="sm" className="h-7 text-xs" onClick={() => toggleSort('date')}>
+                  Joined {sortBy === 'date' && (sortDir === 'asc' ? '↑' : '↓')}
+                </Button>
+                <Button variant={sortBy === 'house' ? 'secondary' : 'ghost'} size="sm" className="h-7 text-xs" onClick={() => toggleSort('house')}>
+                  House {sortBy === 'house' && (sortDir === 'asc' ? '↑' : '↓')}
+                </Button>
+              </div>
+              <Button variant="outline" size="sm" className="h-7" onClick={exportCSV}>
+                <Download className="h-3.5 w-3.5 mr-1" />CSV
+              </Button>
+            </div>
+          </div>
 
           <div className="grid gap-3 grid-cols-1 md:grid-cols-2">
             {filteredMembers.length === 0 ? (
