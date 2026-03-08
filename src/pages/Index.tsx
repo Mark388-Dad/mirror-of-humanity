@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import SEOHead from '@/components/SEOHead';
 import HeroSection from "@/components/HeroSection";
 import GoalsSection from "@/components/GoalsSection";
 import PointsSection from "@/components/PointsSection";
@@ -66,6 +67,7 @@ const Index = () => {
 
   return (
     <main className="min-h-screen relative">
+      <SEOHead title="45-Book Reading Challenge" description="Join the 45-Book Reading Challenge at M-PESA Foundation Academy. Track progress, earn achievements, and explore fiction as a mirror of humanity." path="/" />
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         {!loading && (
           user ? (

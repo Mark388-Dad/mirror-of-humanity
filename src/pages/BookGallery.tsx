@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
@@ -85,6 +86,7 @@ const BookGallery = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Book Gallery" description="Browse books submitted by students in the 45-Book Reading Challenge. Filter by category, house, and year group." path="/gallery" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">

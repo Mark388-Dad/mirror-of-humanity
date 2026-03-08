@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
@@ -151,6 +152,7 @@ const Challenges = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead title="Reading Challenges" description="Join exciting reading challenges, compete with classmates, and earn bonus points in the 45-Book Reading Challenge." path="/challenges" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
