@@ -71,14 +71,16 @@ const FlipDigit = ({ value, label }: { value: number; label: string }) => {
   );
 };
 
-const SessionCountdown = ({ endDate, title, description, sessionName }: SessionCountdownProps) => {
+const SessionCountdown = ({ endDate, startDate, title, description, sessionName }: SessionCountdownProps) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (!endDate) return;
 
     const target = new Date(endDate).getTime();
+    const start = startDate ? new Date(startDate).getTime() : null;
 
     const update = () => {
       const now = Date.now();
@@ -86,6 +88,7 @@ const SessionCountdown = ({ endDate, title, description, sessionName }: SessionC
 
       if (diff <= 0) {
         setIsExpired(true);
+        setProgress(100);
         return;
       }
 
@@ -95,12 +98,18 @@ const SessionCountdown = ({ endDate, title, description, sessionName }: SessionC
         minutes: Math.floor((diff / (1000 * 60)) % 60),
         seconds: Math.floor((diff / 1000) % 60),
       });
+
+      if (start) {
+        const total = target - start;
+        const elapsed = now - start;
+        setProgress(Math.min(100, Math.max(0, (elapsed / total) * 100)));
+      }
     };
 
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [endDate]);
+  }, [endDate, startDate]);
 
   if (!endDate) return null;
 
