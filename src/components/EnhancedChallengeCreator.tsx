@@ -378,6 +378,11 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
                           const { error } = await supabase.from('custom_categories').update({ name: editCatName.trim(), prompt: editCatPrompt.trim() }).eq('id', cat.id);
                           if (error) { toast.error('Failed to update'); } else { toast.success('Category updated'); setEditingCatId(null); refreshCategories(); }
                         }}><Save className="h-3 w-3 mr-1" />Save</Button>
+                        <Button size="sm" variant="destructive" className="h-7 text-xs" onClick={async () => {
+                          if (!confirm('Delete this custom category?')) return;
+                          const { error } = await supabase.from('custom_categories').delete().eq('id', cat.id);
+                          if (error) { toast.error('Failed to delete'); } else { toast.success('Category deleted'); setEditingCatId(null); setTargetCategories(prev => prev.filter(id => id !== cat.id)); refreshCategories(); }
+                        }}><Trash2 className="h-3 w-3 mr-1" />Delete</Button>
                         <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingCatId(null)}>Cancel</Button>
                       </div>
                     </div>
