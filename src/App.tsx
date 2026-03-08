@@ -18,6 +18,7 @@ import LibrarianDashboard from "./pages/LibrarianDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
 import NotFound from "./pages/NotFound";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -132,6 +133,7 @@ const App = () => (
         <BrowserRouter>
           <AuthProvider>
             <AppRoutes />
+            <PWAInstallPrompt />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
