@@ -383,9 +383,14 @@ const SubmitBook = () => {
                 <Label htmlFor="reflection">
                   Reflection * <span className="text-muted-foreground font-normal">(min 50 characters)</span>
                 </Label>
+                {currentCategory && (
+                  <p className="text-xs text-primary bg-primary/5 rounded-lg px-3 py-2 border border-primary/10">
+                    💡 <strong>Remember:</strong> {currentCategory.prompt}
+                  </p>
+                )}
                 <Textarea
                   id="reflection"
-                  placeholder="Share your thoughts, insights, and reflections on the book..."
+                  placeholder={currentCategory ? `Following the prompt: "${currentCategory.prompt.substring(0, 80)}..."` : "Share your thoughts, insights, and reflections on the book..."}
                   value={formData.reflection}
                   onChange={(e) => setFormData({ ...formData, reflection: e.target.value })}
                   className="min-h-[150px]"
