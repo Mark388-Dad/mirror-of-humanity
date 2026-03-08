@@ -352,33 +352,78 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
               <CardTitle className="text-lg flex items-center gap-2">
                 <Tag className="h-5 w-5 text-primary" />Target Reading Categories
               </CardTitle>
-              <p className="text-xs text-muted-foreground">Select which reading categories this challenge covers. Leave empty for all categories.</p>
+              <p className="text-xs text-muted-foreground">Select categories for this challenge, or create & edit custom ones inline.</p>
             </CardHeader>
-            <CardContent className="pt-2">
+            <CardContent className="pt-2 space-y-4">
+              {/* Category badges */}
               <div className="flex flex-wrap gap-2 max-h-60 overflow-y-auto pr-1">
                 {allCategories.map(cat => {
                   const isSelected = targetCategories.includes(cat.id);
-                  return (
+                  const isEditingCat = editingCatId === cat.id;
+                  return isEditingCat ? (
+                    <div key={cat.id} className="w-full p-3 rounded-lg border-2 border-primary/30 bg-primary/5 space-y-2">
+                      <Input value={editCatName} onChange={e => setEditCatName(e.target.value)} placeholder="Category name" className="h-8 text-sm" />
+                      <Textarea value={editCatPrompt} onChange={e => setEditCatPrompt(e.target.value)} placeholder="Reflection prompt" rows={2} className="text-sm" />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="h-7 text-xs" onClick={async () => {
+                          if (!editCatName.trim()) return;
+                          const { error } = await supabase.from('custom_categories').update({ name: editCatName.trim(), prompt: editCatPrompt.trim() }).eq('id', cat.id);
+                          if (error) { toast.error('Failed to update'); } else { toast.success('Category updated'); setEditingCatId(null); refreshCategories(); }
+                        }}><Save className="h-3 w-3 mr-1" />Save</Button>
+                        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingCatId(null)}>Cancel</Button>
+                      </div>
+                    </div>
+                  ) : (
                     <Badge
                       key={cat.id}
                       variant={isSelected ? 'default' : 'outline'}
-                      className={`cursor-pointer transition-all hover:scale-105 text-xs ${isSelected ? 'shadow-md' : 'hover:bg-primary/10'}`}
-                      onClick={() => {
-                        setTargetCategories(prev =>
-                          prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id]
-                        );
-                      }}
+                      className={`cursor-pointer transition-all hover:scale-105 text-xs group ${isSelected ? 'shadow-md' : 'hover:bg-primary/10'}`}
+                      onClick={() => setTargetCategories(prev => prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
                     >
                       {cat.id}. {cat.name}
+                      {cat.id > 30 && (
+                        <button className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => {
+                          e.stopPropagation();
+                          setEditingCatId(cat.id); setEditCatName(cat.name); setEditCatPrompt(cat.prompt);
+                        }}>
+                          <Edit className="h-3 w-3" />
+                        </button>
+                      )}
                     </Badge>
                   );
                 })}
               </div>
+
               {targetCategories.length > 0 && (
-                <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                <div className="flex items-center justify-between pt-3 border-t">
                   <p className="text-xs text-muted-foreground">{targetCategories.length} categor{targetCategories.length === 1 ? 'y' : 'ies'} selected</p>
                   <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setTargetCategories([])}>Clear all</Button>
                 </div>
+              )}
+
+              {/* Inline create new custom category */}
+              {showNewCatForm ? (
+                <div className="p-3 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 space-y-2">
+                  <p className="text-xs font-semibold text-primary">New Custom Category</p>
+                  <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Category name (e.g., A Book About Climate Change)" className="h-8 text-sm" />
+                  <Textarea value={newCatPrompt} onChange={e => setNewCatPrompt(e.target.value)} placeholder="Reflection prompt for students..." rows={2} className="text-sm" />
+                  <div className="flex gap-2">
+                    <Button size="sm" className="h-7 text-xs" disabled={!newCatName.trim() || creatingCat} onClick={async () => {
+                      if (!user) return;
+                      setCreatingCat(true);
+                      const { error } = await supabase.from('custom_categories').insert({ name: newCatName.trim(), prompt: newCatPrompt.trim(), created_by: user.id });
+                      if (error) { toast.error('Failed to create'); } else { toast.success('Category created!'); setNewCatName(''); setNewCatPrompt(''); setShowNewCatForm(false); refreshCategories(); }
+                      setCreatingCat(false);
+                    }}>
+                      {creatingCat ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Plus className="h-3 w-3 mr-1" />}Create
+                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowNewCatForm(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" size="sm" className="w-full border-dashed text-xs" onClick={() => setShowNewCatForm(true)}>
+                  <Plus className="h-3 w-3 mr-1" />Add Custom Category
+                </Button>
               )}
             </CardContent>
           </Card>
