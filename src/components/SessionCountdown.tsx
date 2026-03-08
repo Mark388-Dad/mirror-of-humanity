@@ -4,6 +4,7 @@ import { Clock, BookOpen } from 'lucide-react';
 
 interface SessionCountdownProps {
   endDate?: string | null;
+  startDate?: string | null;
   title?: string | null;
   description?: string | null;
   sessionName?: string | null;
