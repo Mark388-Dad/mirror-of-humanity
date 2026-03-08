@@ -12,6 +12,7 @@ import IBConnectionsSection from "@/components/IBConnectionsSection";
 import OutcomesSection from "@/components/OutcomesSection";
 import Footer from "@/components/Footer";
 import FeaturedChallenges from "@/components/FeaturedChallenges";
+import SessionCountdown from "@/components/SessionCountdown";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LogIn, LayoutDashboard, Sparkles, ExternalLink } from 'lucide-react';
@@ -61,6 +62,7 @@ const Index = () => {
   const tipOfDay = getContent('tip_of_day');
   const featuredChallenge = getContent('featured_challenge');
   const motivation = getContent('motivation');
+  const sessionCountdown = getContent('session_countdown');
 
   return (
     <main className="min-h-screen relative">
@@ -79,6 +81,10 @@ const Index = () => {
       </div>
 
       {isVisible('hero') && <HeroSection title={hero?.title} content={hero?.content} />}
+
+      {sessionCountdown?.is_visible && (
+        <SessionCountdown endDate={sessionCountdown.content} title={sessionCountdown.title} />
+      )}
 
       <AnimatePresence>
         {announcement?.is_visible && (
