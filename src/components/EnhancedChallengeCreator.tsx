@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit } from 'lucide-react';
+import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { differenceInDays, format } from 'date-fns';
 
