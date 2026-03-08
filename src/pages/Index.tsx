@@ -82,14 +82,18 @@ const Index = () => {
 
       {isVisible('hero') && <HeroSection title={hero?.title} content={hero?.content} />}
 
-      {sessionCountdown?.is_visible && (
-        <SessionCountdown
-          endDate={sessionCountdown.content}
-          title={sessionCountdown.title}
-          sessionName={sessionCountdown.image_url?.startsWith('session:') ? sessionCountdown.image_url.replace('session:', '') : undefined}
-          description={sessionCountdown.image_url?.startsWith('session:') ? undefined : sessionCountdown.image_url}
-        />
-      )}
+      {sessionCountdown?.is_visible && (() => {
+        let extra: { sessionName?: string; description?: string } = {};
+        try { extra = JSON.parse(sessionCountdown.image_url || '{}'); } catch {}
+        return (
+          <SessionCountdown
+            endDate={sessionCountdown.content}
+            title={sessionCountdown.title}
+            sessionName={extra.sessionName}
+            description={extra.description}
+          />
+        );
+      })()}
 
       <AnimatePresence>
         {announcement?.is_visible && (
