@@ -24,10 +24,11 @@ export const useSessionCountdown = () => {
         .maybeSingle();
 
       if (row) {
-        let extra: { sessionName?: string; description?: string } = {};
+        let extra: { sessionName?: string; description?: string; startDate?: string } = {};
         try { extra = JSON.parse(row.image_url || '{}'); } catch {}
         setData({
           endDate: row.content,
+          startDate: extra.startDate || null,
           title: row.title,
           sessionName: extra.sessionName || null,
           description: extra.description || null,
