@@ -307,86 +307,104 @@ const MemberManagement = () => {
 
       {/* Student Progress View */}
       {activeView === 'progress' && (
-        <Card className="border-green-500/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Student Progress & Points ({filteredProgress.length} students)
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">Points auto-calculated: Books × 3 = Total Points (max {MAX_POINTS})</p>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {filteredProgress.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground">No student progress data found.</p>
-              ) : (
-                filteredProgress.map((student, index) => {
-                  const booksRead = student.books_read || 0;
-                  const autoCalcPoints = booksRead * 3;
-                  const displayPoints = student.total_points || 0;
-                  const pointsMismatch = displayPoints !== autoCalcPoints;
-                  const booksPercent = Math.min((booksRead / MAX_BOOKS) * 100, 100);
-                  const pointsPercent = Math.min((displayPoints / MAX_POINTS) * 100, 100);
-                  const level = student.achievement_level || 'none';
-                  
-                  return (
-                    <motion.div key={student.user_id || index} initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }} transition={{ delay: Math.min(index * 0.02, 0.5) }}
-                      className="flex items-center gap-4 p-3 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors">
-                      
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                        student.house ? houseColors[student.house] || 'bg-primary' : 'bg-primary'
-                      }`}>
-                        {(student.full_name || '?').charAt(0).toUpperCase()}
-                      </div>
+        <div className="space-y-4">
+          <Card className="border-green-500/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Trophy className="h-5 w-5 text-yellow-500" />
+                Student Progress & Points ({filteredProgress.length} students)
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">Points auto-calculated: Books × 3 = Total Points (max {MAX_POINTS})</p>
+            </CardHeader>
+          </Card>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold text-sm truncate">{student.full_name}</span>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProgress.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground col-span-full">No student progress data found.</p>
+            ) : (
+              filteredProgress.map((student, index) => {
+                const booksRead = student.books_read || 0;
+                const autoCalcPoints = booksRead * 3;
+                const displayPoints = student.total_points || 0;
+                const pointsMismatch = displayPoints !== autoCalcPoints;
+                const booksPercent = Math.min((booksRead / MAX_BOOKS) * 100, 100);
+                const pointsPercent = Math.min((displayPoints / MAX_POINTS) * 100, 100);
+                const level = student.achievement_level || 'none';
+
+                return (
+                  <motion.div key={student.user_id || index} initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.02, 0.5) }}>
+                    <Card className="hover:shadow-md transition-shadow border-border/60">
+                      <CardContent className="p-4 space-y-3">
+                        {/* Header: Avatar + Name + Edit */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${
+                              student.house ? houseColors[student.house] || 'bg-primary' : 'bg-primary'
+                            }`}>
+                              {(student.full_name || '?').charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm truncate">{student.full_name}</p>
+                              <Badge className={`text-xs ${achievementColors[level]}`}>
+                                {level === 'gold' ? '🥇 Gold' : level === 'silver' ? '🥈 Silver' : level === 'bronze' ? '🥉 Bronze' : '📖 Starter'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0"
+                            onClick={() => {
+                              setEditingStudent(student);
+                              setEditPoints((student.total_points || 0).toString());
+                            }}>
+                            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                          </Button>
+                        </div>
+
+                        {/* Tags */}
+                        <div className="flex flex-wrap gap-1.5">
                           {student.year_group && <Badge variant="outline" className="text-xs">{student.year_group}</Badge>}
                           {student.class_name && <Badge variant="outline" className="text-xs">{student.class_name}</Badge>}
                           {student.house && <Badge className={`${houseColors[student.house] || ''} text-white text-xs`}>{student.house}</Badge>}
-                          <Badge className={`text-xs ${achievementColors[level]}`}>
-                            {level === 'gold' ? '🥇 Gold' : level === 'silver' ? '🥈 Silver' : level === 'bronze' ? '🥉 Bronze' : '📖 Starter'}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>📚 {booksRead}/{MAX_BOOKS}</span>
-                            <Progress value={booksPercent} className="h-1.5 w-16" />
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <span>⭐ {displayPoints}/{MAX_POINTS}</span>
-                            <Progress value={pointsPercent} className="h-1.5 w-16" />
-                          </div>
-                          <span className="text-xs text-muted-foreground/70">
-                            ({booksRead} × 3 = {autoCalcPoints})
-                          </span>
                           {pointsMismatch && (
                             <Badge variant="outline" className="text-xs text-orange-600 border-orange-300">⚠️ Mismatch</Badge>
                           )}
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm px-3 py-1">
-                          {displayPoints} pts
-                        </Badge>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0"
-                          onClick={() => {
-                            setEditingStudent(student);
-                            setEditPoints((student.total_points || 0).toString());
-                          }}>
-                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  );
-                })
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                        {/* Books Progress */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">📚 Books Read</span>
+                            <span className="font-medium">{booksRead}/{MAX_BOOKS}</span>
+                          </div>
+                          <Progress value={booksPercent} className="h-2" />
+                        </div>
+
+                        {/* Points Progress */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">⭐ Points</span>
+                            <span className="font-medium">{displayPoints}/{MAX_POINTS}</span>
+                          </div>
+                          <Progress value={pointsPercent} className="h-2" />
+                        </div>
+
+                        {/* Points Badge */}
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs text-muted-foreground">
+                            ({booksRead} × 3 = {autoCalcPoints})
+                          </span>
+                          <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm px-3">
+                            {displayPoints} pts
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
+        </div>
       )}
 
       {/* Members View */}
