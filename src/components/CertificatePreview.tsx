@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Shield, CheckCircle2, Star, Award, Crown, Medal, Sparkles } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import SocialShareButton from './SocialShareButton';
 
 export interface CertificatePreviewProps {
   template: {
