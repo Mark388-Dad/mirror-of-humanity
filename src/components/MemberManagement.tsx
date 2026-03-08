@@ -75,6 +75,10 @@ const MemberManagement = () => {
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
   const [editProfileData, setEditProfileData] = useState({ house: '', year_group: '', class_name: '', full_name: '', email: '', role: '' });
   const [editProfileLoading, setEditProfileLoading] = useState(false);
+  const [filterHouse, setFilterHouse] = useState('all');
+  const [filterYearGroup, setFilterYearGroup] = useState('all');
+  const [filterClass, setFilterClass] = useState('all');
+  const [filterRole, setFilterRole] = useState('all');
 
   useEffect(() => {
     fetchAll();
