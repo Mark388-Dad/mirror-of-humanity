@@ -383,7 +383,7 @@ const SubmitBook = () => {
               {/* Reflection */}
               <div className="space-y-2">
                 <Label htmlFor="reflection">
-                  Reflection * <span className="text-muted-foreground font-normal">(min 50 characters)</span>
+                  Reflection * <span className="text-muted-foreground font-normal">(min 500 characters)</span>
                 </Label>
                 {currentCategory && (
                   <p className="text-xs text-primary bg-primary/5 rounded-lg px-3 py-2 border border-primary/10">
