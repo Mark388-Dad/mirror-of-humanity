@@ -16,7 +16,7 @@ const editSchema = z.object({
   author: z.string().min(1, 'Author is required'),
   date_started: z.string().min(1, 'Start date is required'),
   date_finished: z.string().min(1, 'End date is required'),
-  reflection: z.string().min(50, 'Reflection must be at least 50 characters'),
+  reflection: z.string().min(50, 'Reflection must be at least 500 characters'),
 });
 
 interface EditSubmissionDialogProps {
