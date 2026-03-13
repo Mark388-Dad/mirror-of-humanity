@@ -25,7 +25,7 @@ const submissionSchema = z.object({
   author: z.string().min(1, 'Author is required').max(100),
   dateStarted: z.string().min(1, 'Start date is required'),
   dateFinished: z.string().min(1, 'Finish date is required'),
-  reflection: z.string().min(50, 'Reflection must be at least 50 characters').max(2000),
+  reflection: z.string().min(500, 'Reflection must be at least 500 characters').max(2000),
 });
 
 const SubmitBook = () => {
