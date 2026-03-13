@@ -3,10 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,7 +36,13 @@ interface EditSubmissionDialogProps {
   onSuccess: () => void;
 }
 
-const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: EditSubmissionDialogProps) => {
+const EditSubmissionDialog = ({
+  open,
+  onOpenChange,
+  submission,
+  onSuccess,
+}: EditSubmissionDialogProps) => {
+
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof editSchema>>({
@@ -48,8 +56,11 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
     },
   });
 
+  const reflectionLength = form.watch("reflection")?.length || 0;
+
   const onSubmit = async (values: z.infer<typeof editSchema>) => {
     setLoading(true);
+
     try {
       const { error } = await supabase
         .from('book_submissions')
@@ -67,6 +78,7 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
       toast.success('Submission updated successfully!');
       onSuccess();
       onOpenChange(false);
+
     } catch (error: any) {
       toast.error(error.message || 'Failed to update submission');
     } finally {
@@ -77,14 +89,17 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Edit Submission</DialogTitle>
           <DialogDescription>
             Edit your submission for "{submission.category_name}"
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
             <FormField
               control={form.control}
               name="title"
@@ -98,6 +113,7 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="author"
@@ -111,7 +127,9 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
                 </FormItem>
               )}
             />
+
             <div className="grid grid-cols-2 gap-4">
+
               <FormField
                 control={form.control}
                 name="date_started"
@@ -125,6 +143,7 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="date_finished"
@@ -138,31 +157,56 @@ const EditSubmissionDialog = ({ open, onOpenChange, submission, onSuccess }: Edi
                   </FormItem>
                 )}
               />
+
             </div>
+
             <FormField
               control={form.control}
               name="reflection"
               render={({ field }) => (
                 <FormItem>
+
                   <FormLabel>Reflection</FormLabel>
+
                   <FormControl>
                     <Textarea {...field} rows={6} />
                   </FormControl>
+
+                  <p className="text-sm text-muted-foreground">
+                    {reflectionLength} / 500 characters
+                  </p>
+
                   <FormMessage />
+
                 </FormItem>
               )}
             />
+
             <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+
+              <Button
+                type="submit"
+                disabled={loading || reflectionLength < 500}
+              >
+                {loading && (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                )}
                 Save Changes
               </Button>
+
             </div>
+
           </form>
         </Form>
+
       </DialogContent>
     </Dialog>
   );
