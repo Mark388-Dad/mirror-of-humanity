@@ -20,7 +20,7 @@ type UserRole = Database['public']['Enums']['user_role'];
 type YearGroup = Database['public']['Enums']['year_group'];
 type HouseName = Database['public']['Enums']['house_name'];
 
-// [Your schemas, ROLE_FIELD_CONFIG, MAX_STUDENTS_PER_CLASS, etc stay the same]
+// [schemas, ROLE_FIELD_CONFIG, MAX_STUDENTS_PER_CLASS, validateAccessCode, handleSignUp, handleSignIn stay unchanged]
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -66,11 +66,13 @@ const Auth = () => {
     checkEnrollment();
   }, [formData.yearGroup, formData.role]);
 
-  // [handleSignUp, handleSignIn, validateAccessCode stay exactly the same]
-
   return (
     <div className="min-h-screen bg-hero-gradient flex items-center justify-center p-6">
-      <SEOHead title="Sign In" description="Sign in or create an account for the 45-Book Reading Challenge at M-PESA Foundation Academy." path="/auth" />
+      <SEOHead
+        title="Sign In"
+        description="Sign in or create an account for the 45-Book Reading Challenge at M-PESA Foundation Academy."
+        path="/auth"
+      />
       <Card className="w-full max-w-lg bg-card/95 backdrop-blur">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -88,6 +90,7 @@ const Auth = () => {
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
+            {/* SIGN IN */}
             <TabsContent value="signin">
               {showForgotPassword ? (
                 <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
@@ -133,6 +136,7 @@ const Auth = () => {
               )}
             </TabsContent>
 
+            {/* SIGN UP */}
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 {/* Full Name */}
