@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SEOHead from '@/components/SEOHead';
 import ForgotPasswordForm from '@/components/ForgotPasswordForm';
@@ -13,33 +13,12 @@ const Auth = () => {
 
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
   });
-
-  const [newPassword, setNewPassword] = useState('');
-
-  // 🔥 Detect reset password mode (Supabase recovery)
-  useEffect(() => {
-    const detectRecovery = async () => {
-      const hash = window.location.hash;
-
-      if (hash.includes('type=recovery')) {
-        const { data } = await supabase.auth.getSession();
-
-        if (data.session) {
-          setIsRecoveryMode(true);
-          setShowForgotPassword(true);
-        }
-      }
-    };
-
-    detectRecovery();
-  }, []);
 
   // 🔐 SIGN IN
   const handleSignIn = async (e: React.FormEvent) => {
@@ -60,7 +39,7 @@ const Auth = () => {
     }
   };
 
-  // 🆕 SIGN UP (basic)
+  // 🆕 SIGN UP
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -84,7 +63,7 @@ const Auth = () => {
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth`,
+      redirectTo: "https://mfareadingchallenge.netlify.app/reset-password",
     });
 
     setLoading(false);
@@ -93,24 +72,7 @@ const Auth = () => {
       alert(error.message);
     } else {
       alert('Reset link sent! Check your email.');
-    }
-  };
-
-  // 🔄 UPDATE PASSWORD
-  const handleUpdatePassword = async () => {
-    setLoading(true);
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    setLoading(false);
-
-    if (error) {
-      alert(error.message);
-    } else {
-      alert('Password updated successfully!');
-      window.location.href = '/auth';
+      setShowForgotPassword(false);
     }
   };
 
@@ -137,36 +99,10 @@ const Auth = () => {
 
         <CardContent>
           {showForgotPassword ? (
-            isRecoveryMode ? (
-              // 🔥 RESET PASSWORD UI
-              <div className="space-y-4">
-                <h2 className="text-center text-lg font-semibold">
-                  Set New Password
-                </h2>
-
-                <div className="space-y-2">
-                  <Label>New Password</Label>
-                  <Input
-                    type="password"
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
-
-                <Button
-                  onClick={handleUpdatePassword}
-                  className="w-full bg-gold text-navy"
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="animate-spin" /> : 'Update Password'}
-                </Button>
-              </div>
-            ) : (
-              // 📩 FORGOT PASSWORD UI
-              <ForgotPasswordForm
-                onSubmit={handleSendReset}
-                onBack={() => setShowForgotPassword(false)}
-              />
-            )
+            <ForgotPasswordForm
+              onSubmit={handleSendReset}
+              onBack={() => setShowForgotPassword(false)}
+            />
           ) : (
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
