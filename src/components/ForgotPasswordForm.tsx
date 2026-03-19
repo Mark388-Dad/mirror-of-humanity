@@ -1,27 +1,38 @@
 import { useState } from "react";
 import { Button, Input, Label } from "@/components/ui";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
-  onSubmit: (email: string) => void;
+  onSubmit?: (email: string) => void;
   onBack: () => void;
 }
 
-export default function ForgotPasswordForm({ onSubmit, onBack }: Props) {
+export default function ForgotPasswordForm({ onBack }: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleForgotPassword = async (email: string) => {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://mfareadingchallenge.netlify.app/reset-password",
-  });
+  const handleSubmit = async () => {
+    if (!email) {
+      toast.error("Enter your email");
+      return;
+    }
 
-  if (error) {
-    toast.error(error.message);
-  } else {
-    toast.success("Password reset email sent!");
-  }
-};
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://mfareadingchallenge.netlify.app/reset-password",
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Password reset email sent!");
+    }
+  };
 
   return (
     <div className="space-y-4">
