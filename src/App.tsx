@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import SubmitBook from "./pages/SubmitBook";
 import MyProgress from "./pages/MyProgress";
 import Leaderboard from "./pages/Leaderboard";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookGallery from "./pages/BookGallery";
 import Challenges from "./pages/Challenges";
