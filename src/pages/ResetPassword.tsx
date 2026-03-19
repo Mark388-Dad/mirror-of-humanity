@@ -27,14 +27,27 @@ export default function ResetPassword() {
       }
     });
 
-    // Also check URL hash (important for email links)
-    const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
-    }
+    // Check if a valid session exists from the reset link
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setIsRecovery(true);
+      } else {
+        // Fallback: check URL
+        if (
+          window.location.hash.includes("type=recovery") ||
+          window.location.hash.includes("access_token")
+        ) {
+          setIsRecovery(true);
+        } else {
+          // Invalid access → redirect away
+          toast.error("Invalid or expired reset link");
+          navigate("/login");
+        }
+      }
+    });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +75,7 @@ export default function ResetPassword() {
       toast.success("Password updated successfully!");
 
       setTimeout(() => {
-        navigate("/login"); // ✅ better than /auth if that's your login route
+        navigate("/login");
       }, 2000);
 
     } catch (error: any) {
@@ -88,8 +101,11 @@ export default function ResetPassword() {
           >
             <GraduationCap className="w-8 h-8 text-primary-foreground" />
           </motion.div>
+
           <h1 className="text-3xl font-bold">Reset Password</h1>
-          <p className="text-muted-foreground mt-2">Enter your new password</p>
+          <p className="text-muted-foreground mt-2">
+            Enter your new password
+          </p>
         </div>
 
         <Card className="border-0 shadow-xl">
