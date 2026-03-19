@@ -11,13 +11,17 @@ export default function ForgotPasswordForm({ onSubmit, onBack }: Props) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!email) return alert("Enter your email");
+  const handleForgotPassword = async (email: string) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://mfareadingchallenge.netlify.app/reset-password",
+  });
 
-    setLoading(true);
-    await onSubmit(email);
-    setLoading(false);
-  };
+  if (error) {
+    toast.error(error.message);
+  } else {
+    toast.success("Password reset email sent!");
+  }
+};
 
   return (
     <div className="space-y-4">
