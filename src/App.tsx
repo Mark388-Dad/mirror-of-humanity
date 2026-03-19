@@ -70,6 +70,8 @@ const AppRoutes = () => {
           <Auth />
         </AuthRoute>
       } />
+
+<Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
