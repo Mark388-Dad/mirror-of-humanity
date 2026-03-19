@@ -21,7 +21,7 @@ export { default as Drawer } from "./drawer";
 export { default as DropdownMenu } from "./dropdown-menu";
 export { default as Form } from "./form";
 export { default as HoverCard } from "./hover-card";
-export { default as Input } from "./input";
+export { Input } from "./input";
 export { default as InputOTP } from "./input-otp";
 export { default as Label } from "./label";
 export { default as Menubar } from "./menubar";
