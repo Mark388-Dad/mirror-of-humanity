@@ -20,7 +20,21 @@ import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+useEffect(() => {
+  const url = window.location.href;
 
+  // Detect Lovable redirect with token
+  if (
+    url.includes("lovable.app") &&
+    (url.includes("access_token") || url.includes("type=recovery"))
+  ) {
+    const hash = window.location.hash;
+
+    // Redirect to your real reset page with token
+    window.location.href =
+      "https://mfareadingchallenge.netlify.app/reset-password" + hash;
+  }
+}, []);
 const queryClient = new QueryClient();
 
 // Protected Route wrapper
