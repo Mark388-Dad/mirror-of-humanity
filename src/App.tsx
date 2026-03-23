@@ -11,13 +11,13 @@ import Dashboard from "./pages/Dashboard";
 import SubmitBook from "./pages/SubmitBook";
 import MyProgress from "./pages/MyProgress";
 import Leaderboard from "./pages/Leaderboard";
-import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookGallery from "./pages/BookGallery";
 import Challenges from "./pages/Challenges";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -70,8 +70,7 @@ const AppRoutes = () => {
           <Auth />
         </AuthRoute>
       } />
-
-<Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
