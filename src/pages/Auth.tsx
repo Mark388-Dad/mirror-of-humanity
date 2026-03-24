@@ -208,7 +208,7 @@ const Auth = () => {
                     <Label>Email *</Label>
                     <Input
                       type="email"
-                      placeholder="your.email@school.edu"
+                      placeholder="your.name@mpesafoundationacademy.ac.ke"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
