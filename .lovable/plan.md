@@ -1,184 +1,79 @@
 
 
-# Comprehensive Platform Update: Submissions, Sync, Challenges, Categories & Certificates
+# Platform Enhancement Plan
 
-This is a large update spanning 7 major feature areas. Here is the full breakdown of what will be built and changed.
+## Summary
 
----
+After reviewing the codebase, most features described already exist (auth, access codes, certificates, challenges, dashboard, member management, categories, bulk import). This plan focuses on the **genuinely missing/enhanced** items.
 
-## 1. Submission Limits: Max 2 Books Per Category, Max 45 Total
-
-### What changes
-- When a student submits a book, the system checks how many books they have already submitted in that category. If it's 2 or more, the submission is blocked with a clear error message.
-- When a student has 45 total submissions, they can no longer submit new books (the form shows "You've completed the 45-Book Challenge!").
-- The Submit Book page will display how many slots remain per category and overall.
-
-### Files modified
-- `src/pages/SubmitBook.tsx` -- Add pre-submission checks querying `book_submissions` for the user's count per category and total count. Disable the form at 45 books. Show remaining slots per selected category.
+**Regarding the external Supabase URL**: This project runs on Lovable Cloud, which already provides all backend capabilities. Connecting a separate Supabase project is not supported -- your data lives securely in Lovable Cloud. There is no need to duplicate data elsewhere.
 
 ---
 
-## 2. Librarian Custom Categories
+## Phase 1: Forgot Password Flow
 
-### What changes
-- A new database table `custom_categories` stores librarian-created categories (with id, name, prompt, created_by, is_active).
-- The librarian dashboard gets a "Categories" tab where they can add new categories with a name and reflection prompt.
-- These custom categories appear alongside the 30 default categories on the Submit Book form, the My Progress checklist, and the leaderboard.
-- The `READING_CATEGORIES` constant remains as the default set; custom categories are merged at runtime from the database.
+**Status**: Missing entirely -- no reset link on the sign-in form.
 
-### Database migration
-- Create `custom_categories` table with columns: `id` (serial, starting at 31), `name`, `prompt`, `created_by`, `is_active`, `created_at`.
-- RLS: staff can manage, everyone can read active categories.
-
-### Files modified
-- `src/pages/SubmitBook.tsx` -- Fetch and merge custom categories with default ones.
-- `src/pages/MyProgress.tsx` -- Merge custom categories into checklist.
-- `src/pages/LibrarianDashboard.tsx` -- Add "Categories" tab.
-- New: `src/components/CategoryManager.tsx` -- UI for librarians to add/edit/delete custom categories.
+**Changes**:
+- Add "Forgot Password?" link below the sign-in form in `Auth.tsx`
+- Create a forgot password dialog/section that calls `supabase.auth.resetPasswordForEmail()`
+- Create a new `/reset-password` page that handles the recovery token and lets the user set a new password via `supabase.auth.updateUser({ password })`
+- Add the `/reset-password` route in `App.tsx` as a public route
 
 ---
 
-## 3. Challenge Submissions (In-Challenge Book Tracking)
+## Phase 2: Librarian User-Detail View (Click User → See All Submissions)
 
-### What changes
-- When a student joins a challenge and the challenge has its own submission target (not the main 45-book challenge), the challenge page shows a "Submit for this Challenge" button that opens an inline submission form.
-- Challenge submissions are linked to the challenge via the `challenge_participants` table (incrementing `books_completed`).
-- These challenge submissions do NOT count toward the 45-book main challenge -- they are separate.
-- The challenge card shows the student's progress toward the challenge target.
+**Status**: The `LibrarianUserManager` shows a flat list of all submissions. No per-user drill-down.
 
-### Database changes
-- New table `challenge_submissions` with columns: `id`, `challenge_id`, `user_id`, `title`, `author`, `reflection`, `category_number`, `category_name`, `created_at`, `points_earned` (default 3).
-- RLS: students can insert their own, everyone can read.
-
-### Files modified
-- `src/pages/Challenges.tsx` -- Add inline submission form for joined challenges. Show progress. Distinguish between main 45-book challenge and librarian-created challenges.
-- `src/components/EnhancedChallengeCreator.tsx` -- Already comprehensive. Add a toggle for "Independent from 45-book challenge" so librarian can mark it as separate.
+**Changes**:
+- Add a "Student Profiles" view in the librarian submissions tab
+- Show a list of all students (searchable, filterable)
+- When a librarian clicks on a student, open a detail panel showing:
+  - Student info (name, house, year, class, email)
+  - All their book submissions with status badges
+  - Total points, books read, achievement level
+  - Actions: approve/reject/flag individual submissions
+  - Certificate eligibility status
 
 ---
 
-## 4. Enhanced Challenge Creator
+## Phase 3: Enhanced Challenge Builder with AI
 
-### What changes
-- The existing challenge creator is already fairly complete. Enhancements include:
-  - A richer description editor (multiline with formatting hints).
-  - Preview card showing how the challenge will look to students.
-  - Option to mark a challenge as "Independent" (not counting toward 45-book total).
-  - Librarian can set specific categories that qualify for the challenge.
-  - All 13 challenge types are supported (already in DB constraint).
+**Status**: The `EnhancedChallengeCreator` already supports creating challenges with AI generation, multiple challenge types, participation rules, difficulty levels, and badge assignment. The `generate-challenge` edge function exists.
 
-### Files modified
-- `src/components/EnhancedChallengeCreator.tsx` -- Add "Independent Challenge" toggle, preview card, richer UI.
+**Enhancements**:
+- Add an "Ask AI to Build" text input where the librarian describes a challenge in natural language and AI generates the full configuration
+- Add AI suggestion buttons ("Improve description", "Suggest points", "Recommend difficulty")
+- Add a live preview card showing how the challenge will appear to students
+- Add a pre-publish checklist (title set, dates set, points configured, etc.)
+- Add challenge templates (Reading Sprint, Writing Contest, Poetry Competition, Genre Explorer) that pre-fill the form
 
 ---
 
-## 5. Leaderboard Shows All Students
+## Phase 4: Submission & Dashboard Enhancements
 
-### What changes
-- Currently the student leaderboard is capped at 50 entries. Remove the `.slice(0, 50)` limit so all students are shown.
-- Add pagination or "Load More" for performance if needed.
-
-### Files modified
-- `src/components/AdvancedLeaderboard.tsx` -- Remove the `.slice(0, 50)` cap. Show all students in the list.
+- Certificate download from student dashboard (button appears when milestone is reached)
+- Dynamic dashboard cards that reflect unlocked content and active challenges
+- Improved notification system for deadline reminders and submission feedback
 
 ---
 
-## 6. Google Sheets Two-Way Sync & Deduplication
+## Technical Details
 
-### What changes
-- **Sheet to Web (already working)**: The sync edge function pulls data from Google Sheets and imports it. Enhanced deduplication: check by email + title (case-insensitive) across both `pending_submissions` and `book_submissions`.
-- **Web to Sheet (new)**: When a student submits a book through the web app, a new edge function `push-to-sheet` appends the row to the Google Sheet using the Google Sheets API.
-- **Deduplication**: If data already exists (same email + same title), it is skipped. Re-running sync never creates duplicates.
+### New Files
+- `src/pages/ResetPassword.tsx` -- Password reset page
+- `src/components/StudentDetailView.tsx` -- Librarian per-student submission viewer
+- `src/components/ChallengeTemplates.tsx` -- Pre-built challenge templates
+- `src/components/ChallengePreviewCard.tsx` -- Live preview for challenge builder
 
-### New edge function
-- `supabase/functions/push-to-sheet/index.ts` -- Uses the Google Sheets API (via service account or API key) to append a new row when a web submission is made.
-- However, appending to Google Sheets requires either a Google API key or a service account. Since the sheet is public for reading but writing requires authentication, this will need a Google service account JSON key stored as a secret.
+### Modified Files
+- `src/pages/Auth.tsx` -- Add forgot password link and dialog
+- `src/App.tsx` -- Add `/reset-password` route
+- `src/components/LibrarianUserManager.tsx` -- Add student list view with click-to-detail
+- `src/components/EnhancedChallengeCreator.tsx` -- AI buttons, templates, preview, checklist
+- `src/pages/MyProgress.tsx` -- Certificate download buttons per milestone
 
-### Alternative approach (simpler)
-- Since setting up a Google service account adds complexity, the simpler approach is:
-  - The sync remains one-directional (Sheet to Web) for the automated flow.
-  - Web submissions are the source of truth and can be exported to CSV/Excel from the librarian dashboard for manual sheet updates.
-  - Add an "Export to CSV" button on the librarian submissions manager for easy data transfer back to Sheets.
-
-### Files modified
-- `supabase/functions/sync-google-sheet/index.ts` -- Strengthen deduplication with case-insensitive email+title check across both tables.
-- `src/components/LibrarianUserManager.tsx` -- Add "Export CSV" button.
-- `src/components/GoogleSheetSync.tsx` -- Add note about deduplication behavior.
-
----
-
-## 7. Certificate Generation System
-
-### What changes
-A complete certificate generation system with 4 achievement levels:
-1. **Beginner Level** (first book submitted)
-2. **Bronze Achievement** (15 books)
-3. **Silver Achievement** (30 books)
-4. **Gold Achievement** (45 books)
-
-### Librarian Certificate Designer
-- New tab "Certificates" in the Librarian Dashboard.
-- For each level, the librarian can:
-  - Choose a built-in certificate template (from 3-4 preset designs).
-  - OR upload a custom background image.
-  - Edit certificate text fields: title, subtitle, body text.
-  - Add the school logo (upload once, applies to all).
-  - Preview how the certificate will look with a sample student name.
-  - Publish the certificate design (makes it available to students).
-
-### Student Certificate Download
-- On the My Progress page, when a student reaches an achievement level, a "Download Certificate" button appears next to that level.
-- The certificate is generated as a PDF/image using HTML Canvas, with:
-  - Student's full name
-  - Achievement level and badge
-  - Number of books read
-  - Date of achievement
-  - School logo (if uploaded by librarian)
-  - The librarian's chosen template/background
-
-### Database
-- New table `certificate_templates` with columns: `id`, `level` (beginner/bronze/silver/gold), `title`, `subtitle`, `body_text`, `background_image_url`, `school_logo_url`, `template_preset` (built-in style name), `is_published`, `updated_by`, `created_at`, `updated_at`.
-- RLS: librarians can manage, everyone can read published templates.
-
-### New components
-- `src/components/CertificateManager.tsx` -- Librarian UI for designing certificates per level.
-- `src/components/CertificateGenerator.tsx` -- Client-side certificate generation using HTML Canvas, rendering the student's name, level, badge, and background.
-- `src/components/CertificatePreview.tsx` -- Preview component used in both librarian designer and student download.
-
-### Files modified
-- `src/pages/LibrarianDashboard.tsx` -- Add "Certificates" tab.
-- `src/pages/MyProgress.tsx` -- Add download buttons per achievement level.
-
----
-
-## Technical Summary
-
-### Database Migrations
-1. Create `custom_categories` table (id serial starting at 31, name, prompt, created_by, is_active, created_at)
-2. Create `challenge_submissions` table (id, challenge_id, user_id, title, author, reflection, category_number, category_name, created_at, points_earned default 3)
-3. Create `certificate_templates` table (id, level, title, subtitle, body_text, background_image_url, school_logo_url, template_preset, is_published, updated_by, created_at, updated_at)
-4. RLS policies for all new tables
-5. Create storage bucket `certificates` for uploaded backgrounds and logos
-
-### Edge Function Changes
-- `sync-google-sheet` -- Enhanced deduplication (case-insensitive email + title check)
-
-### New Components (6)
-- `CategoryManager.tsx` -- Librarian category CRUD
-- `CertificateManager.tsx` -- Librarian certificate designer
-- `CertificateGenerator.tsx` -- Canvas-based PDF/image generation
-- `CertificatePreview.tsx` -- Visual preview
-
-### Modified Files (8+)
-- `SubmitBook.tsx` -- Category limits (2/category, 45 total), custom categories
-- `Challenges.tsx` -- In-challenge submissions, independent challenge tracking
-- `EnhancedChallengeCreator.tsx` -- Independent challenge toggle, preview
-- `AdvancedLeaderboard.tsx` -- Show all students (remove 50 cap)
-- `LibrarianDashboard.tsx` -- Add Categories tab, Certificates tab, Export CSV
-- `LibrarianUserManager.tsx` -- Export CSV button
-- `MyProgress.tsx` -- Certificate download buttons, custom categories in checklist
-- `GoogleSheetSync.tsx` -- Deduplication note
-- `sync-google-sheet/index.ts` -- Stronger deduplication
-
-### Constants
-- `constants.ts` -- Add `MAX_BOOKS_PER_CATEGORY = 2`
+### No Database Changes Required
+All needed tables already exist (profiles, book_submissions, challenges, certificate_templates, notifications).
 
