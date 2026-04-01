@@ -17,6 +17,7 @@ import Challenges from "./pages/Challenges";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
