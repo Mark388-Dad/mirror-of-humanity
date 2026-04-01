@@ -268,7 +268,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
               className="border-primary/30 hover:bg-primary/5">
               <Eye className="h-4 w-4 mr-2" />{showPreview ? 'Hide' : 'Show'} Preview
             </Button>
-            <Button variant="outline" onClick={generateWithAI} disabled={aiGenerating}
+            <Button variant="outline" onClick={() => generateWithAI()} disabled={aiGenerating}
               className="border-purple-500/30 hover:bg-purple-500/5 text-purple-600">
               {aiGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
               AI Generate
@@ -276,6 +276,38 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
           </div>
         </div>
       </div>
+
+      {/* AI Ask to Build */}
+      {!isEditing && (
+        <Card className="border-dashed border-2 border-purple-300/50">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Label className="text-sm font-semibold mb-1 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-500" /> Ask AI to Build a Challenge
+                </Label>
+                <Input value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+                  placeholder="e.g., Create a 2-week poetry challenge with peer review for DP1 students"
+                  className="border-purple-200" />
+              </div>
+              <Button onClick={() => generateWithAI(aiPrompt)} disabled={aiGenerating || !aiPrompt.trim()}
+                className="bg-purple-600 hover:bg-purple-700 text-white">
+                {aiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Templates */}
+      {showTemplates && !isEditing && (
+        <ChallengeTemplates onSelect={applyTemplate} />
+      )}
+      {!showTemplates && !isEditing && (
+        <Button variant="link" onClick={() => setShowTemplates(true)} className="text-sm">
+          Show Templates
+        </Button>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Details — broken into separate cards */}
