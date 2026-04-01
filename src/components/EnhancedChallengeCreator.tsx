@@ -151,11 +151,11 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
     setter(arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]);
   };
 
-  const generateWithAI = async () => {
+  const generateWithAI = async (prompt?: string) => {
     setAiGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-challenge', {
-        body: { challenge_type: category },
+        body: { challenge_type: category, prompt: prompt || aiPrompt || undefined },
       });
       if (error) throw error;
       if (data?.challenge) {
@@ -163,6 +163,8 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         setDescription(data.challenge.description || '');
         setTargetBooks(String(data.challenge.target_books || 5));
         setPointsReward(String(data.challenge.points_reward || 10));
+        if (data.challenge.difficulty_level) setDifficultyLevel(data.challenge.difficulty_level);
+        setShowTemplates(false);
         toast.success('AI Generated! ✨ Challenge populated');
       }
     } catch {
@@ -170,6 +172,20 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
     } finally {
       setAiGenerating(false);
     }
+  };
+
+  const applyTemplate = (template: ChallengeTemplate) => {
+    const today = new Date();
+    setTitle(template.title);
+    setDescription(template.description);
+    setCategory(template.category);
+    setDifficultyLevel(template.difficulty);
+    setTargetBooks(String(template.targetBooks));
+    setPointsReward(String(template.points));
+    setStartDate(format(today, 'yyyy-MM-dd'));
+    setEndDate(format(addDays(today, template.duration), 'yyyy-MM-dd'));
+    setShowTemplates(false);
+    toast.success(`Template "${template.name}" applied!`);
   };
 
   const saveChallenge = async () => {
