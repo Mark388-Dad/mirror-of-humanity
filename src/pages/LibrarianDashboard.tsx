@@ -24,6 +24,7 @@ import ChallengesManager from '@/components/ChallengesManager';
 import CountdownEditor from '@/components/CountdownEditor';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 import DashboardCountdown from '@/components/DashboardCountdown';
+import StudentDetailView from '@/components/StudentDetailView';
 
 interface Challenge {
   id: string;
