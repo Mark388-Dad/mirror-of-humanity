@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays, format, addDays } from 'date-fns';
+import ChallengeTemplates, { ChallengeTemplate } from '@/components/ChallengeTemplates';
 
 const CHALLENGE_CATEGORIES = [
   { value: 'reading', label: '📚 Reading Challenge', color: 'from-blue-500 to-cyan-500' },
