@@ -44,6 +44,47 @@ const ROLE_FIELD_CONFIG: Record<UserRole, string[]> = {
   staff: ['accessCode'],
 };
 
+const ForgotPasswordLink = () => {
+  const [sending, setSending] = useState(false);
+  const [email, setForgotEmail] = useState('');
+  const [showDialog, setShowDialog] = useState(false);
+
+  const handleForgotPassword = async () => {
+    if (!email) { toast.error('Please enter your email'); return; }
+    setSending(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) toast.error(error.message);
+    else { toast.success('Password reset link sent! Check your email.'); setShowDialog(false); }
+    setSending(false);
+  };
+
+  if (!showDialog) {
+    return (
+      <button type="button" onClick={() => setShowDialog(true)}
+        className="w-full text-sm text-primary hover:underline mt-2 text-center">
+        Forgot your password?
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-4 p-4 rounded-lg border bg-secondary/50 space-y-3">
+      <p className="text-sm font-medium">Reset your password</p>
+      <Input type="email" placeholder="Enter your email address" value={email}
+        onChange={(e) => setForgotEmail(e.target.value)} />
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={handleForgotPassword} disabled={sending} className="bg-gold text-navy hover:bg-gold-light">
+          {sending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : null}
+          Send Reset Link
+        </Button>
+        <Button type="button" size="sm" variant="ghost" onClick={() => setShowDialog(false)}>Cancel</Button>
+      </div>
+    </div>
+  );
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -363,6 +404,7 @@ const Auth = () => {
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Sign In
                 </Button>
+                <ForgotPasswordLink />
               </form>
             </TabsContent>
 

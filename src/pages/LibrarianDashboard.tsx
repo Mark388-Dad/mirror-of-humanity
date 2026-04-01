@@ -24,6 +24,7 @@ import ChallengesManager from '@/components/ChallengesManager';
 import CountdownEditor from '@/components/CountdownEditor';
 import { VibrantDashboardCard, FollettLibraryButton } from '@/components/VibrantDashboardCard';
 import DashboardCountdown from '@/components/DashboardCountdown';
+import StudentDetailView from '@/components/StudentDetailView';
 
 interface Challenge {
   id: string;
@@ -175,6 +176,7 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="files" className="flex items-center gap-2"><Upload className="w-4 h-4" />Files</TabsTrigger>
             <TabsTrigger value="members" className="flex items-center gap-2"><Users className="w-4 h-4" />Members</TabsTrigger>
             <TabsTrigger value="import" className="flex items-center gap-2"><UserPlus className="w-4 h-4" />Bulk Import</TabsTrigger>
+            <TabsTrigger value="students" className="flex items-center gap-2"><Users className="w-4 h-4" />Student Profiles</TabsTrigger>
           </TabsList>
 
           <TabsContent value="submissions"><LibrarianUserManager /></TabsContent>
@@ -258,6 +260,7 @@ const LibrarianDashboard = () => {
           <TabsContent value="files"><FileUploadManager /></TabsContent>
           <TabsContent value="members"><MemberManagement /></TabsContent>
           <TabsContent value="import"><BulkStudentImport /></TabsContent>
+          <TabsContent value="students"><StudentDetailView /></TabsContent>
         </Tabs>
       </main>
     </div>

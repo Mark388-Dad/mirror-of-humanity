@@ -14,7 +14,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { toast } from 'sonner';
 import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { differenceInDays, format } from 'date-fns';
+import { differenceInDays, format, addDays } from 'date-fns';
+import ChallengeTemplates, { ChallengeTemplate } from '@/components/ChallengeTemplates';
 
 const CHALLENGE_CATEGORIES = [
   { value: 'reading', label: '📚 Reading Challenge', color: 'from-blue-500 to-cyan-500' },
@@ -91,6 +92,8 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [saving, setSaving] = useState(false);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [showTemplates, setShowTemplates] = useState(!isEditing);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('reading');
@@ -148,11 +151,11 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
     setter(arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]);
   };
 
-  const generateWithAI = async () => {
+  const generateWithAI = async (prompt?: string) => {
     setAiGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-challenge', {
-        body: { challenge_type: category },
+        body: { challenge_type: category, prompt: prompt || aiPrompt || undefined },
       });
       if (error) throw error;
       if (data?.challenge) {
@@ -160,6 +163,8 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         setDescription(data.challenge.description || '');
         setTargetBooks(String(data.challenge.target_books || 5));
         setPointsReward(String(data.challenge.points_reward || 10));
+        if (data.challenge.difficulty_level) setDifficultyLevel(data.challenge.difficulty_level);
+        setShowTemplates(false);
         toast.success('AI Generated! ✨ Challenge populated');
       }
     } catch {
@@ -167,6 +172,20 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
     } finally {
       setAiGenerating(false);
     }
+  };
+
+  const applyTemplate = (template: ChallengeTemplate) => {
+    const today = new Date();
+    setTitle(template.title);
+    setDescription(template.description);
+    setCategory(template.category);
+    setDifficultyLevel(template.difficulty);
+    setTargetBooks(String(template.targetBooks));
+    setPointsReward(String(template.points));
+    setStartDate(format(today, 'yyyy-MM-dd'));
+    setEndDate(format(addDays(today, template.duration), 'yyyy-MM-dd'));
+    setShowTemplates(false);
+    toast.success(`Template "${template.name}" applied!`);
   };
 
   const saveChallenge = async () => {
@@ -249,7 +268,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
               className="border-primary/30 hover:bg-primary/5">
               <Eye className="h-4 w-4 mr-2" />{showPreview ? 'Hide' : 'Show'} Preview
             </Button>
-            <Button variant="outline" onClick={generateWithAI} disabled={aiGenerating}
+            <Button variant="outline" onClick={() => generateWithAI()} disabled={aiGenerating}
               className="border-purple-500/30 hover:bg-purple-500/5 text-purple-600">
               {aiGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
               AI Generate
@@ -257,6 +276,38 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
           </div>
         </div>
       </div>
+
+      {/* AI Ask to Build */}
+      {!isEditing && (
+        <Card className="border-dashed border-2 border-purple-300/50">
+          <CardContent className="pt-4 pb-4">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1">
+                <Label className="text-sm font-semibold mb-1 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-500" /> Ask AI to Build a Challenge
+                </Label>
+                <Input value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+                  placeholder="e.g., Create a 2-week poetry challenge with peer review for DP1 students"
+                  className="border-purple-200" />
+              </div>
+              <Button onClick={() => generateWithAI(aiPrompt)} disabled={aiGenerating || !aiPrompt.trim()}
+                className="bg-purple-600 hover:bg-purple-700 text-white">
+                {aiGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Templates */}
+      {showTemplates && !isEditing && (
+        <ChallengeTemplates onSelect={applyTemplate} />
+      )}
+      {!showTemplates && !isEditing && (
+        <Button variant="link" onClick={() => setShowTemplates(true)} className="text-sm">
+          Show Templates
+        </Button>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Details — broken into separate cards */}
