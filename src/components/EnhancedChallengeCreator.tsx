@@ -263,7 +263,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         if (error) throw error;
         toast.success('Challenge updated! 🎉');
       } else {
-        const { error } = await supabase.from('challenges').insert({ ...payload, created_by: user.id, is_active: true });
+        const { error } = await supabase.from('challenges').insert({ ...payload, created_by: user.id, is_active: true } as any);
         if (error) throw error;
         toast.success('Challenge created! 🎉');
         // Reset form
