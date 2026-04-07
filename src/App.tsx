@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ChallengeProvider } from "@/contexts/ChallengeContext";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -13,7 +14,9 @@ import MyProgress from "./pages/MyProgress";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import BookGallery from "./pages/BookGallery";
-import Challenges from "./pages/Challenges";
+import ChallengeHub from "./pages/ChallengeHub";
+import ChallengeEnvironment from "./pages/ChallengeEnvironment";
+import ChallengeDashboard from "./pages/ChallengeDashboard";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
@@ -100,11 +103,24 @@ const AppRoutes = () => {
           <BookGallery />
         </ProtectedRoute>
       } />
+      {/* Challenge Hub - browse & select challenges */}
       <Route path="/challenges" element={
         <ProtectedRoute>
-          <Challenges />
+          <ChallengeHub />
         </ProtectedRoute>
       } />
+      {/* Challenge Environment - scoped routes within a challenge */}
+      <Route path="/challenge/:challengeId" element={
+        <ProtectedRoute>
+          <ChallengeEnvironment />
+        </ProtectedRoute>
+      }>
+        <Route path="dashboard" element={<ChallengeDashboard />} />
+        <Route path="submit" element={<SubmitBook />} />
+        <Route path="leaderboard" element={<Leaderboard />} />
+        <Route path="gallery" element={<BookGallery />} />
+        <Route path="progress" element={<MyProgress />} />
+      </Route>
       <Route path="/librarian" element={
         <ProtectedRoute>
           <LibrarianDashboard />
@@ -134,8 +150,10 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <AppRoutes />
-            <PWAInstallPrompt />
+            <ChallengeProvider>
+              <AppRoutes />
+              <PWAInstallPrompt />
+            </ChallengeProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

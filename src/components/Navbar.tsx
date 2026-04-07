@@ -1,13 +1,15 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChallenge } from '@/contexts/ChallengeContext';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap } from 'lucide-react';
+import { BookOpen, Home, PlusCircle, Trophy, BarChart3, LogOut, User, Settings, Library, Zap, Users, GraduationCap, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NotificationBell from './NotificationBell';
 import ThemeToggle from './ThemeToggle';
 
 const Navbar = () => {
   const { user, profile, signOut } = useAuth();
+  const { activeChallenge, clearChallenge } = useChallenge();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -22,18 +24,30 @@ const Navbar = () => {
   const isHousePatron = profile?.role === 'house_patron';
   const isStaff = profile?.role && profile.role !== 'student';
 
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    ...(isStudent ? [{ path: '/submit', label: 'Submit Book', icon: PlusCircle }] : []),
-    ...(isStudent ? [{ path: '/progress', label: 'My Progress', icon: BarChart3 }] : []),
-    { path: '/gallery', label: 'Gallery', icon: Library },
-    { path: '/challenges', label: 'Challenges', icon: Zap },
-    { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    ...(isLibrarian ? [{ path: '/librarian', label: 'Librarian', icon: BookOpen }] : []),
-    ...(isTutor ? [{ path: '/tutor', label: 'My Class', icon: GraduationCap }] : []),
-    ...(isHousePatron ? [{ path: '/house', label: 'My House', icon: Users }] : []),
-    ...(isStaff ? [{ path: '/admin', label: 'Admin', icon: Settings }] : []),
-  ];
+  // Check if we're inside a challenge environment
+  const inChallenge = location.pathname.startsWith('/challenge/') && activeChallenge;
+  const challengeBase = inChallenge ? `/challenge/${activeChallenge.id}` : '';
+
+  const navItems = inChallenge
+    ? [
+        { path: `${challengeBase}/dashboard`, label: 'Dashboard', icon: Home },
+        ...(isStudent ? [{ path: `${challengeBase}/submit`, label: 'Submit Book', icon: PlusCircle }] : []),
+        ...(isStudent ? [{ path: `${challengeBase}/progress`, label: 'My Progress', icon: BarChart3 }] : []),
+        { path: `${challengeBase}/gallery`, label: 'Gallery', icon: Library },
+        { path: `${challengeBase}/leaderboard`, label: 'Leaderboard', icon: Trophy },
+      ]
+    : [
+        { path: '/dashboard', label: 'Dashboard', icon: Home },
+        ...(isStudent ? [{ path: '/submit', label: 'Submit Book', icon: PlusCircle }] : []),
+        ...(isStudent ? [{ path: '/progress', label: 'My Progress', icon: BarChart3 }] : []),
+        { path: '/gallery', label: 'Gallery', icon: Library },
+        { path: '/challenges', label: 'Challenges', icon: Zap },
+        { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+        ...(isLibrarian ? [{ path: '/librarian', label: 'Librarian', icon: BookOpen }] : []),
+        ...(isTutor ? [{ path: '/tutor', label: 'My Class', icon: GraduationCap }] : []),
+        ...(isHousePatron ? [{ path: '/house', label: 'My House', icon: Users }] : []),
+        ...(isStaff ? [{ path: '/admin', label: 'Admin', icon: Settings }] : []),
+      ];
 
   if (!user) return null;
 
@@ -41,13 +55,25 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-[hsl(220,75%,12%)]/95 backdrop-blur border-b border-primary/20">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/dashboard" className="flex items-center gap-3">
-            <img src="/mpesa-logo.png" alt="Mpesa Foundation Academy" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
-            <span className="font-display font-semibold text-white hidden sm:block">
-              45-Book Challenge
-            </span>
-          </Link>
+          {/* Logo / Challenge Name */}
+          <div className="flex items-center gap-3">
+            {inChallenge && (
+              <Button variant="ghost" size="sm" onClick={() => { clearChallenge(); navigate('/challenges'); }}
+                className="text-white/70 hover:text-white p-1">
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <Link to={inChallenge ? `${challengeBase}/dashboard` : '/dashboard'} className="flex items-center gap-3">
+              {inChallenge && activeChallenge.logo_url ? (
+                <img src={activeChallenge.logo_url} alt="" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
+              ) : (
+                <img src="/mpesa-logo.png" alt="Mpesa Foundation Academy" className="w-10 h-10 rounded-lg object-contain bg-white p-0.5" />
+              )}
+              <span className="font-display font-semibold text-white hidden sm:block truncate max-w-[200px]">
+                {inChallenge ? activeChallenge.title : 'Reading Challenge'}
+              </span>
+            </Link>
+          </div>
 
           {/* Nav Links */}
           <div className="hidden md:flex items-center gap-1">
@@ -93,13 +119,13 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Nav */}
-        <div className="md:hidden flex items-center justify-around py-2 border-t border-primary/10">
-          {navItems.map((item) => (
+        <div className="md:hidden flex items-center justify-around py-2 border-t border-primary/10 overflow-x-auto">
+          {navItems.slice(0, 5).map((item) => (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors",
+                "flex flex-col items-center gap-1 p-2 rounded-lg text-xs transition-colors min-w-[60px]",
                 location.pathname === item.path
                   ? "text-primary"
                   : "text-white/60"
