@@ -1,79 +1,136 @@
 
+# Multi-Challenge Dynamic Platform Architecture
 
-# Platform Enhancement Plan
-
-## Summary
-
-After reviewing the codebase, most features described already exist (auth, access codes, certificates, challenges, dashboard, member management, categories, bulk import). This plan focuses on the **genuinely missing/enhanced** items.
-
-**Regarding the external Supabase URL**: This project runs on Lovable Cloud, which already provides all backend capabilities. Connecting a separate Supabase project is not supported -- your data lives securely in Lovable Cloud. There is no need to duplicate data elsewhere.
+## Overview
+Convert the platform from being hardcoded around one challenge into a flexible system where any challenge can become the "active environment" with full theme takeover, custom layout, and scoped content.
 
 ---
 
-## Phase 1: Forgot Password Flow
+## Phase A: Database Schema Updates
 
-**Status**: Missing entirely -- no reset link on the sign-in form.
-
-**Changes**:
-- Add "Forgot Password?" link below the sign-in form in `Auth.tsx`
-- Create a forgot password dialog/section that calls `supabase.auth.resetPasswordForEmail()`
-- Create a new `/reset-password` page that handles the recovery token and lets the user set a new password via `supabase.auth.updateUser({ password })`
-- Add the `/reset-password` route in `App.tsx` as a public route
-
----
-
-## Phase 2: Librarian User-Detail View (Click User → See All Submissions)
-
-**Status**: The `LibrarianUserManager` shows a flat list of all submissions. No per-user drill-down.
-
-**Changes**:
-- Add a "Student Profiles" view in the librarian submissions tab
-- Show a list of all students (searchable, filterable)
-- When a librarian clicks on a student, open a detail panel showing:
-  - Student info (name, house, year, class, email)
-  - All their book submissions with status badges
-  - Total points, books read, achievement level
-  - Actions: approve/reject/flag individual submissions
-  - Certificate eligibility status
+### Add theming & layout columns to `challenges` table:
+- `primary_color` (text) — HSL color for primary theme
+- `secondary_color` (text) — HSL color for secondary accents
+- `accent_color` (text) — HSL color for highlights
+- `cover_image_url` (text) — Hero/banner image
+- `logo_url` (text) — Challenge-specific logo
+- `layout_config` (jsonb) — Sections visibility/order config:
+  ```json
+  {
+    "sections": ["hero", "leaderboard", "submissions", "progress", "gallery"],
+    "show_streak": true,
+    "show_xp": true,
+    "show_recommendations": false,
+    "hero_style": "full" | "compact" | "minimal"
+  }
+  ```
+- `custom_css` (text) — Optional custom CSS overrides
+- `welcome_message` (text) — Challenge-specific welcome text
 
 ---
 
-## Phase 3: Enhanced Challenge Builder with AI
+## Phase B: Challenge Context & Theme System
 
-**Status**: The `EnhancedChallengeCreator` already supports creating challenges with AI generation, multiple challenge types, participation rules, difficulty levels, and badge assignment. The `generate-challenge` edge function exists.
+### New: `src/contexts/ChallengeContext.tsx`
+- Stores the currently selected challenge
+- Persists selection in localStorage
+- Provides `selectChallenge()`, `clearChallenge()`, `activeChallenge`
+- Wraps the entire app
 
-**Enhancements**:
-- Add an "Ask AI to Build" text input where the librarian describes a challenge in natural language and AI generates the full configuration
-- Add AI suggestion buttons ("Improve description", "Suggest points", "Recommend difficulty")
-- Add a live preview card showing how the challenge will appear to students
-- Add a pre-publish checklist (title set, dates set, points configured, etc.)
-- Add challenge templates (Reading Sprint, Writing Contest, Poetry Competition, Genre Explorer) that pre-fill the form
-
----
-
-## Phase 4: Submission & Dashboard Enhancements
-
-- Certificate download from student dashboard (button appears when milestone is reached)
-- Dynamic dashboard cards that reflect unlocked content and active challenges
-- Improved notification system for deadline reminders and submission feedback
+### New: `src/components/ChallengeThemeProvider.tsx`
+- Reads active challenge from context
+- Dynamically injects CSS variables (--primary, --secondary, --accent, etc.) based on challenge colors
+- Applies cover image, logo, and branding
+- Falls back to default theme when no challenge is selected
 
 ---
 
-## Technical Details
+## Phase C: Challenge Hub (Selection Page)
 
-### New Files
-- `src/pages/ResetPassword.tsx` -- Password reset page
-- `src/components/StudentDetailView.tsx` -- Librarian per-student submission viewer
-- `src/components/ChallengeTemplates.tsx` -- Pre-built challenge templates
-- `src/components/ChallengePreviewCard.tsx` -- Live preview for challenge builder
+### New: `src/pages/ChallengeHub.tsx`
+- Grid/list of all available challenges
+- Each challenge card shows: title, description, dates, participant count, cover image, theme colors
+- Click → enters that challenge's "world"
+- Filters: active/upcoming/completed, difficulty, type
+- Featured challenges highlighted at top
 
-### Modified Files
-- `src/pages/Auth.tsx` -- Add forgot password link and dialog
-- `src/App.tsx` -- Add `/reset-password` route
-- `src/components/LibrarianUserManager.tsx` -- Add student list view with click-to-detail
-- `src/components/EnhancedChallengeCreator.tsx` -- AI buttons, templates, preview, checklist
-- `src/pages/MyProgress.tsx` -- Certificate download buttons per milestone
+### Route changes in `App.tsx`:
+- `/challenges` → ChallengeHub (selection)
+- `/challenge/:id` → ChallengeEnvironment wrapper
+- `/challenge/:id/dashboard` → Scoped dashboard
+- `/challenge/:id/submit` → Scoped submission
+- `/challenge/:id/leaderboard` → Scoped leaderboard
+- `/challenge/:id/gallery` → Scoped gallery
+- `/challenge/:id/progress` → Scoped progress
 
-### No Database Changes Required
-All needed tables already exist (profiles, book_submissions, challenges, certificate_templates, notifications).
+---
 
+## Phase D: Challenge Environment Wrapper
+
+### New: `src/pages/ChallengeEnvironment.tsx`
+- Reads challenge ID from URL params
+- Loads challenge data and applies theme
+- Renders nested routes (dashboard, submit, leaderboard, etc.)
+- Shows challenge-specific navbar with challenge name/logo
+- All child components receive challenge context
+
+### Modified: Dashboard, SubmitBook, Leaderboard, MyProgress, BookGallery
+- Accept optional `challengeId` from context
+- Filter data by challenge when inside a challenge environment
+- Use challenge theme colors
+- Respect `layout_config` for section visibility
+
+---
+
+## Phase E: Librarian Challenge Customization
+
+### New: `src/components/ChallengeThemeEditor.tsx`
+- Color pickers for primary/secondary/accent
+- Cover image upload
+- Logo upload
+- Welcome message editor
+- Live preview of theme changes
+
+### New: `src/components/ChallengeLayoutEditor.tsx`
+- Toggle sections on/off (leaderboard, gallery, streak, XP, recommendations)
+- Reorder sections via drag-and-drop
+- Choose hero style (full/compact/minimal)
+- Preview layout in real-time
+
+### Modified: `EnhancedChallengeCreator.tsx`
+- Add "Appearance" tab with ThemeEditor
+- Add "Layout" tab with LayoutEditor
+- Add "Preview" button showing full challenge environment preview
+
+---
+
+## Phase F: Convert 45-Book Challenge
+
+- Remove hardcoded references to "45 books" throughout the codebase
+- Create a migration-style conversion: the existing challenge structure becomes a regular challenge entry in the database
+- All existing submissions remain linked via the existing `book_submissions` table
+- The "main" challenge concept is replaced by a "featured" flag on any challenge
+
+---
+
+## Files Created
+1. `src/contexts/ChallengeContext.tsx`
+2. `src/components/ChallengeThemeProvider.tsx`
+3. `src/pages/ChallengeHub.tsx`
+4. `src/pages/ChallengeEnvironment.tsx`
+5. `src/components/ChallengeThemeEditor.tsx`
+6. `src/components/ChallengeLayoutEditor.tsx`
+
+## Files Modified
+1. `src/App.tsx` — New routing structure
+2. `src/components/Navbar.tsx` — Challenge-aware navigation
+3. `src/pages/Dashboard.tsx` — Challenge-scoped content
+4. `src/pages/SubmitBook.tsx` — Challenge-scoped submissions
+5. `src/pages/Leaderboard.tsx` — Challenge-scoped rankings
+6. `src/pages/MyProgress.tsx` — Challenge-scoped progress
+7. `src/pages/BookGallery.tsx` — Challenge-scoped gallery
+8. `src/components/EnhancedChallengeCreator.tsx` — Theme/layout editors
+9. `src/pages/LibrarianDashboard.tsx` — Enhanced challenge management
+
+## Database Migration
+- Add columns to `challenges` table (theming, layout, branding)
