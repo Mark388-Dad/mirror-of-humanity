@@ -12,10 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2, Palette, Layout } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { differenceInDays, format, addDays } from 'date-fns';
 import ChallengeTemplates, { ChallengeTemplate } from '@/components/ChallengeTemplates';
+import ChallengeThemeEditor from '@/components/ChallengeThemeEditor';
+import ChallengeLayoutEditor from '@/components/ChallengeLayoutEditor';
+import { LayoutConfig } from '@/contexts/ChallengeContext';
 
 const CHALLENGE_CATEGORIES = [
   { value: 'reading', label: '📚 Reading Challenge', color: 'from-blue-500 to-cyan-500' },
