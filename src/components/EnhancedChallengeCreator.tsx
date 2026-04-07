@@ -247,6 +247,14 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       is_independent: isIndependent,
       badge_name: badgeName || null,
       target_categories: targetCategories.length ? targetCategories : null,
+      primary_color: themeValues.primary_color || null,
+      secondary_color: themeValues.secondary_color || null,
+      accent_color: themeValues.accent_color || null,
+      cover_image_url: themeValues.cover_image_url || null,
+      logo_url: themeValues.logo_url || null,
+      welcome_message: themeValues.welcome_message || null,
+      custom_css: themeValues.custom_css || null,
+      layout_config: layoutConfig,
     };
 
     try {
