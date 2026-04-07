@@ -12,10 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Trophy, Users, BookOpen, Sparkles, Eye, Save, Copy, Calendar, Target, Zap, Clock, Tag, Edit, Trash2, Palette, Layout } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { differenceInDays, format, addDays } from 'date-fns';
 import ChallengeTemplates, { ChallengeTemplate } from '@/components/ChallengeTemplates';
+import ChallengeThemeEditor from '@/components/ChallengeThemeEditor';
+import ChallengeLayoutEditor from '@/components/ChallengeLayoutEditor';
+import { LayoutConfig } from '@/contexts/ChallengeContext';
 
 const CHALLENGE_CATEGORIES = [
   { value: 'reading', label: '📚 Reading Challenge', color: 'from-blue-500 to-cyan-500' },
@@ -113,6 +116,23 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [isIndependent, setIsIndependent] = useState(false);
   const [badgeName, setBadgeName] = useState('');
   const [targetCategories, setTargetCategories] = useState<number[]>([]);
+  // Theme & Layout
+  const [themeValues, setThemeValues] = useState({
+    primary_color: '',
+    secondary_color: '',
+    accent_color: '',
+    cover_image_url: '',
+    logo_url: '',
+    welcome_message: '',
+    custom_css: '',
+  });
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
+    sections: ['hero', 'leaderboard', 'submissions', 'progress', 'gallery'],
+    show_streak: true,
+    show_xp: true,
+    show_recommendations: true,
+    hero_style: 'full',
+  });
   // Inline category management
   const [editingCatId, setEditingCatId] = useState<number | null>(null);
   const [editCatName, setEditCatName] = useState('');
@@ -144,6 +164,22 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       setIsIndependent(editingChallenge.is_independent);
       setBadgeName(editingChallenge.badge_name || '');
       setTargetCategories((editingChallenge as any).target_categories || []);
+      // Theme fields
+      setThemeValues({
+        primary_color: (editingChallenge as any).primary_color || '',
+        secondary_color: (editingChallenge as any).secondary_color || '',
+        accent_color: (editingChallenge as any).accent_color || '',
+        cover_image_url: (editingChallenge as any).cover_image_url || '',
+        logo_url: (editingChallenge as any).logo_url || '',
+        welcome_message: (editingChallenge as any).welcome_message || '',
+        custom_css: (editingChallenge as any).custom_css || '',
+      });
+      if ((editingChallenge as any).layout_config) {
+        const lc = typeof (editingChallenge as any).layout_config === 'string'
+          ? JSON.parse((editingChallenge as any).layout_config)
+          : (editingChallenge as any).layout_config;
+        setLayoutConfig(prev => ({ ...prev, ...lc }));
+      }
     }
   }, [editingChallenge]);
 
@@ -211,7 +247,15 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       is_independent: isIndependent,
       badge_name: badgeName || null,
       target_categories: targetCategories.length ? targetCategories : null,
-    };
+      primary_color: themeValues.primary_color || null,
+      secondary_color: themeValues.secondary_color || null,
+      accent_color: themeValues.accent_color || null,
+      cover_image_url: themeValues.cover_image_url || null,
+      logo_url: themeValues.logo_url || null,
+      welcome_message: themeValues.welcome_message || null,
+      custom_css: themeValues.custom_css || null,
+      layout_config: layoutConfig as any,
+    } as any;
 
     try {
       if (isEditing) {
@@ -219,7 +263,7 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         if (error) throw error;
         toast.success('Challenge updated! 🎉');
       } else {
-        const { error } = await supabase.from('challenges').insert({ ...payload, created_by: user.id, is_active: true });
+        const { error } = await supabase.from('challenges').insert({ ...payload, created_by: user.id, is_active: true } as any);
         if (error) throw error;
         toast.success('Challenge created! 🎉');
         // Reset form
@@ -702,6 +746,18 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
             )}
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* Theme & Layout Editors */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChallengeThemeEditor
+          values={themeValues}
+          onChange={(v) => setThemeValues(prev => ({ ...prev, ...v }))}
+        />
+        <ChallengeLayoutEditor
+          config={layoutConfig}
+          onChange={setLayoutConfig}
+        />
       </div>
 
       {/* Save Button */}

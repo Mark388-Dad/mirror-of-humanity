@@ -286,6 +286,7 @@ export type Database = {
       }
       challenges: {
         Row: {
+          accent_color: string | null
           allowed_classes: string[] | null
           allowed_houses: string[] | null
           allowed_year_groups: string[] | null
@@ -293,8 +294,10 @@ export type Database = {
           badge_name: string | null
           category: string | null
           challenge_type: string
+          cover_image_url: string | null
           created_at: string
           created_by: string
+          custom_css: string | null
           description: string
           difficulty_level: string | null
           end_date: string
@@ -303,17 +306,23 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_independent: boolean
+          layout_config: Json | null
           leaderboard_type: string | null
+          logo_url: string | null
           participation_type: string | null
           points_reward: number | null
+          primary_color: string | null
           requires_submission: boolean | null
+          secondary_color: string | null
           start_date: string
           target_books: number | null
           target_categories: number[] | null
           title: string
           updated_at: string
+          welcome_message: string | null
         }
         Insert: {
+          accent_color?: string | null
           allowed_classes?: string[] | null
           allowed_houses?: string[] | null
           allowed_year_groups?: string[] | null
@@ -321,8 +330,10 @@ export type Database = {
           badge_name?: string | null
           category?: string | null
           challenge_type: string
+          cover_image_url?: string | null
           created_at?: string
           created_by: string
+          custom_css?: string | null
           description: string
           difficulty_level?: string | null
           end_date: string
@@ -331,17 +342,23 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_independent?: boolean
+          layout_config?: Json | null
           leaderboard_type?: string | null
+          logo_url?: string | null
           participation_type?: string | null
           points_reward?: number | null
+          primary_color?: string | null
           requires_submission?: boolean | null
+          secondary_color?: string | null
           start_date: string
           target_books?: number | null
           target_categories?: number[] | null
           title: string
           updated_at?: string
+          welcome_message?: string | null
         }
         Update: {
+          accent_color?: string | null
           allowed_classes?: string[] | null
           allowed_houses?: string[] | null
           allowed_year_groups?: string[] | null
@@ -349,8 +366,10 @@ export type Database = {
           badge_name?: string | null
           category?: string | null
           challenge_type?: string
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string
+          custom_css?: string | null
           description?: string
           difficulty_level?: string | null
           end_date?: string
@@ -359,15 +378,20 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_independent?: boolean
+          layout_config?: Json | null
           leaderboard_type?: string | null
+          logo_url?: string | null
           participation_type?: string | null
           points_reward?: number | null
+          primary_color?: string | null
           requires_submission?: boolean | null
+          secondary_color?: string | null
           start_date?: string
           target_books?: number | null
           target_categories?: number[] | null
           title?: string
           updated_at?: string
+          welcome_message?: string | null
         }
         Relationships: []
       }
