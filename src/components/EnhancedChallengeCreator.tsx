@@ -164,8 +164,22 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       setIsIndependent(editingChallenge.is_independent);
       setBadgeName(editingChallenge.badge_name || '');
       setTargetCategories((editingChallenge as any).target_categories || []);
-    }
-  }, [editingChallenge]);
+      // Theme fields
+      setThemeValues({
+        primary_color: (editingChallenge as any).primary_color || '',
+        secondary_color: (editingChallenge as any).secondary_color || '',
+        accent_color: (editingChallenge as any).accent_color || '',
+        cover_image_url: (editingChallenge as any).cover_image_url || '',
+        logo_url: (editingChallenge as any).logo_url || '',
+        welcome_message: (editingChallenge as any).welcome_message || '',
+        custom_css: (editingChallenge as any).custom_css || '',
+      });
+      if ((editingChallenge as any).layout_config) {
+        const lc = typeof (editingChallenge as any).layout_config === 'string'
+          ? JSON.parse((editingChallenge as any).layout_config)
+          : (editingChallenge as any).layout_config;
+        setLayoutConfig(prev => ({ ...prev, ...lc }));
+      }
 
   const toggleArrayItem = (arr: string[], item: string, setter: (arr: string[]) => void) => {
     setter(arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]);
