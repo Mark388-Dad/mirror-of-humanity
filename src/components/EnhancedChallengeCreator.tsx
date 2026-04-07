@@ -180,6 +180,8 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
           : (editingChallenge as any).layout_config;
         setLayoutConfig(prev => ({ ...prev, ...lc }));
       }
+    }
+  }, [editingChallenge]);
 
   const toggleArrayItem = (arr: string[], item: string, setter: (arr: string[]) => void) => {
     setter(arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]);
