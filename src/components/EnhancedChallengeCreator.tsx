@@ -254,8 +254,8 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
       logo_url: themeValues.logo_url || null,
       welcome_message: themeValues.welcome_message || null,
       custom_css: themeValues.custom_css || null,
-      layout_config: layoutConfig,
-    };
+      layout_config: layoutConfig as any,
+    } as any;
 
     try {
       if (isEditing) {
