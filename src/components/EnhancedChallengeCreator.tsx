@@ -748,6 +748,18 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
         </div>
       </div>
 
+      {/* Theme & Layout Editors */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChallengeThemeEditor
+          values={themeValues}
+          onChange={(v) => setThemeValues(prev => ({ ...prev, ...v }))}
+        />
+        <ChallengeLayoutEditor
+          config={layoutConfig}
+          onChange={setLayoutConfig}
+        />
+      </div>
+
       {/* Save Button */}
       <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
         <Button size="lg" onClick={saveChallenge} disabled={saving || aiGenerating}
