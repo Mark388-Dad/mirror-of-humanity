@@ -148,7 +148,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead title="Dashboard" description="Your reading dashboard — track books, earn points, and see your progress in the 45-Book Reading Challenge." path="/dashboard" />
+      <SEOHead title="Dashboard" description="Your reading dashboard — track books, earn points, and see your progress in the Reading Challenge." path="/dashboard" />
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
