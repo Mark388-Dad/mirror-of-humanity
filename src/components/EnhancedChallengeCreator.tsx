@@ -116,6 +116,23 @@ const EnhancedChallengeCreator = ({ editingChallenge, onSaved, onCancel }: Enhan
   const [isIndependent, setIsIndependent] = useState(false);
   const [badgeName, setBadgeName] = useState('');
   const [targetCategories, setTargetCategories] = useState<number[]>([]);
+  // Theme & Layout
+  const [themeValues, setThemeValues] = useState({
+    primary_color: '',
+    secondary_color: '',
+    accent_color: '',
+    cover_image_url: '',
+    logo_url: '',
+    welcome_message: '',
+    custom_css: '',
+  });
+  const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>({
+    sections: ['hero', 'leaderboard', 'submissions', 'progress', 'gallery'],
+    show_streak: true,
+    show_xp: true,
+    show_recommendations: true,
+    hero_style: 'full',
+  });
   // Inline category management
   const [editingCatId, setEditingCatId] = useState<number | null>(null);
   const [editCatName, setEditCatName] = useState('');
