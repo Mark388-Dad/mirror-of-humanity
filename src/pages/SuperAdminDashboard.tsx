@@ -648,6 +648,108 @@ const SuperAdminDashboard = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* SETTINGS TAB */}
+          <TabsContent value="settings">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Registration & Access */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" /> Registration & Access</CardTitle>
+                  <CardDescription>Control who can access the platform</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Registration Open</p>
+                      <p className="text-sm text-muted-foreground">Allow new users to sign up</p>
+                    </div>
+                    <Switch
+                      checked={getSettingValue('registration_enabled') === 'true'}
+                      onCheckedChange={(v) => updateSetting('registration_enabled', v ? 'true' : 'false')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Maintenance Mode</p>
+                      <p className="text-sm text-muted-foreground">Show maintenance page to non-admins</p>
+                    </div>
+                    <Switch
+                      checked={getSettingValue('maintenance_mode') === 'true'}
+                      onCheckedChange={(v) => updateSetting('maintenance_mode', v ? 'true' : 'false')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-medium">Max Submissions Per Day</p>
+                    <p className="text-sm text-muted-foreground">Limit daily book submissions per student</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={getSettingValue('max_submissions_per_day') || '10'}
+                      onChange={(e) => updateSetting('max_submissions_per_day', e.target.value)}
+                      className="w-24"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Default Challenge */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5" /> Default Challenge</CardTitle>
+                  <CardDescription>Auto-redirect users to a specific challenge</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <p className="font-medium">Default Challenge</p>
+                    <p className="text-sm text-muted-foreground">Users will be redirected to this challenge on login</p>
+                    <Select
+                      value={getSettingValue('default_challenge_id') || 'none'}
+                      onValueChange={(v) => updateSetting('default_challenge_id', v === 'none' ? '' : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="No default" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No default challenge</SelectItem>
+                        {challenges.filter(c => c.is_active).map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Announcement Banner */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" /> Announcement Banner</CardTitle>
+                  <CardDescription>Display a platform-wide message to all users</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    placeholder="e.g., Reading week starts Monday! Submit your books by Friday."
+                    value={getSettingValue('announcement_banner')}
+                    onChange={(e) => updateSetting('announcement_banner', e.target.value)}
+                  />
+                  {getSettingValue('announcement_banner') && (
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                      <p className="font-medium text-primary">Preview:</p>
+                      <p className="text-foreground mt-1">{getSettingValue('announcement_banner')}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Save Button */}
+              <div className="md:col-span-2 flex justify-end">
+                <Button onClick={saveSettings} disabled={savingSettings} className="gap-2">
+                  {savingSettings && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Save All Settings
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
       </main>
     </div>
