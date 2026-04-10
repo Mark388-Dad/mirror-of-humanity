@@ -69,6 +69,14 @@ interface ActivityLog {
   user_name?: string;
 }
 
+interface SystemSetting {
+  id: string;
+  setting_key: string;
+  setting_value: string;
+  description: string | null;
+  updated_at: string;
+}
+
 const SuperAdminDashboard = () => {
   const { profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -80,6 +88,8 @@ const SuperAdminDashboard = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [challenges, setChallenges] = useState<ChallengeRecord[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [settings, setSettings] = useState<SystemSetting[]>([]);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [userSearch, setUserSearch] = useState('');
