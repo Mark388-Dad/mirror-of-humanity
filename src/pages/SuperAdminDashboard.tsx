@@ -121,7 +121,8 @@ const SuperAdminDashboard = () => {
         { data: submissionPoints },
         { data: profileData },
         { data: recentSubmissions },
-        { data: participantData }
+        { data: participantData },
+        { data: settingsData }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
@@ -132,8 +133,11 @@ const SuperAdminDashboard = () => {
         supabase.from('book_submissions').select('points_earned'),
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('book_submissions').select('title, created_at, profiles!book_submissions_user_id_fkey(full_name)').order('created_at', { ascending: false }).limit(20),
-        supabase.from('challenge_participants').select('challenge_id')
+        supabase.from('challenge_participants').select('challenge_id'),
+        supabase.from('system_settings').select('*')
       ]);
+
+      setSettings((settingsData || []) as unknown as SystemSetting[]);
 
       const totalPoints = submissionPoints?.reduce((sum, s) => sum + (s.points_earned || 0), 0) || 0;
       const activeChallenges = challengeData?.filter(c => c.is_active).length || 0;
@@ -300,6 +304,7 @@ const SuperAdminDashboard = () => {
             <TabsTrigger value="users" className="gap-2"><UserCog className="w-4 h-4" />User Management</TabsTrigger>
             <TabsTrigger value="challenges" className="gap-2"><Trophy className="w-4 h-4" />Challenge Control</TabsTrigger>
             <TabsTrigger value="activity" className="gap-2"><Activity className="w-4 h-4" />Activity Feed</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" />System Settings</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
