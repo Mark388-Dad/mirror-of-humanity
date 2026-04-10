@@ -20,6 +20,7 @@ import ChallengeDashboard from "./pages/ChallengeDashboard";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
