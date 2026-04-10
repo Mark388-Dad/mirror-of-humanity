@@ -231,6 +231,30 @@ const SuperAdminDashboard = () => {
     link.click();
   };
 
+  const getSettingValue = (key: string) => settings.find(s => s.setting_key === key)?.setting_value || '';
+
+  const updateSetting = async (key: string, value: string) => {
+    const updated = settings.map(s => s.setting_key === key ? { ...s, setting_value: value } : s);
+    setSettings(updated);
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      for (const setting of settings) {
+        await supabase
+          .from('system_settings')
+          .update({ setting_value: setting.setting_value, updated_by: profile?.user_id } as any)
+          .eq('setting_key', setting.setting_key);
+      }
+      toast.success('Settings saved successfully');
+    } catch (err) {
+      toast.error('Failed to save settings');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
