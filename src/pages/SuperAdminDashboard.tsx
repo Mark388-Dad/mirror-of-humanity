@@ -69,6 +69,14 @@ interface ActivityLog {
   user_name?: string;
 }
 
+interface SystemSetting {
+  id: string;
+  setting_key: string;
+  setting_value: string;
+  description: string | null;
+  updated_at: string;
+}
+
 const SuperAdminDashboard = () => {
   const { profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -80,6 +88,8 @@ const SuperAdminDashboard = () => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [challenges, setChallenges] = useState<ChallengeRecord[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [settings, setSettings] = useState<SystemSetting[]>([]);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [userSearch, setUserSearch] = useState('');
@@ -111,7 +121,8 @@ const SuperAdminDashboard = () => {
         { data: submissionPoints },
         { data: profileData },
         { data: recentSubmissions },
-        { data: participantData }
+        { data: participantData },
+        { data: settingsData }
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student'),
@@ -122,8 +133,11 @@ const SuperAdminDashboard = () => {
         supabase.from('book_submissions').select('points_earned'),
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('book_submissions').select('title, created_at, profiles!book_submissions_user_id_fkey(full_name)').order('created_at', { ascending: false }).limit(20),
-        supabase.from('challenge_participants').select('challenge_id')
+        supabase.from('challenge_participants').select('challenge_id'),
+        supabase.from('system_settings').select('*')
       ]);
+
+      setSettings((settingsData || []) as unknown as SystemSetting[]);
 
       const totalPoints = submissionPoints?.reduce((sum, s) => sum + (s.points_earned || 0), 0) || 0;
       const activeChallenges = challengeData?.filter(c => c.is_active).length || 0;
@@ -217,6 +231,30 @@ const SuperAdminDashboard = () => {
     link.click();
   };
 
+  const getSettingValue = (key: string) => settings.find(s => s.setting_key === key)?.setting_value || '';
+
+  const updateSetting = async (key: string, value: string) => {
+    const updated = settings.map(s => s.setting_key === key ? { ...s, setting_value: value } : s);
+    setSettings(updated);
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      for (const setting of settings) {
+        await supabase
+          .from('system_settings')
+          .update({ setting_value: setting.setting_value, updated_by: profile?.user_id } as any)
+          .eq('setting_key', setting.setting_key);
+      }
+      toast.success('Settings saved successfully');
+    } catch (err) {
+      toast.error('Failed to save settings');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -290,6 +328,7 @@ const SuperAdminDashboard = () => {
             <TabsTrigger value="users" className="gap-2"><UserCog className="w-4 h-4" />User Management</TabsTrigger>
             <TabsTrigger value="challenges" className="gap-2"><Trophy className="w-4 h-4" />Challenge Control</TabsTrigger>
             <TabsTrigger value="activity" className="gap-2"><Activity className="w-4 h-4" />Activity Feed</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Settings className="w-4 h-4" />System Settings</TabsTrigger>
           </TabsList>
 
           {/* OVERVIEW TAB */}
@@ -608,6 +647,108 @@ const SuperAdminDashboard = () => {
                 </ScrollArea>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* SETTINGS TAB */}
+          <TabsContent value="settings">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Registration & Access */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Lock className="h-5 w-5" /> Registration & Access</CardTitle>
+                  <CardDescription>Control who can access the platform</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Registration Open</p>
+                      <p className="text-sm text-muted-foreground">Allow new users to sign up</p>
+                    </div>
+                    <Switch
+                      checked={getSettingValue('registration_enabled') === 'true'}
+                      onCheckedChange={(v) => updateSetting('registration_enabled', v ? 'true' : 'false')}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Maintenance Mode</p>
+                      <p className="text-sm text-muted-foreground">Show maintenance page to non-admins</p>
+                    </div>
+                    <Switch
+                      checked={getSettingValue('maintenance_mode') === 'true'}
+                      onCheckedChange={(v) => updateSetting('maintenance_mode', v ? 'true' : 'false')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-medium">Max Submissions Per Day</p>
+                    <p className="text-sm text-muted-foreground">Limit daily book submissions per student</p>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={getSettingValue('max_submissions_per_day') || '10'}
+                      onChange={(e) => updateSetting('max_submissions_per_day', e.target.value)}
+                      className="w-24"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Default Challenge */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5" /> Default Challenge</CardTitle>
+                  <CardDescription>Auto-redirect users to a specific challenge</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <p className="font-medium">Default Challenge</p>
+                    <p className="text-sm text-muted-foreground">Users will be redirected to this challenge on login</p>
+                    <Select
+                      value={getSettingValue('default_challenge_id') || 'none'}
+                      onValueChange={(v) => updateSetting('default_challenge_id', v === 'none' ? '' : v)}
+                    >
+                      <SelectTrigger><SelectValue placeholder="No default" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No default challenge</SelectItem>
+                        {challenges.filter(c => c.is_active).map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Announcement Banner */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" /> Announcement Banner</CardTitle>
+                  <CardDescription>Display a platform-wide message to all users</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Input
+                    placeholder="e.g., Reading week starts Monday! Submit your books by Friday."
+                    value={getSettingValue('announcement_banner')}
+                    onChange={(e) => updateSetting('announcement_banner', e.target.value)}
+                  />
+                  {getSettingValue('announcement_banner') && (
+                    <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-sm">
+                      <p className="font-medium text-primary">Preview:</p>
+                      <p className="text-foreground mt-1">{getSettingValue('announcement_banner')}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Save Button */}
+              <div className="md:col-span-2 flex justify-end">
+                <Button onClick={saveSettings} disabled={savingSettings} className="gap-2">
+                  {savingSettings && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Save All Settings
+                </Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </main>
