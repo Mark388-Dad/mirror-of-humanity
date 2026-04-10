@@ -137,6 +137,11 @@ const AppRoutes = () => {
           <HousePatronDashboard />
         </ProtectedRoute>
       } />
+      <Route path="/super-admin" element={
+        <ProtectedRoute>
+          <SuperAdminDashboard />
+        </ProtectedRoute>
+      } />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
