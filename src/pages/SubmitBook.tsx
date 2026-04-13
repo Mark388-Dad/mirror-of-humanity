@@ -249,7 +249,9 @@ const SubmitBook = () => {
             Submit a Book 📚
           </h1>
           <p className="text-muted-foreground">
-            Record your reading journey and earn points for the challenge.
+            {activeChallenge
+              ? `Submit your reading for "${activeChallenge.title}" challenge.`
+              : 'Record your reading journey and earn points for the challenge.'}
           </p>
           {!limitsLoading && (
             <div className="flex gap-3 mt-3 flex-wrap">
