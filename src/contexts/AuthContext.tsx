@@ -11,6 +11,7 @@ interface Profile {
   year_group: 'MYP5' | 'DP1' | 'DP2' | 'G10' | null;
   class_name: string | null;
   house: 'Kenya' | 'Longonot' | 'Kilimanjaro' | 'Elgon' | null;
+  avatar_url: string | null;
 }
 
 interface AuthContextType {
