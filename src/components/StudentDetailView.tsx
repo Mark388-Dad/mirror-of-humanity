@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft, Search, BookOpen, CheckCircle, XCircle, AlertCircle,
-  Flag, Loader2, User, Mail, Home, GraduationCap, Award, Trophy
+  Flag, Loader2, User, Mail, Home, GraduationCap, Award, Trophy,
+  KeyRound, Camera, Upload
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { calculateTotalPoints, POINTS_PER_BOOK } from '@/lib/milestonePoints';
@@ -22,6 +26,7 @@ interface Profile {
   year_group: string | null;
   class_name: string | null;
   role: string;
+  avatar_url: string | null;
 }
 
 interface Submission {
@@ -40,6 +45,7 @@ interface Submission {
 }
 
 const StudentDetailView = () => {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Profile[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Profile | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -49,15 +55,15 @@ const StudentDetailView = () => {
   const [houseFilter, setHouseFilter] = useState('all');
   const [yearFilter, setYearFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
+  useEffect(() => { fetchStudents(); }, []);
 
   const fetchStudents = async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, full_name, email, house, year_group, class_name, role')
+      .select('user_id, full_name, email, house, year_group, class_name, role, avatar_url')
       .eq('role', 'student')
       .order('full_name');
     setStudents((data as Profile[]) || []);
@@ -90,6 +96,61 @@ const StudentDetailView = () => {
     setActionLoading(null);
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedStudent || !user) return;
+    setResettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { user_id: selectedStudent.user_id, caller_id: user.id }
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(`Password reset to Mpesa123 for ${selectedStudent.full_name}`);
+      setResetDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reset password');
+    }
+    setResettingPassword(false);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedStudent || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be less than 2MB');
+      return;
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${selectedStudent.user_id}/avatar.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error('Failed to upload image');
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('user_id', selectedStudent.user_id);
+
+    if (updateError) {
+      toast.error('Failed to update profile');
+    } else {
+      toast.success('Profile picture updated!');
+      setSelectedStudent({ ...selectedStudent, avatar_url: publicUrl });
+      fetchStudents();
+    }
+  };
+
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'approved': return <Badge className="bg-green-500 text-white">✅ Approved</Badge>;
@@ -118,7 +179,6 @@ const StudentDetailView = () => {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  // Student detail view
   if (selectedStudent) {
     const totalBooks = submissions.length;
     const totalPoints = calculateTotalPoints(totalBooks);
@@ -132,13 +192,25 @@ const StudentDetailView = () => {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Students
         </Button>
 
-        {/* Student Info Card */}
         <Card className="border-2 border-primary/10">
           <CardContent className="pt-6">
             <div className="flex items-start gap-6 flex-wrap">
-              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <User className="w-8 h-8 text-primary" />
+              {/* Avatar with upload */}
+              <div className="relative group">
+                <Avatar className="w-20 h-20">
+                  {selectedStudent.avatar_url ? (
+                    <AvatarImage src={selectedStudent.avatar_url} alt={selectedStudent.full_name} />
+                  ) : null}
+                  <AvatarFallback className="text-2xl bg-primary/10">
+                    {selectedStudent.full_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                  <Camera className="w-6 h-6 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+                </label>
               </div>
+
               <div className="flex-1 space-y-1 min-w-[200px]">
                 <h2 className="text-2xl font-bold">{selectedStudent.full_name}</h2>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -155,7 +227,13 @@ const StudentDetailView = () => {
                     <Badge variant="outline">{selectedStudent.class_name}</Badge>
                   )}
                 </div>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" onClick={() => setResetDialogOpen(true)}>
+                    <KeyRound className="w-4 h-4 mr-1" /> Reset Password
+                  </Button>
+                </div>
               </div>
+
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="text-center p-3 rounded-xl bg-secondary">
                   <div className="text-2xl font-bold">{totalBooks}</div>
@@ -209,7 +287,7 @@ const StudentDetailView = () => {
                           <span>📅 {format(new Date(sub.created_at), 'MMM d, yyyy')}</span>
                         </div>
                         {sub.reflection && (
-                          <p className="text-sm text-muted-foreground mt-2 bg-secondary p-2 rounded line-clamp-2">
+                          <p className="text-sm text-muted-foreground mt-2 bg-secondary p-2 rounded">
                             {sub.reflection}
                           </p>
                         )}
@@ -246,6 +324,26 @@ const StudentDetailView = () => {
             ))}
           </div>
         )}
+
+        {/* Reset Password Dialog */}
+        <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reset Password</DialogTitle>
+              <DialogDescription>
+                This will reset <strong>{selectedStudent.full_name}</strong>'s password to <code className="bg-secondary px-2 py-1 rounded font-mono">Mpesa123</code>. 
+                The student will receive an in-app notification about the change.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleResetPassword} disabled={resettingPassword} className="bg-gold text-navy hover:bg-gold-light">
+                {resettingPassword ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <KeyRound className="w-4 h-4 mr-2" />}
+                Confirm Reset
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </motion.div>
     );
   }
@@ -257,11 +355,10 @@ const StudentDetailView = () => {
         <User className="h-6 w-6 text-primary" />
         <div>
           <h2 className="text-2xl font-bold">Student Profiles</h2>
-          <p className="text-muted-foreground">Click a student to view all their submissions</p>
+          <p className="text-muted-foreground">Click a student to view submissions, reset password, or upload profile picture</p>
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -290,7 +387,6 @@ const StudentDetailView = () => {
 
       <p className="text-sm text-muted-foreground">{filteredStudents.length} students</p>
 
-      {/* Student Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filteredStudents.map((student, i) => (
           <motion.div key={student.user_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -299,9 +395,14 @@ const StudentDetailView = () => {
               onClick={() => selectStudent(student)}>
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <User className="w-5 h-5 text-primary" />
-                  </div>
+                  <Avatar className="w-10 h-10">
+                    {student.avatar_url ? (
+                      <AvatarImage src={student.avatar_url} alt={student.full_name} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-sm">
+                      {student.full_name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold truncate">{student.full_name}</p>
                     <p className="text-xs text-muted-foreground truncate">{student.email}</p>

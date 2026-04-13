@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import SEOHead from '@/components/SEOHead';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChallenge } from '@/contexts/ChallengeContext';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const submissionSchema = z.object({
 
 const SubmitBook = () => {
   const { user } = useAuth();
+  const { activeChallenge } = useChallenge();
   const navigate = useNavigate();
   const { allCategories, loading: categoriesLoading } = useCustomCategories();
   const [loading, setLoading] = useState(false);
@@ -117,6 +119,35 @@ const SubmitBook = () => {
       }).select().single();
 
       if (error) throw error;
+
+      // Also save to challenge_submissions if inside a challenge
+      if (activeChallenge) {
+        await supabase.from('challenge_submissions').insert({
+          challenge_id: activeChallenge.id,
+          user_id: user.id,
+          title: validatedData.title.trim(),
+          author: validatedData.author.trim(),
+          category_name: currentCategory?.name || '',
+          category_number: validatedData.categoryNumber,
+          reflection: validatedData.reflection.trim(),
+          points_earned: 3,
+        });
+
+        // Update participant books_completed count
+        const { data: participant } = await supabase
+          .from('challenge_participants')
+          .select('id, books_completed')
+          .eq('challenge_id', activeChallenge.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (participant) {
+          await supabase
+            .from('challenge_participants')
+            .update({ books_completed: (participant.books_completed || 0) + 1 })
+            .eq('id', participant.id);
+        }
+      }
 
       // Trigger AI review in background
       supabase.functions.invoke('review-submission', {
@@ -218,7 +249,9 @@ const SubmitBook = () => {
             Submit a Book 📚
           </h1>
           <p className="text-muted-foreground">
-            Record your reading journey and earn points for the challenge.
+            {activeChallenge
+              ? `Submit your reading for "${activeChallenge.title}" challenge.`
+              : 'Record your reading journey and earn points for the challenge.'}
           </p>
           {!limitsLoading && (
             <div className="flex gap-3 mt-3 flex-wrap">
