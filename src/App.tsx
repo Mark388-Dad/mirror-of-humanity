@@ -22,6 +22,7 @@ import TutorDashboard from "./pages/TutorDashboard";
 import HousePatronDashboard from "./pages/HousePatronDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
+import ProfileSettings from "./pages/ProfileSettings";
 import NotFound from "./pages/NotFound";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
@@ -140,6 +141,11 @@ const AppRoutes = () => {
       <Route path="/super-admin" element={
         <ProtectedRoute>
           <SuperAdminDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <ProfileSettings />
         </ProtectedRoute>
       } />
       <Route path="/reset-password" element={<ResetPassword />} />
