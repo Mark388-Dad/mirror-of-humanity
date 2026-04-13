@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import SEOHead from '@/components/SEOHead';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useChallenge } from '@/contexts/ChallengeContext';
 import Navbar from '@/components/Navbar';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const submissionSchema = z.object({
 
 const SubmitBook = () => {
   const { user } = useAuth();
+  const { activeChallenge } = useChallenge();
   const navigate = useNavigate();
   const { allCategories, loading: categoriesLoading } = useCustomCategories();
   const [loading, setLoading] = useState(false);
