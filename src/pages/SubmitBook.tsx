@@ -120,6 +120,35 @@ const SubmitBook = () => {
 
       if (error) throw error;
 
+      // Also save to challenge_submissions if inside a challenge
+      if (activeChallenge) {
+        await supabase.from('challenge_submissions').insert({
+          challenge_id: activeChallenge.id,
+          user_id: user.id,
+          title: validatedData.title.trim(),
+          author: validatedData.author.trim(),
+          category_name: currentCategory?.name || '',
+          category_number: validatedData.categoryNumber,
+          reflection: validatedData.reflection.trim(),
+          points_earned: 3,
+        });
+
+        // Update participant books_completed count
+        const { data: participant } = await supabase
+          .from('challenge_participants')
+          .select('id, books_completed')
+          .eq('challenge_id', activeChallenge.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (participant) {
+          await supabase
+            .from('challenge_participants')
+            .update({ books_completed: (participant.books_completed || 0) + 1 })
+            .eq('id', participant.id);
+        }
+      }
+
       // Trigger AI review in background
       supabase.functions.invoke('review-submission', {
         body: {
