@@ -595,6 +595,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           class_name: string | null
           created_at: string
           email: string
@@ -607,6 +608,7 @@ export type Database = {
           year_group: Database["public"]["Enums"]["year_group"] | null
         }
         Insert: {
+          avatar_url?: string | null
           class_name?: string | null
           created_at?: string
           email: string
@@ -619,6 +621,7 @@ export type Database = {
           year_group?: Database["public"]["Enums"]["year_group"] | null
         }
         Update: {
+          avatar_url?: string | null
           class_name?: string | null
           created_at?: string
           email?: string
