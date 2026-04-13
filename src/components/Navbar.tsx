@@ -98,15 +98,19 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <NotificationBell />
-            <div className="hidden sm:flex items-center gap-2 text-white/80 text-sm">
-              <User className="w-4 h-4" />
+            <Link to="/profile" className="hidden sm:flex items-center gap-2 text-white/80 text-sm hover:text-primary transition-colors">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover border border-primary/30" />
+              ) : (
+                <User className="w-4 h-4" />
+              )}
               <span className="font-medium">{profile?.full_name || 'User'}</span>
               {profile?.house && (
                 <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-xs">
                   {profile.house}
                 </span>
               )}
-            </div>
+            </Link>
             <Button
               variant="ghost"
               size="sm"
