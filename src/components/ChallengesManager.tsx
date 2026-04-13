@@ -281,13 +281,61 @@ const ChallengesManager = ({ challenges, loading, onEdit, onDuplicate, onToggleS
           </CardHeader>
         </Card>
 
-        {/* Description Card */}
-        <Card className="border-2">
-          <CardHeader className="pb-2">
+        {/* Description Card — parsed into sections */}
+        <Card className="border-2 overflow-hidden">
+          <CardHeader className="pb-2 bg-gradient-to-r from-primary/5 to-accent/5">
             <CardTitle className="text-lg font-display flex items-center gap-2">📝 Description</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-base text-muted-foreground leading-relaxed">{ch.description}</p>
+          <CardContent className="pt-4">
+            {(() => {
+              const raw = ch.description || '';
+              // Split on long dashes (——) used as section dividers
+              const sections = raw.split(/\s*[—–]{3,}\s*/).filter(Boolean);
+              if (sections.length <= 1) {
+                return <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{raw}</p>;
+              }
+              return (
+                <div className="space-y-4">
+                  {sections.map((section, idx) => {
+                    const trimmed = section.trim();
+                    // Try to extract a heading (first sentence or line before a period/newline)
+                    const headingMatch = trimmed.match(/^([A-Z][A-Za-z &']+(?:\:|\s*$))/m);
+                    const heading = headingMatch?.[1]?.replace(/:$/, '').trim();
+                    const body = heading ? trimmed.slice(headingMatch![0].length).trim() : trimmed;
+
+                    const colors = [
+                      'from-blue-500/10 to-blue-500/5 border-l-blue-500',
+                      'from-emerald-500/10 to-emerald-500/5 border-l-emerald-500',
+                      'from-purple-500/10 to-purple-500/5 border-l-purple-500',
+                      'from-amber-500/10 to-amber-500/5 border-l-amber-500',
+                      'from-pink-500/10 to-pink-500/5 border-l-pink-500',
+                      'from-cyan-500/10 to-cyan-500/5 border-l-cyan-500',
+                      'from-red-500/10 to-red-500/5 border-l-red-500',
+                      'from-indigo-500/10 to-indigo-500/5 border-l-indigo-500',
+                    ];
+
+                    return (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className={`rounded-lg border-l-4 bg-gradient-to-r p-4 ${colors[idx % colors.length]}`}
+                      >
+                        {heading && (
+                          <h4 className="font-display font-bold text-sm mb-2 flex items-center gap-2">
+                            {['📖','🎯','⭐','🏆','📚','🔗','🌟','✨'][idx % 8]} {heading}
+                          </h4>
+                        )}
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                          {body || trimmed}
+                        </p>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 
