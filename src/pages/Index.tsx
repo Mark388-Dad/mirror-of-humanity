@@ -30,6 +30,26 @@ interface HomepageContent {
 const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf-u0b7RP1aUMOJGQvGzUaJKEP2hMKyNWvB0cMu68ANHqFq-A/viewform";
 const FOLLETT_URL = "https://mfa.follettdestiny.com";
 
+const isLegacyHomepageOverride = (section?: HomepageContent) => {
+  if (!section) return false;
+
+  const title = (section.title || '').trim().toLowerCase();
+  const content = (section.content || '').trim().toLowerCase();
+
+  switch (section.section_key) {
+    case 'hero':
+      return title === 'welcome to the reading challenge' || content.includes('ignite your passion for books');
+    case 'featured_challenge':
+      return title.includes('featured challenge wait language and litaraure');
+    case 'motivation':
+      return title.includes('tonny crabiter') || content.includes('every page you read is a step towards becoming a better version of yourself');
+    case 'tip_of_day':
+      return title === 'reading tip of the day' && content.includes('set a specific time each day for reading');
+    default:
+      return false;
+  }
+};
+
 const Index = () => {
   const { user, loading } = useAuth();
   const [homepageContent, setHomepageContent] = useState<HomepageContent[]>([]);
@@ -46,7 +66,10 @@ const Index = () => {
     if (data) setHomepageContent(data);
   };
 
-  const getContent = (key: string) => homepageContent.find(c => c.section_key === key);
+  const getContent = (key: string) => {
+    const section = homepageContent.find(c => c.section_key === key);
+    return isLegacyHomepageOverride(section) ? undefined : section;
+  };
   const isVisible = (key: string) => {
     const c = getContent(key);
     return c ? c.is_visible : true; // Default visible if not in DB
