@@ -105,7 +105,7 @@ const StudentDetailView = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Password reset to Mpesa123 for ${selectedStudent.full_name}`);
+      toast.success(`Password reset to Mpesa123! for ${selectedStudent.full_name}`);
       setResetDialogOpen(false);
     } catch (err: any) {
       toast.error(err.message || 'Failed to reset password');
@@ -331,7 +331,7 @@ const StudentDetailView = () => {
             <DialogHeader>
               <DialogTitle>Reset Password</DialogTitle>
               <DialogDescription>
-                This will reset <strong>{selectedStudent.full_name}</strong>'s password to <code className="bg-secondary px-2 py-1 rounded font-mono">Mpesa123</code>. 
+                This will reset <strong>{selectedStudent.full_name}</strong>'s password to <code className="bg-secondary px-2 py-1 rounded font-mono">Mpesa123!</code>. 
                 The student will receive an in-app notification about the change.
               </DialogDescription>
             </DialogHeader>
