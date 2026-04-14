@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     // Reset password to Mpesa123
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user_id, {
-      password: 'Mpesa123'
+      password: 'Mpesa123!'
     })
 
     if (error) {
@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
         user_id,
         type: 'system',
         title: '🔑 Password Reset',
-        message: 'Your password has been reset by a librarian. Your new temporary password is: Mpesa123. Please change it after logging in.'
+        message: 'Your password has been reset by a librarian. Your new temporary password is: Mpesa123! — Please change it after logging in.'
       })
     }
 
