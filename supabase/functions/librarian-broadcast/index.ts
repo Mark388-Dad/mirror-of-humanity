@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
 
     // also store as in-app notifications
     if (body.alsoCreateNotification !== false) {
-      const notifs = valid.map(r => ({
+      const notifs = valid.filter(r => r.user_id).map(r => ({
         user_id: r.user_id,
         title: body.subject,
         message: body.message + (body.linkUrl ? `\n\n${body.linkUrl}` : ''),
