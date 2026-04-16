@@ -99,6 +99,11 @@ Deno.serve(async (req) => {
           ${body.imageUrl ? `<img src="${escape(body.imageUrl)}" alt="" style="width:100%;border-radius:8px;margin:12px 0"/>` : ''}
           <div style="color:#374151;font-size:15px;line-height:1.6;white-space:pre-wrap">${escape(body.message)}</div>
           ${body.linkUrl ? `<p style="margin:24px 0 0"><a href="${escape(body.linkUrl)}" style="display:inline-block;background:#1e7d3e;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">${escape(body.linkLabel || 'Open Link')}</a></p>` : ''}
+          ${body.attachments?.length ? `
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb">
+              <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600">📎 Attachments</p>
+              ${body.attachments.map(a => `<div style="margin:6px 0"><a href="${escape(a.url)}" style="color:#2563eb;text-decoration:none;font-size:14px">📄 ${escape(a.name)}</a></div>`).join('')}
+            </div>` : ''}
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"/>
           <p style="color:#6b7280;font-size:12px;margin:0">Sent by ${escape(callerProfile.full_name || 'Library Staff')}</p>
         </div>
