@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy, Timer, UserPlus } from 'lucide-react';
+import { BookOpen, Loader2, Trophy, Calendar, CheckCircle, XCircle, AlertCircle, Home, Key, Upload, Cloud, Sparkles, Settings, Users, Tag, Award, Pencil, Copy, Timer, UserPlus, Megaphone } from 'lucide-react';
+import { LibrarianBroadcast } from '@/components/LibrarianBroadcast';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -177,7 +178,9 @@ const LibrarianDashboard = () => {
             <TabsTrigger value="members" className="flex items-center gap-2"><Users className="w-4 h-4" />Members</TabsTrigger>
             <TabsTrigger value="import" className="flex items-center gap-2"><UserPlus className="w-4 h-4" />Bulk Import</TabsTrigger>
             <TabsTrigger value="students" className="flex items-center gap-2"><Users className="w-4 h-4" />Student Profiles</TabsTrigger>
+            <TabsTrigger value="broadcast" className="flex items-center gap-2"><Megaphone className="w-4 h-4" />Broadcast</TabsTrigger>
           </TabsList>
+          <TabsContent value="broadcast"><LibrarianBroadcast /></TabsContent>
 
           <TabsContent value="submissions"><LibrarianUserManager /></TabsContent>
 
