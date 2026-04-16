@@ -58,18 +58,30 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Subject and message required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // build recipient query
-    let q = supabase.from('profiles').select('user_id, email, full_name');
-    switch (body.audience.type) {
-      case 'house': q = q.eq('house', body.audience.value); break;
-      case 'year_group': q = q.eq('year_group', body.audience.value); break;
-      case 'class': q = q.eq('class_name', body.audience.value); break;
-      case 'role': q = q.eq('role', body.audience.value); break;
-      case 'individual': q = q.eq('user_id', body.audience.value); break;
-      case 'all': default: break;
+    // build recipients
+    let recipients: { user_id: string | null; email: string; full_name: string | null }[] = [];
+    if (body.audience.type === 'emails') {
+      const emails = (body.audience.emails || []).filter(Boolean);
+      if (!emails.length) {
+        return new Response(JSON.stringify({ error: 'No email addresses provided' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Look up profiles for in-app notifications; still email everyone given
+      const { data: matched } = await supabase.from('profiles').select('user_id, email, full_name').in('email', emails);
+      const matchedMap = new Map((matched || []).map(m => [m.email, m]));
+      recipients = emails.map(em => matchedMap.get(em) || { user_id: null, email: em, full_name: null });
+    } else {
+      let q = supabase.from('profiles').select('user_id, email, full_name');
+      switch (body.audience.type) {
+        case 'house': q = q.eq('house', body.audience.value); break;
+        case 'year_group': q = q.eq('year_group', body.audience.value); break;
+        case 'class': q = q.eq('class_name', body.audience.value); break;
+        case 'role': q = q.eq('role', body.audience.value); break;
+        case 'all': default: break;
+      }
+      const { data, error: rErr } = await q.limit(2000);
+      if (rErr) throw rErr;
+      recipients = data || [];
     }
-    const { data: recipients, error: rErr } = await q.limit(2000);
-    if (rErr) throw rErr;
     if (!recipients?.length) {
       return new Response(JSON.stringify({ error: 'No recipients matched' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
