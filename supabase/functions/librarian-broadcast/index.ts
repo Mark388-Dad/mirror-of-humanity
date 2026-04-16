@@ -7,13 +7,15 @@ const corsHeaders = {
 
 interface BroadcastBody {
   subject: string;
-  message: string; // plain text / simple HTML allowed
+  message: string;
   imageUrl?: string;
   linkUrl?: string;
   linkLabel?: string;
+  attachments?: { name: string; url: string }[];
   audience: {
-    type: 'all' | 'house' | 'year_group' | 'class' | 'role' | 'individual';
-    value?: string; // e.g., 'Kenya', 'DP1', '10A', 'student', or user_id
+    type: 'all' | 'house' | 'year_group' | 'class' | 'role' | 'emails';
+    value?: string;
+    emails?: string[];
   };
   alsoCreateNotification?: boolean;
 }
@@ -56,18 +58,30 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Subject and message required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // build recipient query
-    let q = supabase.from('profiles').select('user_id, email, full_name');
-    switch (body.audience.type) {
-      case 'house': q = q.eq('house', body.audience.value); break;
-      case 'year_group': q = q.eq('year_group', body.audience.value); break;
-      case 'class': q = q.eq('class_name', body.audience.value); break;
-      case 'role': q = q.eq('role', body.audience.value); break;
-      case 'individual': q = q.eq('user_id', body.audience.value); break;
-      case 'all': default: break;
+    // build recipients
+    let recipients: { user_id: string | null; email: string; full_name: string | null }[] = [];
+    if (body.audience.type === 'emails') {
+      const emails = (body.audience.emails || []).filter(Boolean);
+      if (!emails.length) {
+        return new Response(JSON.stringify({ error: 'No email addresses provided' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      // Look up profiles for in-app notifications; still email everyone given
+      const { data: matched } = await supabase.from('profiles').select('user_id, email, full_name').in('email', emails);
+      const matchedMap = new Map((matched || []).map(m => [m.email, m]));
+      recipients = emails.map(em => matchedMap.get(em) || { user_id: null, email: em, full_name: null });
+    } else {
+      let q = supabase.from('profiles').select('user_id, email, full_name');
+      switch (body.audience.type) {
+        case 'house': q = q.eq('house', body.audience.value); break;
+        case 'year_group': q = q.eq('year_group', body.audience.value); break;
+        case 'class': q = q.eq('class_name', body.audience.value); break;
+        case 'role': q = q.eq('role', body.audience.value); break;
+        case 'all': default: break;
+      }
+      const { data, error: rErr } = await q.limit(2000);
+      if (rErr) throw rErr;
+      recipients = data || [];
     }
-    const { data: recipients, error: rErr } = await q.limit(2000);
-    if (rErr) throw rErr;
     if (!recipients?.length) {
       return new Response(JSON.stringify({ error: 'No recipients matched' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -85,6 +99,11 @@ Deno.serve(async (req) => {
           ${body.imageUrl ? `<img src="${escape(body.imageUrl)}" alt="" style="width:100%;border-radius:8px;margin:12px 0"/>` : ''}
           <div style="color:#374151;font-size:15px;line-height:1.6;white-space:pre-wrap">${escape(body.message)}</div>
           ${body.linkUrl ? `<p style="margin:24px 0 0"><a href="${escape(body.linkUrl)}" style="display:inline-block;background:#1e7d3e;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">${escape(body.linkLabel || 'Open Link')}</a></p>` : ''}
+          ${body.attachments?.length ? `
+            <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb">
+              <p style="margin:0 0 8px;font-size:13px;color:#6b7280;font-weight:600">📎 Attachments</p>
+              ${body.attachments.map(a => `<div style="margin:6px 0"><a href="${escape(a.url)}" style="color:#2563eb;text-decoration:none;font-size:14px">📄 ${escape(a.name)}</a></div>`).join('')}
+            </div>` : ''}
           <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"/>
           <p style="color:#6b7280;font-size:12px;margin:0">Sent by ${escape(callerProfile.full_name || 'Library Staff')}</p>
         </div>
@@ -116,7 +135,7 @@ Deno.serve(async (req) => {
 
     // also store as in-app notifications
     if (body.alsoCreateNotification !== false) {
-      const notifs = valid.map(r => ({
+      const notifs = valid.filter(r => r.user_id).map(r => ({
         user_id: r.user_id,
         title: body.subject,
         message: body.message + (body.linkUrl ? `\n\n${body.linkUrl}` : ''),
