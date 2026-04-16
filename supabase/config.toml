@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.admin-reset-password]
 verify_jwt = false
+
+[functions.librarian-broadcast]
+verify_jwt = true
