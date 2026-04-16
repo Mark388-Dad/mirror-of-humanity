@@ -7,13 +7,15 @@ const corsHeaders = {
 
 interface BroadcastBody {
   subject: string;
-  message: string; // plain text / simple HTML allowed
+  message: string;
   imageUrl?: string;
   linkUrl?: string;
   linkLabel?: string;
+  attachments?: { name: string; url: string }[];
   audience: {
-    type: 'all' | 'house' | 'year_group' | 'class' | 'role' | 'individual';
-    value?: string; // e.g., 'Kenya', 'DP1', '10A', 'student', or user_id
+    type: 'all' | 'house' | 'year_group' | 'class' | 'role' | 'emails';
+    value?: string;
+    emails?: string[];
   };
   alsoCreateNotification?: boolean;
 }
